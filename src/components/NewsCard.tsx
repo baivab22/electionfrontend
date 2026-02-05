@@ -38,12 +38,12 @@ interface NewsCardProps {
 // Get API URL based on environment (Vite)
 const API_URL = 
   import.meta.env.MODE === 'production'
-    ? import.meta.env.VITE_PROD_URL || 'http://api.abhushangallery.com/api'
+    ? import.meta.env.VITE_PROD_URL || 'https://api.abhushangallery.com/api'
     : import.meta.env.VITE_DEV_URL || 'http://localhost:3000/api';
 
 const API_ASSET_URL = 
   import.meta.env.MODE === 'production'
-    ? import.meta.env.VITE_PROD_URL || 'http://api.abhushangallery.com/'
+    ? import.meta.env.VITE_PROD_URL || 'https://api.abhushangallery.com/'
     : import.meta.env.VITE_DEV_URL || 'http://localhost:3000/';
 
 // Social Media Icons (keep your existing icons)
@@ -290,8 +290,7 @@ const getCategoryColor = (cat: string) => {
       <CardHeader className="p-0 relative flex-shrink-0">
         <Link to={`/post/${id}`} className="block relative overflow-hidden">
           <div 
-            className="w-full bg-gray-100 relative overflow-hidden"
-            style={{ height: `${IMAGE_HEIGHT}px` }}
+            className="w-full bg-gray-100 relative overflow-hidden h-40 xs:h-48 sm:h-56 md:h-60"
           >
             <img
               src={getImageUrl()}
@@ -305,37 +304,38 @@ const getCategoryColor = (cat: string) => {
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
             
             {/* Top Badges */}
-            <div className="absolute top-3 left-3 right-3 flex items-start justify-between">
-              <div className="flex flex-col gap-2">
+            <div className="absolute top-2 xs:top-3 left-2 xs:left-3 right-2 xs:right-3 flex items-start justify-between">
+              <div className="flex flex-col gap-1 xs:gap-2">
                 {/* Featured Badge */}
                 {featured && (
-                  <Badge className="bg-gradient-to-r from-amber-400 to-orange-500 text-white border-0 shadow-lg font-semibold text-xs px-3 py-1.5 backdrop-blur-sm">
+                  <Badge className="bg-gradient-to-r from-amber-400 to-orange-500 text-white border-0 shadow-lg font-semibold text-[10px] xs:text-xs px-2 xs:px-3 py-1 xs:py-1.5 backdrop-blur-sm">
                     ⭐ Featured
                   </Badge>
                 )}
                 
                 {/* Category Badge */}
-                <Badge className={`${getCategoryColor(category)} border backdrop-blur-sm font-medium text-xs px-3 py-1.5 max-w-[120px] truncate`}>
+                <Badge className={`${getCategoryColor(category)} border backdrop-blur-sm font-medium text-[10px] xs:text-xs px-2 xs:px-3 py-1 xs:py-1.5 max-w-[100px] xs:max-w-[120px] truncate`}>
                   {t(`categories.${category}`)}
                 </Badge>
               </div>
 
               {/* Action Buttons */}
-              <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              <div className="flex items-center gap-1 xs:gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300">
                 <button
                   onClick={(e) => {
                     e.preventDefault();
                     setIsBookmarked(!isBookmarked);
                   }}
-                  className={`p-2.5 rounded-full backdrop-blur-md transition-all duration-300 shadow-lg ${
+                  className={`p-1.5 xs:p-2.5 rounded-full backdrop-blur-md transition-all duration-300 shadow-lg ${
                     isBookmarked 
                       ? 'bg-amber-500 text-white' 
                       : 'bg-white/90 text-gray-700 hover:bg-white'
                   }`}
                 >
                   <Bookmark 
-                    size={16} 
-                    fill={isBookmarked ? 'currentColor' : 'none'} 
+                    size={14} 
+                    fill={isBookmarked ? 'currentColor' : 'none'}
+                    className="xs:w-4 xs:h-4"
                   />
                 </button>
                 
@@ -344,18 +344,18 @@ const getCategoryColor = (cat: string) => {
                     e.preventDefault();
                     setShowSocialPlugin(true);
                   }}
-                  className="p-2.5 rounded-full bg-white/90 text-gray-700 hover:bg-white backdrop-blur-md transition-all duration-300 shadow-lg"
+                  className="p-1.5 xs:p-2.5 rounded-full bg-white/90 text-gray-700 hover:bg-white backdrop-blur-md transition-all duration-300 shadow-lg"
                 >
-                  <Share2 size={16} />
+                  <Share2 size={14} className="xs:w-4 xs:h-4" />
                 </button>
               </div>
             </div>
 
             {/* Location Badge */}
             {location && (
-              <div className="absolute bottom-3 left-3">
-                <Badge className="bg-black/60 text-white border-0 backdrop-blur-sm font-medium text-xs px-3 py-1.5 flex items-center gap-1">
-                  <MapPin size={12} />
+              <div className="absolute bottom-2 xs:bottom-3 left-2 xs:left-3">
+                <Badge className="bg-black/60 text-white border-0 backdrop-blur-sm font-medium text-[10px] xs:text-xs px-2 xs:px-3 py-1 xs:py-1.5 flex items-center gap-1">
+                  <MapPin size={10} className="xs:w-3 xs:h-3" />
                   {location}
                 </Badge>
               </div>
@@ -365,68 +365,64 @@ const getCategoryColor = (cat: string) => {
       </CardHeader>
 
       {/* Content Area */}
-      <CardContent className="p-5 flex-1 flex flex-col">
+      <CardContent className="p-2 xs:p-3 sm:p-5 flex-1 flex flex-col">
         {/* Meta Info */}
-        <div className="flex items-center gap-3 text-xs text-gray-500 mb-3">
-          <div className="flex items-center gap-1.5">
-            <Calendar size={14} />
+        <div className="flex items-center gap-2 xs:gap-3 text-[10px] xs:text-xs text-gray-500 mb-2 xs:mb-3">
+          <div className="flex items-center gap-1 xs:gap-1.5">
+            <Calendar size={12} className="xs:w-3.5 xs:h-3.5" />
             <span>{formatDate(publishedAt)}</span>
           </div>
-          <span>•</span>
-          <div className="flex items-center gap-1.5">
-            <Clock size={14} />
+          <span className="hidden xs:inline">•</span>
+          <div className="hidden xs:flex items-center gap-1 xs:gap-1.5">
+            <Clock size={12} className="xs:w-3.5 xs:h-3.5" />
             <span>{readingTime} min read</span>
           </div>
         </div>
 
         {/* Title */}
-        <Link to={`/post/${id}`} className="mb-3 group/title">
-          <h3 className="text-xl font-bold text-gray-900 leading-tight line-clamp-2 group-hover/title:text-blue-600 transition-colors duration-300 mb-2">
+        <Link to={`/post/${id}`} className="mb-2 xs:mb-3 group/title">
+          <h3 className="text-sm xs:text-base sm:text-lg md:text-xl font-bold text-gray-900 leading-tight line-clamp-2 group-hover/title:text-blue-600 transition-colors duration-300 mb-1 xs:mb-2">
             {title}
           </h3>
         </Link>
-        
-        {/* Excerpt */}
-        {/* <p className="text-gray-600 text-sm leading-relaxed line-clamp-3 mb-4 flex-1">
-          {excerpt}
-        </p> */}
 
         {/* Stats Bar */}
-        <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-          <div className="flex items-center gap-4 text-xs text-gray-500">
-            <span className="flex items-center gap-1.5">
-              <Eye size={14} />
-              {viewCount.toLocaleString()} views
+        <div className="flex items-center justify-between pt-2 xs:pt-3 border-t border-gray-100 mt-auto">
+          <div className="flex items-center gap-2 xs:gap-4 text-[10px] xs:text-xs text-gray-500">
+            <span className="flex items-center gap-1 xs:gap-1.5">
+              <Eye size={12} className="xs:w-3.5 xs:h-3.5" />
+              {viewCount.toLocaleString()}
             </span>
-            <span className="flex items-center gap-1.5">
-              <MessageCircle size={14} />
-              {commentCount} comments
+            <span className="flex items-center gap-1 xs:gap-1.5">
+              <MessageCircle size={12} className="xs:w-3.5 xs:h-3.5" />
+              {commentCount}
             </span>
           </div>
         </div>
       </CardContent>
 
       {/* Footer */}
-      <CardFooter className="px-5 pb-5 pt-0 flex items-center justify-between">
+      <CardFooter className="px-2 xs:px-3 sm:px-5 pb-3 xs:pb-4 sm:pb-5 pt-0 flex items-center justify-between gap-2">
         {/* Author Info */}
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-primary via-accent to-secondary rounded-full flex items-center justify-center shadow-sm">
-            <User size={16} className="text-white" />
+        <div className="flex items-center gap-1.5 xs:gap-2 sm:gap-3 min-w-0">
+          <div className="w-7 xs:w-8 sm:w-10 h-7 xs:h-8 sm:h-10 bg-gradient-to-br from-primary via-accent to-secondary rounded-full flex items-center justify-center shadow-sm flex-shrink-0">
+            <User size={12} className="text-white xs:w-3.5 xs:h-3.5 sm:w-4 sm:h-4" />
           </div>
-          <div>
-            <p className="text-sm font-semibold text-gray-900">{author}</p>
-            <p className="text-xs text-gray-500">Author</p>
+          <div className="min-w-0">
+            <p className="text-xs xs:text-sm font-semibold text-gray-900 truncate">{author}</p>
+            <p className="text-[10px] xs:text-xs text-gray-500 hidden xs:block">Author</p>
           </div>
         </div>
 
         {/* Read More Button */}
-        <Link to={`/post/${id}`}>
+        <Link to={`/post/${id}`} className="flex-shrink-0">
           <Button 
             size="sm"
-            className="bg-gradient-to-r from-primary via-accent to-secondary hover:from-primary/90 hover:via-accent/90 hover:to-secondary/90 text-white rounded-full px-5 h-10 font-semibold shadow-lg hover:shadow-xl transition-all duration-300 group/btn"
+            className="bg-gradient-to-r from-primary via-accent to-secondary hover:from-primary/90 hover:via-accent/90 hover:to-secondary/90 text-white rounded-full px-2 xs:px-3 sm:px-5 h-7 xs:h-8 sm:h-10 text-[10px] xs:text-xs sm:text-sm font-semibold shadow-lg hover:shadow-xl transition-all duration-300 group/btn"
           >
-            Read More
-            <ArrowRight size={16} className="ml-2 group-hover/btn:translate-x-1 transition-transform" />
+            <span className="hidden xs:inline">Read More</span>
+            <span className="xs:hidden">Read</span>
+            <ArrowRight size={12} className="ml-1 xs:ml-2 group-hover/btn:translate-x-1 transition-transform xs:w-3.5 xs:h-3.5 sm:w-4 sm:h-4" />
           </Button>
         </Link>
       </CardFooter>

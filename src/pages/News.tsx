@@ -15,15 +15,15 @@ import API, { Post, PostsQuery, PostsResponse } from '@/lib/api';
 // Loading skeleton components
 const PostCardSkeleton = ({ viewMode }: { viewMode: 'grid' | 'list' }) => (
   <Card className="shadow-md">
-    <CardContent className={`p-0 ${viewMode === 'list' ? 'flex' : ''}`}>
-      <Skeleton className={`${viewMode === 'list' ? 'w-64 h-48' : 'h-48 w-full'} rounded-t-lg`} />
-      <div className="p-6 flex-1">
-        <Skeleton className="h-6 w-full mb-3" />
-        <Skeleton className="h-4 w-full mb-2" />
-        <Skeleton className="h-4 w-3/4 mb-4" />
+    <CardContent className={`p-0 ${viewMode === 'list' ? 'flex flex-col xs:flex-row' : ''}`}>
+      <Skeleton className={`${viewMode === 'list' ? 'w-full xs:w-48 sm:w-64 h-36 xs:h-40 sm:h-48' : 'h-36 xs:h-40 sm:h-48 w-full'} rounded-t-lg ${viewMode === 'list' ? 'xs:rounded-l-lg xs:rounded-tr-none' : ''}`} />
+      <div className="p-3 xs:p-4 sm:p-6 flex-1">
+        <Skeleton className="h-5 xs:h-6 w-full mb-2 xs:mb-3" />
+        <Skeleton className="h-3 xs:h-4 w-full mb-1.5 xs:mb-2" />
+        <Skeleton className="h-3 xs:h-4 w-3/4 mb-3 xs:mb-4" />
         <div className="flex items-center justify-between">
-          <Skeleton className="h-4 w-20" />
-          <Skeleton className="h-4 w-24" />
+          <Skeleton className="h-3 xs:h-4 w-16 xs:w-20" />
+          <Skeleton className="h-3 xs:h-4 w-20 xs:w-24" />
         </div>
       </div>
     </CardContent>
@@ -32,8 +32,8 @@ const PostCardSkeleton = ({ viewMode }: { viewMode: 'grid' | 'list' }) => (
 
 const PostsGridSkeleton = ({ viewMode }: { viewMode: 'grid' | 'list' }) => (
   <div className={viewMode === 'grid' 
-    ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8' 
-    : 'space-y-6'
+    ? 'grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 gap-4 xs:gap-6 lg:gap-8' 
+    : 'space-y-4 xs:space-y-6'
   }>
     {Array.from({ length: 6 }, (_, i) => (
       <PostCardSkeleton key={i} viewMode={viewMode} />
@@ -206,13 +206,13 @@ const News = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-blue-900 via-blue-800 to-teal-800 text-white py-16">
-        <div className="container mx-auto px-4">
+      <section className="bg-gradient-to-r from-blue-900 via-blue-800 to-teal-800 text-white py-8 xs:py-12 sm:py-16">
+        <div className="container mx-auto px-3 xs:px-4">
           <div className="text-center">
-            <h1 className="text-4xl md:text-5xl font-bold mb-4">
+            <h1 className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl font-bold mb-2 xs:mb-3 sm:mb-4">
               {t('nav.news', 'News & Updates')}
             </h1>
-            <p className="text-xl text-gray-200 max-w-2xl mx-auto">
+            <p className="text-sm xs:text-base sm:text-lg md:text-xl text-gray-200 max-w-2xl mx-auto px-2">
               {t('news.subtitle', 'Stay updated with the latest developments in ICT, digital transformation, and social justice initiatives in Nepal.')}
             </p>
           </div>
@@ -220,18 +220,18 @@ const News = () => {
       </section>
 
       {/* Filters and Search */}
-      <section className="py-8 bg-white shadow-sm">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
-            <div className="flex flex-col sm:flex-row gap-4 flex-1">
-              <div className="relative flex-1 max-w-md">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+      <section className="py-4 xs:py-6 sm:py-8 bg-white shadow-sm">
+        <div className="container mx-auto px-3 xs:px-4">
+          <div className="flex flex-col gap-3 xs:gap-4">
+            <div className="flex flex-col sm:flex-row gap-3 xs:gap-4 flex-1">
+              <div className="relative flex-1">
+                <Search className="absolute left-2 xs:left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 xs:w-5 h-4 xs:h-5" />
                 <Input
                   type="text"
                   placeholder={t('common.searchPlaceholder', 'Search articles...')}
                   value={searchTerm}
                   onChange={handleSearchChange}
-                  className="pl-10"
+                  className="pl-8 xs:pl-10 h-9 xs:h-10 text-sm xs:text-base"
                   disabled={loading}
                 />
               </div>
@@ -240,13 +240,13 @@ const News = () => {
                 onValueChange={handleCategoryChange}
                 disabled={loading}
               >
-                <SelectTrigger className="w-full sm:w-64">
-                  <Filter size={16} className="mr-2" />
+                <SelectTrigger className="w-full sm:w-48 md:w-64 h-9 xs:h-10 text-sm xs:text-base">
+                  <Filter size={14} className="mr-1.5 xs:mr-2 flex-shrink-0" />
                   <SelectValue placeholder={t('common.filter', 'Filter by category')} />
                 </SelectTrigger>
                 <SelectContent>
                   {categories.map((category) => (
-                    <SelectItem key={category.value} value={category.value}>
+                    <SelectItem key={category.value} value={category.value} className="text-sm xs:text-base">
                       {category.label}
                     </SelectItem>
                   ))}
@@ -254,22 +254,24 @@ const News = () => {
               </Select>
             </div>
             
-            <div className="flex items-center gap-2">
+            <div className="flex items-center justify-end gap-1.5 xs:gap-2">
               <Button
                 variant={viewMode === 'grid' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setViewMode('grid')}
                 disabled={loading}
+                className="h-8 xs:h-9 w-8 xs:w-9 p-0"
               >
-                <Grid size={16} />
+                <Grid className="w-3.5 xs:w-4 h-3.5 xs:h-4" />
               </Button>
               <Button
                 variant={viewMode === 'list' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setViewMode('list')}
                 disabled={loading}
+                className="h-8 xs:h-9 w-8 xs:w-9 p-0"
               >
-                <List size={16} />
+                <List className="w-3.5 xs:w-4 h-3.5 xs:h-4" />
               </Button>
             </div>
           </div>
@@ -277,18 +279,18 @@ const News = () => {
       </section>
 
       {/* Posts Grid/List */}
-      <section className="py-12">
-        <div className="container mx-auto px-4">
+      <section className="py-6 xs:py-8 sm:py-12">
+        <div className="container mx-auto px-3 xs:px-4">
           {/* Error State */}
           {error && !loading && (
-            <Alert className="mb-8 border-red-200 bg-red-50">
-              <AlertCircle className="h-4 w-4 text-red-600" />
-              <AlertDescription className="text-red-800">
+            <Alert className="mb-4 xs:mb-6 sm:mb-8 border-red-200 bg-red-50">
+              <AlertCircle className="h-3.5 xs:h-4 w-3.5 xs:w-4 text-red-600" />
+              <AlertDescription className="text-red-800 text-xs xs:text-sm">
                 {error}
                 <Button
                   variant="link"
                   onClick={handleRetry}
-                  className="ml-2 p-0 h-auto text-red-600 underline"
+                  className="ml-1.5 xs:ml-2 p-0 h-auto text-red-600 underline text-xs xs:text-sm"
                 >
                   {t('common.tryAgain', 'Try again')}
                 </Button>
@@ -301,12 +303,12 @@ const News = () => {
             <PostsGridSkeleton viewMode={viewMode} />
           ) : posts.length === 0 ? (
             /* Empty State */
-            <div className="text-center py-16">
-              <div className="text-6xl mb-4">📰</div>
-              <h3 className="text-2xl font-semibold text-gray-900 mb-2">
+            <div className="text-center py-8 xs:py-12 sm:py-16">
+              <div className="text-4xl xs:text-5xl sm:text-6xl mb-3 xs:mb-4">📰</div>
+              <h3 className="text-lg xs:text-xl sm:text-2xl font-semibold text-gray-900 mb-1.5 xs:mb-2">
                 {t('news.noPosts', 'No posts found')}
               </h3>
-              <p className="text-gray-600 mb-4">
+              <p className="text-gray-600 mb-3 xs:mb-4 text-sm xs:text-base px-4">
                 {searchTerm || selectedCategory !== 'all' 
                   ? t('news.noPostsFilter', 'Try adjusting your search or filter criteria.')
                   : t('news.noPostsGeneral', 'No articles are available at the moment.')
@@ -321,6 +323,7 @@ const News = () => {
                     setSelectedCategory('all');
                     setCurrentPage(1);
                   }}
+                  className="text-xs xs:text-sm h-8 xs:h-9"
                 >
                   {t('common.clearFilters', 'Clear Filters')}
                 </Button>
@@ -329,8 +332,8 @@ const News = () => {
           ) : (
             <>
               {/* Results Info */}
-              <div className="mb-8 flex items-center justify-between">
-                <p className="text-gray-600">
+              <div className="mb-4 xs:mb-6 sm:mb-8 flex flex-col xs:flex-row items-start xs:items-center justify-between gap-2 xs:gap-3">
+                <p className="text-gray-600 text-xs xs:text-sm sm:text-base">
                   {t('news.showingResults', 'Showing {{start}}-{{end}} of {{total}} posts', {
                     start: startIndex + 1,
                     end: endIndex,
@@ -343,9 +346,9 @@ const News = () => {
                     variant="outline"
                     size="sm"
                     onClick={handleRetry}
-                    className="gap-2"
+                    className="gap-1.5 xs:gap-2 h-7 xs:h-8 text-xs xs:text-sm"
                   >
-                    <RefreshCw size={14} />
+                    <RefreshCw className="w-3 xs:w-3.5 h-3 xs:h-3.5" />
                     {t('common.refresh', 'Refresh')}
                   </Button>
                 )}
@@ -353,8 +356,8 @@ const News = () => {
               
               {/* Posts */}
               <div className={viewMode === 'grid' 
-                ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8' 
-                : 'space-y-6'
+                ? 'grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 gap-4 xs:gap-6 lg:gap-8' 
+                : 'space-y-4 xs:space-y-6'
               }>
                 {posts.map((post) => (
                   <NewsCard 
@@ -376,12 +379,13 @@ const News = () => {
 
               {/* Pagination */}
               {totalPages > 1 && (
-                <div className="flex justify-center mt-12">
-                  <div className="flex items-center space-x-2">
+                <div className="flex justify-center mt-8 xs:mt-10 sm:mt-12">
+                  <div className="flex flex-wrap items-center justify-center gap-1 xs:gap-1.5 sm:gap-2">
                     <Button
                       variant="outline"
                       onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
                       disabled={currentPage === 1 || loading}
+                      className="h-8 xs:h-9 sm:h-10 px-2 xs:px-3 text-xs xs:text-sm"
                     >
                       {t('common.previous', 'Previous')}
                     </Button>
@@ -406,14 +410,14 @@ const News = () => {
                             variant={currentPage === 1 ? 'default' : 'outline'}
                             onClick={() => handlePageChange(1)}
                             disabled={loading}
-                            className="w-10 h-10"
+                            className="w-7 xs:w-8 sm:w-10 h-7 xs:h-8 sm:h-10 text-xs xs:text-sm p-0"
                           >
                             1
                           </Button>
                         );
                         
                         if (startPage > 2) {
-                          pages.push(<span key="ellipsis1" className="px-2">...</span>);
+                          pages.push(<span key="ellipsis1" className="px-1 xs:px-2 text-xs xs:text-sm">...</span>);
                         }
                       }
                       
@@ -425,7 +429,7 @@ const News = () => {
                             variant={currentPage === page ? 'default' : 'outline'}
                             onClick={() => handlePageChange(page)}
                             disabled={loading}
-                            className="w-10 h-10"
+                            className="w-7 xs:w-8 sm:w-10 h-7 xs:h-8 sm:h-10 text-xs xs:text-sm p-0"
                           >
                             {page}
                           </Button>
@@ -435,7 +439,7 @@ const News = () => {
                       // Show last page and ellipsis if needed
                       if (endPage < totalPages) {
                         if (endPage < totalPages - 1) {
-                          pages.push(<span key="ellipsis2" className="px-2">...</span>);
+                          pages.push(<span key="ellipsis2" className="px-1 xs:px-2 text-xs xs:text-sm">...</span>);
                         }
                         
                         pages.push(
@@ -444,7 +448,7 @@ const News = () => {
                             variant={currentPage === totalPages ? 'default' : 'outline'}
                             onClick={() => handlePageChange(totalPages)}
                             disabled={loading}
-                            className="w-10 h-10"
+                            className="w-7 xs:w-8 sm:w-10 h-7 xs:h-8 sm:h-10 text-xs xs:text-sm p-0"
                           >
                             {totalPages}
                           </Button>
@@ -458,6 +462,7 @@ const News = () => {
                       variant="outline"
                       onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
                       disabled={currentPage === totalPages || loading}
+                      className="h-8 xs:h-9 sm:h-10 px-2 xs:px-3 text-xs xs:text-sm"
                     >
                       {t('common.next', 'Next')}
                     </Button>

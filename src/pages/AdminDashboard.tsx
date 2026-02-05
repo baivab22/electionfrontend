@@ -779,7 +779,7 @@ const AdminDashboard: React.FC = () => {
   };
 
   const API_ASSET_URL = import.meta.env.MODE === 'production'
-    ? import.meta.env.VITE_PROD_URL || 'http://api.abhushangallery.com/'
+    ? import.meta.env.VITE_PROD_URL || 'https://api.abhushangallery.com/'
     : import.meta.env.VITE_DEV_URL || 'http://localhost:3000/';
 
   const getImageUrl = (post: Post) => {

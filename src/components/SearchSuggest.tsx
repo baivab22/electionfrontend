@@ -80,41 +80,41 @@ export default function EnhancedTrackingCard({ className = '' }: EnhancedTrackin
 
   return (
     <>
-      <Card className={`w-full border-0 shadow-2xl bg-white/95 backdrop-blur-sm hover:shadow-3xl transition-all duration-300 transform hover:scale-105 rounded-2xl overflow-hidden ${className}`}>
-        <CardHeader className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white p-8">
+      <Card className={`w-full border-0 shadow-xl xs:shadow-2xl bg-white/95 backdrop-blur-sm hover:shadow-2xl xs:hover:shadow-3xl transition-all duration-300 transform hover:scale-[1.02] xs:hover:scale-105 rounded-xl xs:rounded-2xl overflow-hidden ${className}`}>
+        <CardHeader className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white p-4 xs:p-5 sm:p-6 lg:p-8">
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="text-2xl font-bold flex items-center font-poppins">
-                <Search className="w-7 h-7 mr-3 animate-pulse" />
+              <CardTitle className="text-lg xs:text-xl sm:text-2xl font-bold flex items-center font-poppins">
+                <Search className="w-5 xs:w-6 sm:w-7 h-5 xs:h-6 sm:h-7 mr-2 xs:mr-3 animate-pulse" />
                 Track Your Feedback
               </CardTitle>
-              <p className="text-base text-indigo-100 mt-2 font-inter">
+              <p className="text-xs xs:text-sm sm:text-base text-indigo-100 mt-1.5 xs:mt-2 font-inter">
                 Enter your suggestion ID or keywords to check real-time status
               </p>
             </div>
-            <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
-              <Sparkles className="w-6 h-6 text-yellow-300 animate-pulse" />
+            <div className="w-8 xs:w-10 sm:w-12 h-8 xs:h-10 sm:h-12 bg-white/20 rounded-full flex items-center justify-center">
+              <Sparkles className="w-4 xs:w-5 sm:w-6 h-4 xs:h-5 sm:h-6 text-yellow-300 animate-pulse" />
             </div>
           </div>
         </CardHeader>
         
-        <CardContent className="p-8">
-          <div className="space-y-6">
+        <CardContent className="p-4 xs:p-5 sm:p-6 lg:p-8">
+          <div className="space-y-4 xs:space-y-5 sm:space-y-6">
             <div>
-              <Label className="block text-base font-semibold text-gray-700 mb-3 font-inter">
+              <Label className="block text-sm xs:text-base font-semibold text-gray-700 mb-2 xs:mb-3 font-inter">
                 Search Feedback
               </Label>
               <div className="relative">
-                <Search className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                <Search className="absolute left-2.5 xs:left-3 top-2.5 xs:top-3 h-4 xs:h-5 w-4 xs:w-5 text-gray-400" />
                 <Input
                   placeholder="Search keyword description..."
                   value={trackId}
                   onChange={(e) => setTrackId(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && onTrack()}
-                  className="pl-10 h-12 text-base border-2 border-gray-200 focus:border-purple-500 focus:ring-purple-500 rounded-xl transition-all duration-300 bg-gray-50 focus:bg-white"
+                  className="pl-8 xs:pl-10 h-10 xs:h-11 sm:h-12 text-sm xs:text-base border-2 border-gray-200 focus:border-purple-500 focus:ring-purple-500 rounded-lg xs:rounded-xl transition-all duration-300 bg-gray-50 focus:bg-white"
                 />
               </div>
-              <p className="text-sm text-gray-500 mt-2 font-inter">
+              <p className="text-xs xs:text-sm text-gray-500 mt-1.5 xs:mt-2 font-inter">
                 Enter your keywords from your feedback
               </p>
             </div>
@@ -122,66 +122,66 @@ export default function EnhancedTrackingCard({ className = '' }: EnhancedTrackin
             <Button 
               onClick={onTrack} 
               disabled={loading}
-              className="w-full h-12 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold disabled:bg-gray-300 disabled:cursor-not-allowed rounded-xl transition-all duration-300 transform hover:scale-105 text-base font-inter shadow-lg"
+              className="w-full h-10 xs:h-11 sm:h-12 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold disabled:bg-gray-300 disabled:cursor-not-allowed rounded-lg xs:rounded-xl transition-all duration-300 transform hover:scale-105 text-sm xs:text-base font-inter shadow-lg"
             >
               {loading ? (
                 <div className="flex items-center justify-center">
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                  <div className="animate-spin rounded-full h-4 xs:h-5 w-4 xs:w-5 border-b-2 border-white mr-1.5 xs:mr-2"></div>
                   Searching...
                 </div>
               ) : (
                 <div className="flex items-center justify-center">
-                  <Search className="w-5 h-5 mr-2" />
+                  <Search className="w-4 xs:w-5 h-4 xs:h-5 mr-1.5 xs:mr-2" />
                   Track Feedback
                 </div>
               )}
             </Button>
 
             {error && (
-              <div className="p-4 bg-gradient-to-r from-red-50 to-pink-50 border border-red-200 rounded-xl animate-shake">
+              <div className="p-2.5 xs:p-3 sm:p-4 bg-gradient-to-r from-red-50 to-pink-50 border border-red-200 rounded-lg xs:rounded-xl animate-shake">
                 <div className="flex items-center">
-                  <AlertCircle className="w-5 h-5 text-red-500 mr-2 flex-shrink-0 animate-pulse" />
-                  <p className="text-red-700 font-medium text-sm font-inter">{error}</p>
+                  <AlertCircle className="w-4 xs:w-5 h-4 xs:h-5 text-red-500 mr-1.5 xs:mr-2 flex-shrink-0 animate-pulse" />
+                  <p className="text-red-700 font-medium text-xs xs:text-sm font-inter">{error}</p>
                 </div>
               </div>
             )}
 
             {result && (
-              <div className="p-5 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-xl animate-fadeIn">
-                <div className="space-y-4">
+              <div className="p-3 xs:p-4 sm:p-5 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-lg xs:rounded-xl animate-fadeIn">
+                <div className="space-y-3 xs:space-y-4">
                   <div className="flex items-center">
-                    <CheckCircle2 className="w-6 h-6 text-emerald-600 mr-2 flex-shrink-0 animate-bounce" />
-                    <span className="font-bold text-emerald-900 text-lg font-poppins">Feedback Found!</span>
+                    <CheckCircle2 className="w-5 xs:w-6 h-5 xs:h-6 text-emerald-600 mr-1.5 xs:mr-2 flex-shrink-0 animate-bounce" />
+                    <span className="font-bold text-emerald-900 text-base xs:text-lg font-poppins">Feedback Found!</span>
                   </div>
                   
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center p-3 bg-white rounded-lg border border-emerald-200 transform hover:scale-105 transition-all duration-200">
-                      <span className="font-semibold text-gray-700 font-inter">Status:</span>
-                      <Badge className={`text-sm font-semibold border animate-pulse ${statusColors[result.status].bg} ${statusColors[result.status].text} ${statusColors[result.status].border}`}>
+                  <div className="space-y-2 xs:space-y-3">
+                    <div className="flex justify-between items-center p-2 xs:p-3 bg-white rounded-lg border border-emerald-200 transform hover:scale-105 transition-all duration-200">
+                      <span className="font-semibold text-gray-700 font-inter text-xs xs:text-sm sm:text-base">Status:</span>
+                      <Badge className={`text-xs xs:text-sm font-semibold border animate-pulse ${statusColors[result.status].bg} ${statusColors[result.status].text} ${statusColors[result.status].border}`}>
                         {result.status}
                       </Badge>
                     </div>
                     
-                    <div className="flex justify-between items-center p-3 bg-white rounded-lg border border-emerald-200 transform hover:scale-105 transition-all duration-200">
-                      <span className="font-semibold text-gray-700 font-inter">Category:</span>
-                      <span className="font-semibold text-gray-900 font-inter capitalize">{result.category}</span>
+                    <div className="flex justify-between items-center p-2 xs:p-3 bg-white rounded-lg border border-emerald-200 transform hover:scale-105 transition-all duration-200">
+                      <span className="font-semibold text-gray-700 font-inter text-xs xs:text-sm sm:text-base">Category:</span>
+                      <span className="font-semibold text-gray-900 font-inter capitalize text-xs xs:text-sm sm:text-base">{result.category}</span>
                     </div>
                     
-                    <div className="flex justify-between items-center p-3 bg-white rounded-lg border border-emerald-200 transform hover:scale-105 transition-all duration-200">
-                      <span className="font-semibold text-gray-700 font-inter">Submitted:</span>
-                      <span className="font-medium text-gray-900 font-inter">
+                    <div className="flex justify-between items-center p-2 xs:p-3 bg-white rounded-lg border border-emerald-200 transform hover:scale-105 transition-all duration-200">
+                      <span className="font-semibold text-gray-700 font-inter text-xs xs:text-sm sm:text-base">Submitted:</span>
+                      <span className="font-medium text-gray-900 font-inter text-xs xs:text-sm sm:text-base">
                         {format(new Date(result.createdAt), 'MMM dd, yyyy')}
                       </span>
                     </div>
                   </div>
                   
-                  <div className="pt-3 border-t border-emerald-200">
+                  <div className="pt-2 xs:pt-3 border-t border-emerald-200">
                     <Button 
                       onClick={handleViewDetails}
-                      className="w-full border-emerald-300 rounded-lg transform hover:scale-105 transition-all duration-200 font-semibold font-inter"
+                      className="w-full border-emerald-300 rounded-lg transform hover:scale-105 transition-all duration-200 font-semibold font-inter h-9 xs:h-10 text-xs xs:text-sm"
                     >
                       View Full Details
-                      <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform duration-200" />
+                      <ArrowRight className="w-3 xs:w-4 h-3 xs:h-4 ml-1.5 xs:ml-2 group-hover:translate-x-1 transition-transform duration-200" />
                     </Button>
                   </div>
                 </div>
@@ -193,11 +193,11 @@ export default function EnhancedTrackingCard({ className = '' }: EnhancedTrackin
 
       {/* Suggestion Detail Modal */}
       <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto p-0 rounded-2xl">
-          <div className="p-6 pb-0">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0 rounded-xl xs:rounded-2xl mx-2 xs:mx-4">
+          <div className="p-4 xs:p-5 sm:p-6 pb-0">
             <DialogHeader>
-              <DialogTitle className="flex items-center gap-2 text-xl">
-                <FileText className="h-5 w-5" />
+              <DialogTitle className="flex items-center gap-2 text-base xs:text-lg sm:text-xl">
+                <FileText className="h-4 xs:h-5 w-4 xs:w-5" />
                 Suggestion Details
               </DialogTitle>
               <DialogDescription className="text-base">

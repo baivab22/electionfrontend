@@ -60,7 +60,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
         <div className="text-center mb-8">
           <div className="relative inline-block">
             <img
-              src="/assets/images/WhatsApp Image 2025-09-26 at 8.50.23 PM (1).jpeg"
+              src="/assets/images/ncp-logo.jpg"
               alt="Nepal Communist Party"
               className="h-20 w-20 mx-auto rounded-full object-cover border-4 border-white shadow-2xl mb-6"
             />

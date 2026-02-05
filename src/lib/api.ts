@@ -401,7 +401,7 @@ export interface CandidateFeedbackResponse {
 // API Configuration
 // Use absolute URL for API calls
 const API_BASE_URL = import.meta.env.MODE === 'production'
-  ? 'http://api.abhushangallery.com/api'
+  ? 'https://api.abhushangallery.com/api'
   : 'http://localhost:3000/api';
 
 const api = axios.create({

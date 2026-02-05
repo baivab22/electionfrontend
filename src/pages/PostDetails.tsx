@@ -145,7 +145,7 @@ const PostDetails: React.FC = () => {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const API_URL = import.meta.env.MODE === 'production'
-    ? import.meta.env.VITE_PROD_URL || 'http://api.abhushangallery.com/api'
+    ? import.meta.env.VITE_PROD_URL || 'https://api.abhushangallery.com/api'
     : import.meta.env.VITE_DEV_URL || 'http://localhost:3000/api';
   
   const [post, setPost] = useState<Post | null>(null);
@@ -191,7 +191,7 @@ const PostDetails: React.FC = () => {
  import.meta.env.MODE === 'production'
    ? import.meta.env.VITE_PROD_URL ||
   
-  'http://api.abhushangallery.com/'
+  'https://api.abhushangallery.com/'
   :
     import.meta.env.VITE_DEV_URL || 'http://localhost:3000/';
 
@@ -325,7 +325,7 @@ const PostDetails: React.FC = () => {
         {/* Social Media Plugin - Fixed Position */}
         {showSocialPlugin && (
           <div 
-            className="fixed top-1/2 right-0 transform -translate-y-1/2 z-50 bg-white rounded-l-2xl shadow-2xl border border-gray-200 p-3 flex flex-col gap-2"
+            className="fixed top-1/2 right-0 transform -translate-y-1/2 z-50 bg-white rounded-l-xl xs:rounded-l-2xl shadow-2xl border border-gray-200 p-2 xs:p-3 flex flex-col gap-1.5 xs:gap-2 max-w-[200px] xs:max-w-none"
             style={{
               animation: 'slideIn 0.3s ease-out forwards'
             }}
@@ -345,92 +345,92 @@ const PostDetails: React.FC = () => {
             
             <button
               onClick={() => setShowSocialPlugin(false)}
-              className="absolute -left-8 top-1/2 -translate-y-1/2 bg-white rounded-l-lg shadow-lg border border-gray-200 p-2 hover:bg-gray-50 transition-colors"
+              className="absolute -left-6 xs:-left-8 top-1/2 -translate-y-1/2 bg-white rounded-l-lg shadow-lg border border-gray-200 p-1.5 xs:p-2 hover:bg-gray-50 transition-colors"
               title="Close"
             >
               <X size={16} className="text-gray-600" />
             </button>
             
-            <div className="flex flex-col gap-2">
-              <p className="text-xs font-semibold text-gray-700 px-2 pb-1 border-b border-gray-200">
+            <div className="flex flex-col gap-1 xs:gap-2">
+              <p className="text-[10px] xs:text-xs font-semibold text-gray-700 px-1.5 xs:px-2 pb-1 border-b border-gray-200">
                 Share Article
               </p>
               
               <button
                 onClick={() => handleSocialShare('facebook')}
-                className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-blue-50 text-blue-600 transition-all duration-200 hover:scale-105"
+                className="flex items-center gap-1.5 xs:gap-2 px-2 xs:px-3 py-1.5 xs:py-2 rounded-lg hover:bg-blue-50 text-blue-600 transition-all duration-200 hover:scale-105"
                 title="Share on Facebook"
               >
-                <FacebookIcon size={18} />
-                <span className="text-sm font-medium">Facebook</span>
+                <FacebookIcon size={16} />
+                <span className="text-xs xs:text-sm font-medium">Facebook</span>
               </button>
               
               <button
                 onClick={() => handleSocialShare('twitter')}
-                className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-sky-50 text-sky-600 transition-all duration-200 hover:scale-105"
+                className="flex items-center gap-1.5 xs:gap-2 px-2 xs:px-3 py-1.5 xs:py-2 rounded-lg hover:bg-sky-50 text-sky-600 transition-all duration-200 hover:scale-105"
                 title="Share on Twitter"
               >
-                <TwitterIcon size={18} />
-                <span className="text-sm font-medium">Twitter</span>
+                <TwitterIcon size={16} />
+                <span className="text-xs xs:text-sm font-medium">Twitter</span>
               </button>
               
               <button
                 onClick={() => handleSocialShare('linkedin')}
-                className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-blue-50 text-blue-700 transition-all duration-200 hover:scale-105"
+                className="flex items-center gap-1.5 xs:gap-2 px-2 xs:px-3 py-1.5 xs:py-2 rounded-lg hover:bg-blue-50 text-blue-700 transition-all duration-200 hover:scale-105"
                 title="Share on LinkedIn"
               >
-                <LinkedInIcon size={18} />
-                <span className="text-sm font-medium">LinkedIn</span>
+                <LinkedInIcon size={16} />
+                <span className="text-xs xs:text-sm font-medium">LinkedIn</span>
               </button>
               
               <button
                 onClick={() => handleSocialShare('whatsapp')}
-                className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-green-50 text-green-600 transition-all duration-200 hover:scale-105"
+                className="flex items-center gap-1.5 xs:gap-2 px-2 xs:px-3 py-1.5 xs:py-2 rounded-lg hover:bg-green-50 text-green-600 transition-all duration-200 hover:scale-105"
                 title="Share on WhatsApp"
               >
-                <WhatsAppIcon size={18} />
-                <span className="text-sm font-medium">WhatsApp</span>
+                <WhatsAppIcon size={16} />
+                <span className="text-xs xs:text-sm font-medium">WhatsApp</span>
               </button>
               
               <button
                 onClick={() => handleSocialShare('telegram')}
-                className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-blue-50 text-blue-500 transition-all duration-200 hover:scale-105"
+                className="flex items-center gap-1.5 xs:gap-2 px-2 xs:px-3 py-1.5 xs:py-2 rounded-lg hover:bg-blue-50 text-blue-500 transition-all duration-200 hover:scale-105"
                 title="Share on Telegram"
               >
-                <TelegramIcon size={18} />
-                <span className="text-sm font-medium">Telegram</span>
+                <TelegramIcon size={16} />
+                <span className="text-xs xs:text-sm font-medium">Telegram</span>
               </button>
               
               <button
                 onClick={() => handleSocialShare('reddit')}
-                className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-orange-50 text-orange-600 transition-all duration-200 hover:scale-105"
+                className="flex items-center gap-1.5 xs:gap-2 px-2 xs:px-3 py-1.5 xs:py-2 rounded-lg hover:bg-orange-50 text-orange-600 transition-all duration-200 hover:scale-105"
                 title="Share on Reddit"
               >
-                <RedditIcon size={18} />
-                <span className="text-sm font-medium">Reddit</span>
+                <RedditIcon size={16} />
+                <span className="text-xs xs:text-sm font-medium">Reddit</span>
               </button>
               
               <button
                 onClick={() => handleSocialShare('email')}
-                className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-50 text-gray-700 transition-all duration-200 hover:scale-105"
+                className="flex items-center gap-1.5 xs:gap-2 px-2 xs:px-3 py-1.5 xs:py-2 rounded-lg hover:bg-gray-50 text-gray-700 transition-all duration-200 hover:scale-105"
                 title="Share via Email"
               >
-                <EmailIcon size={18} />
-                <span className="text-sm font-medium">Email</span>
+                <EmailIcon size={16} />
+                <span className="text-xs xs:text-sm font-medium">Email</span>
               </button>
               
-              <div className="border-t border-gray-200 pt-2">
+              <div className="border-t border-gray-200 pt-1.5 xs:pt-2">
                 <button
                   onClick={handleCopyLink}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg w-full transition-all duration-200 hover:scale-105 ${
+                  className={`flex items-center gap-1.5 xs:gap-2 px-2 xs:px-3 py-1.5 xs:py-2 rounded-lg w-full transition-all duration-200 hover:scale-105 ${
                     copied 
                       ? 'bg-green-50 text-green-600' 
                       : 'hover:bg-gray-50 text-gray-700'
                   }`}
                   title={copied ? "Link copied!" : "Copy link"}
                 >
-                  {copied ? <Check size={18} /> : <Copy size={18} />}
-                  <span className="text-sm font-medium">
+                  {copied ? <Check size={16} /> : <Copy size={16} />}
+                  <span className="text-xs xs:text-sm font-medium">
                     {copied ? 'Copied!' : 'Copy Link'}
                   </span>
                 </button>
@@ -443,19 +443,19 @@ const PostDetails: React.FC = () => {
         {!showSocialPlugin && (
           <button
             onClick={() => setShowSocialPlugin(true)}
-            className="fixed top-1/2 right-0 transform -translate-y-1/2 z-40 bg-gradient-to-l from-blue-600 to-blue-500 text-white rounded-l-lg shadow-lg p-3 hover:from-blue-700 hover:to-blue-600 transition-all duration-300 hover:pr-4 group/share"
+            className="fixed top-1/2 right-0 transform -translate-y-1/2 z-40 bg-gradient-to-l from-blue-600 to-blue-500 text-white rounded-l-lg shadow-lg p-2 xs:p-3 hover:from-blue-700 hover:to-blue-600 transition-all duration-300 hover:pr-3 xs:hover:pr-4 group/share"
             title="Share this article"
           >
-            <Share2 size={18} className="group-hover/share:scale-110 transition-transform" />
+            <Share2 className="w-4 xs:w-[18px] h-4 xs:h-[18px] group-hover/share:scale-110 transition-transform" />
           </button>
         )}
 
         {/* Back Navigation */}
         <div className="bg-white border-b">
-          <div className="container mx-auto px-4 py-4">
+          <div className="container mx-auto px-3 xs:px-4 py-2 xs:py-3 sm:py-4">
             <Link to="/news">
-              <Button variant="ghost" className="text-blue-600 hover:text-blue-700">
-                <ArrowLeft className="mr-2" size={20} />
+              <Button variant="ghost" className="text-blue-600 hover:text-blue-700 h-8 xs:h-9 sm:h-10 text-xs xs:text-sm sm:text-base px-2 xs:px-3 sm:px-4">
+                <ArrowLeft className="mr-1 xs:mr-2 w-4 xs:w-5 h-4 xs:h-5" />
                 Back to News
               </Button>
             </Link>
@@ -463,53 +463,54 @@ const PostDetails: React.FC = () => {
         </div>
 
         {/* Article Header */}
-        <section className="py-12 bg-white">
-          <div className="container mx-auto px-4">
+        <section className="py-6 xs:py-8 sm:py-12 bg-white">
+          <div className="container mx-auto px-3 xs:px-4">
             <div className="max-w-4xl mx-auto">
-              <div className="mb-6">
-                <Badge className={`${getCategoryColor(post.category)} border mb-4`}>
+              <div className="mb-4 xs:mb-6">
+                <Badge className={`${getCategoryColor(post.category)} border mb-3 xs:mb-4 text-xs xs:text-sm`}>
                   {t(`categories.${post.category}`)}
                 </Badge>
-                <h1 className="text-4xl md:text-5xl font-bold text-gray-900 leading-tight mb-6">
+                <h1 className="text-xl xs:text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 leading-tight mb-3 xs:mb-4 sm:mb-6">
                   {post.title}
                 </h1>
               </div>
 
-              <div className="flex flex-wrap items-center gap-6 text-gray-600 mb-8">
-                <div className="flex items-center space-x-2">
-                  <User size={18} />
+              <div className="flex flex-wrap items-center gap-2 xs:gap-3 sm:gap-4 md:gap-6 text-gray-600 mb-4 xs:mb-6 sm:mb-8 text-xs xs:text-sm sm:text-base">
+                <div className="flex items-center space-x-1 xs:space-x-2">
+                  <User className="w-3.5 xs:w-4 sm:w-[18px] h-3.5 xs:h-4 sm:h-[18px]" />
                   <span>{getAuthorName(post.author)}</span>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <Calendar size={18} />
+                <div className="flex items-center space-x-1 xs:space-x-2">
+                  <Calendar className="w-3.5 xs:w-4 sm:w-[18px] h-3.5 xs:h-4 sm:h-[18px]" />
                   <span>{formatDate(post.publishedAt)}</span>
                 </div>
                 {post.readTime && (
-                  <div className="text-sm">
+                  <div className="text-xs xs:text-sm">
                     {post.readTime}
                   </div>
                 )}
               </div>
 
-              <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
-                <div className="flex flex-wrap gap-2">
+              <div className="flex flex-col xs:flex-row items-start xs:items-center justify-between mb-4 xs:mb-6 sm:mb-8 gap-3 xs:gap-4">
+                <div className="flex flex-wrap gap-1.5 xs:gap-2">
                   {post.tags?.map((tag, index) => (
-                    <Badge key={index} variant="outline" className="text-xs">
+                    <Badge key={index} variant="outline" className="text-[10px] xs:text-xs">
                       {tag}
                     </Badge>
                   ))}
                 </div>
-                <div className="flex space-x-2">
-                  <Button variant="outline" size="sm">
-                    <Heart size={16} className="mr-1" />
+                <div className="flex space-x-1.5 xs:space-x-2">
+                  <Button variant="outline" size="sm" className="h-7 xs:h-8 sm:h-9 text-xs xs:text-sm px-2 xs:px-3">
+                    <Heart className="w-3 xs:w-4 h-3 xs:h-4 mr-1" />
                     Like
                   </Button>
                   <Button 
                     variant="outline" 
                     size="sm" 
                     onClick={() => setShowSocialPlugin(true)}
+                    className="h-7 xs:h-8 sm:h-9 text-xs xs:text-sm px-2 xs:px-3"
                   >
-                    <Share2 size={16} className="mr-1" />
+                    <Share2 className="w-3 xs:w-4 h-3 xs:h-4 mr-1" />
                     Share
                   </Button>
                 </div>
@@ -520,13 +521,13 @@ const PostDetails: React.FC = () => {
 
         {/* Featured Image */}
         {post.image && (
-          <section className="pb-12 bg-white">
-            <div className="container mx-auto px-4">
+          <section className="pb-6 xs:pb-8 sm:pb-12 bg-white">
+            <div className="container mx-auto px-3 xs:px-4">
               <div className="max-w-4xl mx-auto">
                 <img
                   src={getImageUrl()}
                   alt={post.title}
-                  className="w-full h-96 object-cover rounded-lg shadow-xl"
+                  className="w-full h-48 xs:h-56 sm:h-72 md:h-80 lg:h-96 object-cover rounded-lg shadow-xl"
                   onError={(e) => {
                     (e.target as HTMLImageElement).style.display = 'none';
                   }}
@@ -537,16 +538,16 @@ const PostDetails: React.FC = () => {
         )}
 
         {/* Article Content */}
-        <section className="pb-16 bg-white">
-          <div className="container mx-auto px-4">
+        <section className="pb-8 xs:pb-12 sm:pb-16 bg-white">
+          <div className="container mx-auto px-3 xs:px-4">
             <div className="max-w-4xl mx-auto">
               {post.content ? (
                 <div 
-                  className="prose prose-lg max-w-none text-gray-700 leading-relaxed"
+                  className="prose prose-sm xs:prose sm:prose-lg max-w-none text-gray-700 leading-relaxed"
                   dangerouslySetInnerHTML={{ __html: sanitizeContent(post.content) }}
                 />
               ) : (
-                <p className="text-gray-600 text-lg">No content available.</p>
+                <p className="text-gray-600 text-sm xs:text-base sm:text-lg">No content available.</p>
               )}
             </div>
           </div>
@@ -554,35 +555,35 @@ const PostDetails: React.FC = () => {
 
         {/* Author Bio */}
         {(getAuthorBio(post.author) || typeof post.author === 'object') && (
-          <section className="py-12 bg-gray-50">
-            <div className="container mx-auto px-4">
+          <section className="py-6 xs:py-8 sm:py-12 bg-gray-50">
+            <div className="container mx-auto px-3 xs:px-4">
               <div className="max-w-4xl mx-auto">
                 <Card className="border-0 shadow-lg">
-                  <CardContent className="p-8">
-                    <div className="flex items-start space-x-6">
+                  <CardContent className="p-4 xs:p-6 sm:p-8">
+                    <div className="flex flex-col xs:flex-row items-center xs:items-start gap-4 xs:gap-5 sm:gap-6">
                       {getAuthorAvatar(post.author) && (
                         <img
                           src={getAuthorAvatar(post.author)}
                           alt={getAuthorName(post.author)}
-                          className="w-20 h-20 rounded-full object-cover border-4 border-green-500"
+                          className="w-16 xs:w-18 sm:w-20 h-16 xs:h-18 sm:h-20 rounded-full object-cover border-4 border-green-500 flex-shrink-0"
                           onError={(e) => {
                             (e.target as HTMLImageElement).style.display = 'none';
                           }}
                         />
                       )}
-                      <div className="flex-1">
-                        <h3 className="text-xl font-bold text-gray-900 mb-2">
+                      <div className="flex-1 text-center xs:text-left">
+                        <h3 className="text-base xs:text-lg sm:text-xl font-bold text-gray-900 mb-1 xs:mb-2">
                           {getAuthorName(post.author)}
                         </h3>
                         {getAuthorBio(post.author) && (
-                          <p className="text-gray-600 mb-4">
+                          <p className="text-gray-600 mb-3 xs:mb-4 text-xs xs:text-sm sm:text-base">
                             {getAuthorBio(post.author)}
                           </p>
                         )}
-                        <div className="flex space-x-4">
-                          <Button variant="outline" size="sm">Follow</Button>
-                          <Button variant="outline" size="sm">
-                            <MessageCircle size={16} className="mr-1" />
+                        <div className="flex justify-center xs:justify-start space-x-2 xs:space-x-3 sm:space-x-4">
+                          <Button variant="outline" size="sm" className="h-7 xs:h-8 sm:h-9 text-xs xs:text-sm">Follow</Button>
+                          <Button variant="outline" size="sm" className="h-7 xs:h-8 sm:h-9 text-xs xs:text-sm">
+                            <MessageCircle className="w-3 xs:w-4 h-3 xs:h-4 mr-1" />
                             Contact
                           </Button>
                         </div>
@@ -597,17 +598,17 @@ const PostDetails: React.FC = () => {
 
         {/* Related Posts */}
         {relatedPosts.length > 0 && (
-          <section className="py-16 bg-white">
-            <div className="container mx-auto px-4">
+          <section className="py-8 xs:py-12 sm:py-16 bg-white">
+            <div className="container mx-auto px-3 xs:px-4">
               <div className="max-w-6xl mx-auto">
-                <div className="text-center mb-12">
-                  <h2 className="text-3xl font-bold text-gray-900 mb-4">
+                <div className="text-center mb-6 xs:mb-8 sm:mb-12">
+                  <h2 className="text-xl xs:text-2xl sm:text-3xl font-bold text-gray-900 mb-2 xs:mb-3 sm:mb-4">
                     {t('post.relatedPosts')}
                   </h2>
-                  <div className="w-24 h-1 bg-gradient-to-r from-blue-600 to-green-600 mx-auto rounded-full"></div>
+                  <div className="w-16 xs:w-20 sm:w-24 h-1 bg-gradient-to-r from-blue-600 to-green-600 mx-auto rounded-full"></div>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 xs:gap-6 sm:gap-8">
                   {relatedPosts.map((relatedPost) => (
                     <NewsCard key={relatedPost.id} {...relatedPost} content="" viewCount={0} commentCount={0} />
                   ))}
@@ -627,34 +628,34 @@ const PostDetailsSkeleton: React.FC = () => {
     <div className="min-h-screen bg-gray-50">
       {/* Back Navigation Skeleton */}
       <div className="bg-white border-b">
-        <div className="container mx-auto px-4 py-4">
-          <Skeleton className="h-10 w-40" />
+        <div className="container mx-auto px-3 xs:px-4 py-2 xs:py-3 sm:py-4">
+          <Skeleton className="h-8 xs:h-9 sm:h-10 w-28 xs:w-32 sm:w-40" />
         </div>
       </div>
 
       {/* Article Header Skeleton */}
-      <section className="py-12 bg-white">
-        <div className="container mx-auto px-4">
+      <section className="py-6 xs:py-8 sm:py-12 bg-white">
+        <div className="container mx-auto px-3 xs:px-4">
           <div className="max-w-4xl mx-auto">
-            <Skeleton className="h-8 w-32 mb-4" />
-            <Skeleton className="h-12 w-full mb-4" />
-            <Skeleton className="h-12 w-3/4 mb-6" />
+            <Skeleton className="h-6 xs:h-7 sm:h-8 w-24 xs:w-28 sm:w-32 mb-3 xs:mb-4" />
+            <Skeleton className="h-8 xs:h-10 sm:h-12 w-full mb-2 xs:mb-3 sm:mb-4" />
+            <Skeleton className="h-8 xs:h-10 sm:h-12 w-3/4 mb-4 xs:mb-5 sm:mb-6" />
 
-            <div className="flex flex-wrap items-center gap-6 mb-8">
-              <Skeleton className="h-5 w-32" />
-              <Skeleton className="h-5 w-40" />
-              <Skeleton className="h-5 w-24" />
+            <div className="flex flex-wrap items-center gap-3 xs:gap-4 sm:gap-6 mb-4 xs:mb-6 sm:mb-8">
+              <Skeleton className="h-4 xs:h-5 w-24 xs:w-28 sm:w-32" />
+              <Skeleton className="h-4 xs:h-5 w-28 xs:w-32 sm:w-40" />
+              <Skeleton className="h-4 xs:h-5 w-16 xs:w-20 sm:w-24" />
             </div>
 
-            <div className="flex items-center justify-between mb-8">
-              <div className="flex space-x-2">
-                <Skeleton className="h-6 w-24" />
-                <Skeleton className="h-6 w-24" />
-                <Skeleton className="h-6 w-24" />
+            <div className="flex flex-col xs:flex-row items-start xs:items-center justify-between gap-3 xs:gap-4 mb-4 xs:mb-6 sm:mb-8">
+              <div className="flex flex-wrap gap-1.5 xs:gap-2">
+                <Skeleton className="h-5 xs:h-6 w-16 xs:w-20 sm:w-24" />
+                <Skeleton className="h-5 xs:h-6 w-16 xs:w-20 sm:w-24" />
+                <Skeleton className="h-5 xs:h-6 w-16 xs:w-20 sm:w-24" />
               </div>
-              <div className="flex space-x-2">
-                <Skeleton className="h-9 w-20" />
-                <Skeleton className="h-9 w-20" />
+              <div className="flex space-x-1.5 xs:space-x-2">
+                <Skeleton className="h-7 xs:h-8 sm:h-9 w-14 xs:w-16 sm:w-20" />
+                <Skeleton className="h-7 xs:h-8 sm:h-9 w-14 xs:w-16 sm:w-20" />
               </div>
             </div>
           </div>
@@ -662,50 +663,50 @@ const PostDetailsSkeleton: React.FC = () => {
       </section>
 
       {/* Featured Image Skeleton */}
-      <section className="pb-12 bg-white">
-        <div className="container mx-auto px-4">
+      <section className="pb-6 xs:pb-8 sm:pb-12 bg-white">
+        <div className="container mx-auto px-3 xs:px-4">
           <div className="max-w-4xl mx-auto">
-            <Skeleton className="w-full h-96 rounded-lg" />
+            <Skeleton className="w-full h-48 xs:h-56 sm:h-72 md:h-80 lg:h-96 rounded-lg" />
           </div>
         </div>
       </section>
 
       {/* Content Skeleton */}
-      <section className="pb-16 bg-white">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto space-y-4">
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-5/6" />
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-4/5" />
-            <div className="pt-4" />
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-3/4" />
-            <div className="pt-4" />
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-5/6" />
-            <Skeleton className="h-4 w-full" />
+      <section className="pb-8 xs:pb-12 sm:pb-16 bg-white">
+        <div className="container mx-auto px-3 xs:px-4">
+          <div className="max-w-4xl mx-auto space-y-2 xs:space-y-3 sm:space-y-4">
+            <Skeleton className="h-3 xs:h-4 w-full" />
+            <Skeleton className="h-3 xs:h-4 w-full" />
+            <Skeleton className="h-3 xs:h-4 w-5/6" />
+            <Skeleton className="h-3 xs:h-4 w-full" />
+            <Skeleton className="h-3 xs:h-4 w-4/5" />
+            <div className="pt-2 xs:pt-3 sm:pt-4" />
+            <Skeleton className="h-3 xs:h-4 w-full" />
+            <Skeleton className="h-3 xs:h-4 w-full" />
+            <Skeleton className="h-3 xs:h-4 w-3/4" />
+            <div className="pt-2 xs:pt-3 sm:pt-4" />
+            <Skeleton className="h-3 xs:h-4 w-full" />
+            <Skeleton className="h-3 xs:h-4 w-5/6" />
+            <Skeleton className="h-3 xs:h-4 w-full" />
           </div>
         </div>
       </section>
 
       {/* Author Bio Skeleton */}
-      <section className="py-12 bg-gray-50">
-        <div className="container mx-auto px-4">
+      <section className="py-6 xs:py-8 sm:py-12 bg-gray-50">
+        <div className="container mx-auto px-3 xs:px-4">
           <div className="max-w-4xl mx-auto">
             <Card className="border-0 shadow-lg">
-              <CardContent className="p-8">
-                <div className="flex items-start space-x-6">
-                  <Skeleton className="w-20 h-20 rounded-full flex-shrink-0" />
-                  <div className="flex-1 space-y-3">
-                    <Skeleton className="h-6 w-40" />
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-5/6" />
-                    <div className="flex space-x-4 pt-2">
-                      <Skeleton className="h-9 w-20" />
-                      <Skeleton className="h-9 w-24" />
+              <CardContent className="p-4 xs:p-6 sm:p-8">
+                <div className="flex flex-col xs:flex-row items-center xs:items-start gap-4 xs:gap-5 sm:gap-6">
+                  <Skeleton className="w-16 xs:w-18 sm:w-20 h-16 xs:h-18 sm:h-20 rounded-full flex-shrink-0" />
+                  <div className="flex-1 space-y-2 xs:space-y-3 w-full">
+                    <Skeleton className="h-5 xs:h-6 w-32 xs:w-36 sm:w-40 mx-auto xs:mx-0" />
+                    <Skeleton className="h-3 xs:h-4 w-full" />
+                    <Skeleton className="h-3 xs:h-4 w-5/6" />
+                    <div className="flex justify-center xs:justify-start space-x-2 xs:space-x-3 sm:space-x-4 pt-1 xs:pt-2">
+                      <Skeleton className="h-7 xs:h-8 sm:h-9 w-14 xs:w-16 sm:w-20" />
+                      <Skeleton className="h-7 xs:h-8 sm:h-9 w-16 xs:w-20 sm:w-24" />
                     </div>
                   </div>
                 </div>
@@ -716,25 +717,25 @@ const PostDetailsSkeleton: React.FC = () => {
       </section>
 
       {/* Related Posts Skeleton */}
-      <section className="py-16 bg-white">
-        <div className="container mx-auto px-4">
+      <section className="py-8 xs:py-12 sm:py-16 bg-white">
+        <div className="container mx-auto px-3 xs:px-4">
           <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-12">
-              <Skeleton className="h-10 w-64 mx-auto mb-4" />
-              <Skeleton className="h-1 w-24 mx-auto rounded-full" />
+            <div className="text-center mb-6 xs:mb-8 sm:mb-12">
+              <Skeleton className="h-7 xs:h-8 sm:h-10 w-48 xs:w-56 sm:w-64 mx-auto mb-2 xs:mb-3 sm:mb-4" />
+              <Skeleton className="h-1 w-16 xs:w-20 sm:w-24 mx-auto rounded-full" />
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 xs:gap-6 sm:gap-8">
               {[1, 2].map((i) => (
                 <Card key={i} className="overflow-hidden">
-                  <Skeleton className="w-full h-48" />
-                  <CardContent className="p-6 space-y-3">
-                    <Skeleton className="h-6 w-3/4" />
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-5/6" />
-                    <div className="flex items-center justify-between pt-4">
-                      <Skeleton className="h-4 w-24" />
-                      <Skeleton className="h-4 w-20" />
+                  <Skeleton className="w-full h-36 xs:h-40 sm:h-48" />
+                  <CardContent className="p-3 xs:p-4 sm:p-6 space-y-2 xs:space-y-3">
+                    <Skeleton className="h-5 xs:h-6 w-3/4" />
+                    <Skeleton className="h-3 xs:h-4 w-full" />
+                    <Skeleton className="h-3 xs:h-4 w-5/6" />
+                    <div className="flex items-center justify-between pt-2 xs:pt-3 sm:pt-4">
+                      <Skeleton className="h-3 xs:h-4 w-16 xs:w-20 sm:w-24" />
+                      <Skeleton className="h-3 xs:h-4 w-14 xs:w-16 sm:w-20" />
                     </div>
                   </CardContent>
                 </Card>
