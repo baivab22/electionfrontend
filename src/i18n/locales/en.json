@@ -1,0 +1,80 @@
+{
+  "nav": {
+    "home": "Home",
+    "news": "News & Forum",
+    "candidates": "Candidates",
+    "about": "About",
+    "contact": "Contact",
+    "admin": "Admin",
+    "membership-form": "Membership Form",
+    "feedback": "Feedback"
+  },
+  "hero": {
+    "title": "Nepal Communist Party",
+    "subtitle": "Building a Socialist Society through People's Democracy",
+    "description": "Fighting for social justice, equality, and the rights of workers, farmers, and all working people of Nepal."
+  },
+  "home": {
+    "latestNews": "Latest News",
+    "featuredPosts": "Featured Posts",
+    "categories": "Categories",
+    "readMore": "Read More",
+    "viewAll": "View All News"
+  },
+  "categories": {
+    "technology": "Technology",
+    "digitalTransformation": "Digital Transformation",
+    "socialJustice": "Social Justice",
+    "events": "Events",
+    "innovation": "Innovation",
+    "policy": "Policy & Governance",
+    "education": "Digital Education",
+    "startups": "Tech Startups"
+  },
+  "post": {
+    "publishedOn": "Published on",
+    "author": "Author",
+    "category": "Category",
+    "relatedPosts": "Related Posts"
+  },
+  "about": {
+    "title": "About Nepal Communist Party ",
+    "mission": "Our Mission",
+    "vision": "Our Vision",
+    "missionText": "To build a socialist society based on social justice, equality, and people's democracy. Fighting for the rights of workers, farmers, and all oppressed people of Nepal.",
+    "visionText": "A prosperous Nepal where power belongs to the people, where everyone has equal opportunities, and where social justice and human dignity prevail."
+  },
+  "contact": {
+    "title": "Contact Us",
+    "getInTouch": "Get in Touch",
+    "address": "Address",
+    "email": "Email",
+    "phone": "Phone",
+    "followUs": "Follow Us"
+  },
+  "admin": {
+    "login": "Admin Login",
+    "dashboard": "Dashboard",
+    "createPost": "Create Post",
+    "managePosts": "Manage Posts",
+    "title": "Title",
+    "content": "Content",
+    "category": "Category",
+    "image": "Image URL",
+    "publish": "Publish",
+    "edit": "Edit",
+    "delete": "Delete",
+    "save": "Save",
+    "cancel": "Cancel"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Error occurred",
+    "success": "Success",
+    "search": "Search",
+    "filter": "Filter",
+    "sort": "Sort",
+    "previous": "Previous",
+    "next": "Next"
+  }
+}
