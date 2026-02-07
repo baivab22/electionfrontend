@@ -1022,7 +1022,6 @@ const CandidateRegistrationForm: React.FC = () => {
             </div>
           </div>
         );
-
       case 9:
         return (
           <div className="space-y-6">

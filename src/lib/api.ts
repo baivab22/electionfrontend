@@ -211,20 +211,145 @@ export interface ApiResponse<T = any> {
 
 export interface Candidate {
   _id: string;
+  // 1. Personal Info
   personalInfo: {
     fullName: string;
     fullName_np?: string;
-    position: 'President' | 'Vice President' | 'Parliamentary' | 'Local Body' | 'Other';
-    position_np?: string;
-    constituency: string;
-    constituency_np?: string;
+    nickname?: string;
+    nickname_np?: string;
     dateOfBirth: string;
     gender: 'Male' | 'Female' | 'Other';
+    gender_np?: string;
+    maritalStatus?: string;
+    maritalStatus_np?: string;
+    permanentAddress?: string;
+    permanentAddress_np?: string;
+    currentAddress?: string;
+    currentAddress_np?: string;
+    citizenshipNumber?: string;
+    citizenshipIssuedDistrict?: string;
+    citizenshipIssuedDistrict_np?: string;
     contactNumber: string;
-    email: string;
+    email?: string;
+    website?: string;
+    // Legacy fields for backwards compatibility
+    position?: 'President' | 'Vice President' | 'Parliamentary' | 'Local Body' | 'Other';
+    position_np?: string;
+    constituency?: string;
+    constituency_np?: string;
     address?: string;
   };
-  biography: {
+  // 2. Political Info
+  politicalInfo?: {
+    partyName?: string;
+    partyName_np?: string;
+    currentPosition?: string;
+    currentPosition_np?: string;
+    candidacyLevel?: string;
+    candidacyLevel_np?: string;
+    constituencyNumber?: string;
+    constituency?: string;
+    constituency_np?: string;
+    electionSymbol?: string;
+    electionSymbol_np?: string;
+    isFirstTimeCandidate?: boolean;
+    previousElectionHistory?: string;
+    previousElectionHistory_np?: string;
+  };
+  // 3. Education
+  education?: {
+    highestQualification?: string;
+    highestQualification_np?: string;
+    subject?: string;
+    subject_np?: string;
+    institution?: string;
+    institution_np?: string;
+    country?: string;
+    country_np?: string;
+    additionalTraining?: string;
+    additionalTraining_np?: string;
+  };
+  // 4. Professional Experience
+  professionalExperience?: {
+    currentProfession?: string;
+    currentProfession_np?: string;
+    previousExperience?: string;
+    previousExperience_np?: string;
+    organizationResponsibility?: string;
+    organizationResponsibility_np?: string;
+    leadershipExperience?: string;
+    leadershipExperience_np?: string;
+  };
+  // 5. Political Experience
+  politicalExperience?: {
+    partyJoinYear?: string;
+    movementRole?: string;
+    movementRole_np?: string;
+    previousRepresentativePosition?: string;
+    previousRepresentativePosition_np?: string;
+    majorAchievements?: string;
+    majorAchievements_np?: string;
+  };
+  // 6. Social Engagement
+  socialEngagement?: {
+    ngoInvolvement?: string;
+    ngoInvolvement_np?: string;
+    sectorWork?: string;
+    sectorWork_np?: string;
+    awardsHonors?: string;
+    awardsHonors_np?: string;
+  };
+  // 7. Financial Info
+  financialInfo?: {
+    movableAssets?: string;
+    movableAssets_np?: string;
+    immovableAssets?: string;
+    immovableAssets_np?: string;
+    annualIncomeSource?: string;
+    annualIncomeSource_np?: string;
+    bankLoans?: string;
+    bankLoans_np?: string;
+    taxStatus?: string;
+    taxStatus_np?: string;
+  };
+  // 8. Legal Status
+  legalStatus?: {
+    hasCriminalCase?: boolean;
+    caseDetails?: string;
+    caseDetails_np?: string;
+    eligibilityDeclaration?: string;
+    eligibilityDeclaration_np?: string;
+  };
+  // 9. Vision & Goals
+  visionGoals?: {
+    vision?: string;
+    vision_np?: string;
+    goals?: string;
+    goals_np?: string;
+    declaration?: string;
+    declaration_np?: string;
+  };
+  // Social Media
+  socialMedia?: {
+    facebook?: string;
+    twitter?: string;
+    instagram?: string;
+    youtube?: string;
+    tiktok?: string;
+    linkedin?: string;
+    website?: string;
+  };
+  // Campaign
+  campaign?: {
+    campaignSlogan?: string;
+    campaignSlogan_np?: string;
+    votingTarget?: number;
+  };
+  // Files
+  profilePhoto?: string;
+  electionSymbolImage?: string;
+  // Legacy fields for backwards compatibility
+  biography?: {
     bio_en?: string;
     bio_np?: string;
     backgroundEducation?: string;
@@ -233,14 +358,14 @@ export interface Candidate {
     experience_np?: string;
     profilePhoto?: string;
   };
-  manifesto: {
+  manifesto?: {
     title_en?: string;
     title_np?: string;
     content_en?: string;
     content_np?: string;
     manifestoBrochure?: string;
   };
-  issues: Array<{
+  issues?: Array<{
     issueTitle_en?: string;
     issueTitle_np?: string;
     issueDescription_en?: string;
@@ -248,7 +373,7 @@ export interface Candidate {
     issueCategory?: string;
     priority?: number;
   }>;
-  achievements: Array<{
+  achievements?: Array<{
     achievementTitle_en?: string;
     achievementTitle_np?: string;
     achievementDescription_en?: string;
@@ -257,19 +382,8 @@ export interface Candidate {
     achievementCategory?: string;
     achievementImage?: string;
   }>;
-  socialMedia?: {
-    facebook?: string;
-    twitter?: string;
-    instagram?: string;
-    youtube?: string;
-    website?: string;
-  };
-  campaign?: {
-    campaignSlogan_en?: string;
-    campaignSlogan_np?: string;
-    votingTarget?: number;
-  };
   isActive: boolean;
+  isVerified?: boolean;
 }
 
 export type CreateCandidateData = Omit<Candidate, '_id' | 'issues' | 'achievements'> & {
@@ -399,17 +513,18 @@ export interface CandidateFeedbackResponse {
 }
 
 // API Configuration
-// Use absolute URL for API calls
-const API_BASE_URL = import.meta.env.MODE === 'production'
-  ? 'https://api.abhushangallery.com/api'
-  : 'http://localhost:3000/api';
+// Use absolute URL for API calls. Prefer `VITE_API_URL` when provided.
+const rawViteUrl = import.meta.env.VITE_API_URL as string | undefined;
+const normalizedViteUrl = rawViteUrl ? rawViteUrl.replace(/\/+$/g, '') : undefined;
+const API_BASE_URL = normalizedViteUrl
+  ? `${normalizedViteUrl}/api`
+  : import.meta.env.MODE === 'production'
+    ? 'https://api.abhushangallery.com/api'
+    : 'http://localhost:3000/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
   timeout: 10000,
-  headers: {
-    'Content-Type': 'application/json',
-  },
 });
 
 // Request interceptor to add auth token
@@ -586,11 +701,8 @@ export const membersAPI = {
   // Create new member application
   createMember: async (formData: FormData): Promise<MemberResponse> => {
     try {
-      const response: AxiosResponse<MemberResponse> = await api.post('/members', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      // Let the browser/axios set the Content-Type (including boundary) for FormData
+      const response: AxiosResponse<MemberResponse> = await api.post('/members', formData);
       return response.data;
     } catch (error) {
       throw handleApiError(error);
@@ -680,8 +792,8 @@ export const candidatesAPI = {
 
   createCandidate: async (data: CreateCandidateData | FormData): Promise<{ success: boolean; data: Candidate }> => {
     try {
-      const headers = data instanceof FormData ? { 'Content-Type': 'multipart/form-data' } : {};
-      const response: AxiosResponse<{ success: boolean; data: Candidate }> = await api.post('/candidates', data, { headers });
+      // When sending FormData, don't manually set Content-Type — axios/browser will include the correct boundary.
+      const response: AxiosResponse<{ success: boolean; data: Candidate }> = await api.post('/candidates', data as any);
       return response.data;
     } catch (error) {
       throw handleApiError(error);
@@ -690,8 +802,8 @@ export const candidatesAPI = {
 
   updateCandidate: async (id: string, data: UpdateCandidateData | FormData): Promise<{ success: boolean; data: Candidate }> => {
     try {
-      const headers = data instanceof FormData ? { 'Content-Type': 'multipart/form-data' } : {};
-      const response: AxiosResponse<{ success: boolean; data: Candidate }> = await api.put(`/candidates/${id}`, data, { headers });
+      // Send FormData directly; axios will set proper headers
+      const response: AxiosResponse<{ success: boolean; data: Candidate }> = await api.put(`/candidates/${id}`, data as any);
       return response.data;
     } catch (error) {
       throw handleApiError(error);
@@ -777,12 +889,9 @@ export const mediaAPI = {
       const formData = new FormData();
       formData.append('image', file);
       
+      // Let axios set the correct Content-Type (with boundary) for FormData
       const response: AxiosResponse<{ success: boolean; data: { url: string } }> = 
-        await api.post('/media/upload', formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        });
+        await api.post('/media/upload', formData);
       return response.data;
     } catch (error) {
       throw handleApiError(error);
@@ -929,10 +1038,9 @@ const feedbackAPI = {
         });
       }
       
+      // Let axios set the Content-Type for FormData so boundary is included
       const response: AxiosResponse<{ message: string; feedback: Feedback }> = 
-        await api.post('/feedback', formData, {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        });
+        await api.post('/feedback', formData);
       return response.data;
     } catch (error) {
       throw handleApiError(error);
@@ -1080,6 +1188,100 @@ const candidateFeedbackAPI = {
     } catch (error) {
       throw handleApiError(error);
     }
+  },
+
+  // Admin methods
+  getAllFeedbackAdmin: async (candidateId: string, query?: { page?: number; limit?: number; status?: string }): Promise<CandidateFeedbackResponse & { feedbackList: CandidateFeedback[] }> => {
+    try {
+      const response: AxiosResponse<CandidateFeedbackResponse & { feedbackList: CandidateFeedback[] }> = 
+        await api.get(`/candidates/${candidateId}/feedback/admin`, { params: query });
+      return response.data;
+    } catch (error) {
+      throw handleApiError(error);
+    }
+  },
+
+  updateFeedbackStatus: async (candidateId: string, feedbackId: string, data: { status: 'pending' | 'approved' | 'rejected'; isPublic?: boolean }): Promise<{ message: string; feedback: CandidateFeedback }> => {
+    try {
+      const response: AxiosResponse<{ message: string; feedback: CandidateFeedback }> = 
+        await api.patch(`/candidates/${candidateId}/feedback/admin/${feedbackId}`, data);
+      return response.data;
+    } catch (error) {
+      throw handleApiError(error);
+    }
+  },
+
+  deleteFeedback: async (candidateId: string, feedbackId: string): Promise<{ message: string }> => {
+    try {
+      const response: AxiosResponse<{ message: string }> = 
+        await api.delete(`/candidates/${candidateId}/feedback/admin/${feedbackId}`);
+      return response.data;
+    } catch (error) {
+      throw handleApiError(error);
+    }
+  },
+
+  // Get all feedback across all candidates (admin)
+  getAllFeedback: async (query?: { page?: number; limit?: number; status?: string; candidateId?: string }): Promise<{ success: boolean; data: CandidateFeedback[]; total: number; stats: { total: number; pending: number; approved: number; rejected: number } }> => {
+    try {
+      const response: AxiosResponse<{ success: boolean; data: CandidateFeedback[]; total: number; stats: { total: number; pending: number; approved: number; rejected: number } }> = 
+        await api.get(`/candidate-feedback/admin`, { params: query });
+      return response.data;
+    } catch (error) {
+      throw handleApiError(error);
+    }
+  }
+};
+
+// Polls API
+const pollsAPI = {
+  createPoll: async (data: { title: string; description?: string; choices: Array<{ label: string }>; startAt?: string; endAt?: string; allowAnonymous?: boolean }) => {
+    try {
+      const response: AxiosResponse<any> = await api.post(`/polls`, data);
+      return response.data;
+    } catch (error) {
+      throw handleApiError(error);
+    }
+  },
+  listPolls: async (params?: { activeOnly?: boolean }) => {
+    try {
+      const response: AxiosResponse<any> = await api.get(`/polls`, { params });
+      return response.data;
+    } catch (error) {
+      throw handleApiError(error);
+    }
+  },
+  getPoll: async (id: string) => {
+    try {
+      const response: AxiosResponse<any> = await api.get(`/polls/${id}`);
+      return response.data;
+    } catch (error) {
+      throw handleApiError(error);
+    }
+  },
+  vote: async (id: string, body: { choiceId: string; voterId?: string }) => {
+    try {
+      const response: AxiosResponse<any> = await api.post(`/polls/${id}/vote`, body);
+      return response.data;
+    } catch (error) {
+      throw handleApiError(error);
+    }
+  },
+  results: async (id: string) => {
+    try {
+      const response: AxiosResponse<any> = await api.get(`/polls/${id}/results`);
+      return response.data;
+    } catch (error) {
+      throw handleApiError(error);
+    }
+  },
+  checkStatus: async (id: string, params: { voterId?: string }) => {
+    try {
+      const response: AxiosResponse<any> = await api.get(`/polls/${id}/check`, { params });
+      return response.data;
+    } catch (error) {
+      throw handleApiError(error);
+    }
   }
 };
 
@@ -1093,6 +1295,7 @@ const API = {
   media: mediaAPI,
   feedback: feedbackAPI,
   candidateFeedback: candidateFeedbackAPI,
+  polls: pollsAPI,
   utils: apiUtils,
 };
 

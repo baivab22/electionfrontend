@@ -59,9 +59,9 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
         {/* Header */}
         <div className="text-center mb-8">
           <div className="relative inline-block">
-            <img
+              <img
               src="/assets/images/ncp-logo.jpg"
-              alt="Nepal Communist Party"
+              alt="Nepali Communist Party"
               className="h-20 w-20 mx-auto rounded-full object-cover border-4 border-white shadow-2xl mb-6"
             />
             <div className="absolute -top-2 -right-2 w-8 h-8 bg-gradient-to-r from-red-400 to-yellow-500 rounded-full flex items-center justify-center shadow-lg">
@@ -72,7 +72,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
             <Sparkles className="mr-2 text-yellow-400" size={32} />
             Admin Portal
           </h1>
-          <p className="text-red-200 text-lg">Nepal Communist Party</p>
+          <p className="text-red-200 text-lg">Nepali Communist Party</p>
           <div className="w-24 h-1 bg-gradient-to-r from-red-400 to-yellow-500 mx-auto mt-4 rounded-full"></div>
         </div>
 
@@ -184,7 +184,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
         {/* Footer */}
         <div className="text-center mt-8">
           <p className="text-red-200 text-sm">
-            © 2024 Nepal Communist Party. Secure Admin Access.
+            © 2024 Nepali Communist Party. Secure Admin Access.
           </p>
         </div>
       </div>

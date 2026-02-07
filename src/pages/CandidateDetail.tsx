@@ -32,6 +32,7 @@ import { useNavigate } from 'react-router-dom';
 import API from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import CandidateFeedbackSection from '@/components/CandidateFeedbackSection';
+import VotingSystem from '@/components/VotingSystem';
 
 interface Candidate {
   _id: string;
@@ -83,6 +84,9 @@ interface Candidate {
   };
   likes?: number;
   shares?: number;
+  votes?: number;
+  votePercentage?: number;
+  votingEnabled?: boolean;
   comments?: Array<{
     _id: string;
     name: string;
@@ -443,6 +447,17 @@ const CandidateDetailPage: React.FC = () => {
 
           {/* Main Content */}
           <div className="lg:col-span-3">
+            {/* Voting System */}
+            <div className="mb-4 xs:mb-5 sm:mb-6">
+              <VotingSystem
+                candidateId={candidate._id}
+                candidateName={candidate.personalInfo.fullName}
+                initialVotes={candidate.votes || 0}
+                initialVotePercentage={candidate.votePercentage || 0}
+                votingEnabled={candidate.votingEnabled !== false}
+              />
+            </div>
+
             {/* Social Engagement Card */}
             <Card className="border-0 shadow-lg mb-4 xs:mb-5 sm:mb-6">
               <CardContent className="p-3 xs:p-4 sm:p-6">

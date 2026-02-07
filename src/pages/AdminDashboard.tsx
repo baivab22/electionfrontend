@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { 
   Plus, Edit, Trash2, Eye, Users, FileText, TrendingUp, Calendar, 
   Image, Upload, Settings, Loader2, AlertCircle, RefreshCw, 
-  UserCheck, UserX, Download, Filter, Search 
+  UserCheck, UserX, Download, Filter, Search, MessageCircle, Star, CheckCircle, XCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,7 +20,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { toast } from '@/hooks/use-toast';
 import CreatePostForm from '@/components/admin/CreatePostForm';
 import LoginForm from '@/components/admin/LoginForm';
-import API, { CreatePostData, Post, UpdatePostData, User, Member, MembersQuery, StatsResponse, Candidate, CreateCandidateData, UpdateCandidateData } from '@/lib/api';
+import PollCreateForm from '@/components/admin/PollCreateForm';
+import API, { CreatePostData, Post, UpdatePostData, User, Member, MembersQuery, StatsResponse, Candidate, CreateCandidateData, UpdateCandidateData, CandidateFeedback } from '@/lib/api';
 
 interface Stats {
   totalPosts: number;
@@ -68,54 +69,169 @@ const AdminDashboard: React.FC = () => {
   });
   
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState<boolean>(false);
+  const [isPollDialogOpen, setIsPollDialogOpen] = useState<boolean>(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState<boolean>(false);
   const [editingPost, setEditingPost] = useState<Post | null>(null);
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [isCandidateDialogOpen, setIsCandidateDialogOpen] = useState<boolean>(false);
   const [isCandidateEditDialogOpen, setIsCandidateEditDialogOpen] = useState<boolean>(false);
   const [editingCandidate, setEditingCandidate] = useState<Candidate | null>(null);
-  const [candidateForm, setCandidateForm] = useState({
-    fullName: '',
-    position: 'Parliamentary',
-    constituency: '',
-    dateOfBirth: '',
-    gender: 'Male',
-    contactNumber: '',
-    email: '',
-    address: '',
-    bio_en: '',
-    backgroundEducation: '',
-    experience: '',
-    manifestoTitle: '',
-    manifestoContent: '',
-    manifestoBrochure: '',
-    manifestoBrochureFile: null as File | null,
-    profilePhoto: '',
+  
+  // Comprehensive candidate form matching the Nepali form structure
+  const initialCandidateForm = {
+    // 1. Personal Info
+    personalInfo: {
+      fullName: '',
+      fullName_np: '',
+      nickname: '',
+      nickname_np: '',
+      dateOfBirth: '',
+      gender: 'Male',
+      gender_np: 'पुरुष',
+      maritalStatus: '',
+      maritalStatus_np: '',
+      permanentAddress: '',
+      permanentAddress_np: '',
+      currentAddress: '',
+      currentAddress_np: '',
+      citizenshipNumber: '',
+      citizenshipIssuedDistrict: '',
+      citizenshipIssuedDistrict_np: '',
+      contactNumber: '',
+      email: '',
+      website: '',
+    },
+    // 2. Political Info
+    politicalInfo: {
+      partyName: 'नेपाल कम्युनिष्ट पार्टी',
+      partyName_np: 'नेपाल कम्युनिष्ट पार्टी',
+      currentPosition: '',
+      currentPosition_np: '',
+      candidacyLevel: '',
+      candidacyLevel_np: '',
+      constituencyNumber: '',
+      constituency: '',
+      constituency_np: '',
+      electionSymbol: '',
+      electionSymbol_np: '',
+      isFirstTimeCandidate: false,
+      previousElectionHistory: '',
+      previousElectionHistory_np: '',
+    },
+    // 3. Education
+    education: {
+      highestQualification: '',
+      highestQualification_np: '',
+      subject: '',
+      subject_np: '',
+      institution: '',
+      institution_np: '',
+      country: 'Nepal',
+      country_np: 'नेपाल',
+      additionalTraining: '',
+      additionalTraining_np: '',
+    },
+    // 4. Professional Experience
+    professionalExperience: {
+      currentProfession: '',
+      currentProfession_np: '',
+      previousExperience: '',
+      previousExperience_np: '',
+      organizationResponsibility: '',
+      organizationResponsibility_np: '',
+      leadershipExperience: '',
+      leadershipExperience_np: '',
+    },
+    // 5. Political Experience
+    politicalExperience: {
+      partyJoinYear: '',
+      movementRole: '',
+      movementRole_np: '',
+      previousRepresentativePosition: '',
+      previousRepresentativePosition_np: '',
+      majorAchievements: '',
+      majorAchievements_np: '',
+    },
+    // 6. Social Engagement
+    socialEngagement: {
+      ngoInvolvement: '',
+      ngoInvolvement_np: '',
+      sectorWork: '',
+      sectorWork_np: '',
+      awardsHonors: '',
+      awardsHonors_np: '',
+    },
+    // 7. Financial Info
+    financialInfo: {
+      movableAssets: '',
+      movableAssets_np: '',
+      immovableAssets: '',
+      immovableAssets_np: '',
+      annualIncomeSource: '',
+      annualIncomeSource_np: '',
+      bankLoans: '',
+      bankLoans_np: '',
+      taxStatus: '',
+      taxStatus_np: '',
+    },
+    // 8. Legal Status
+    legalStatus: {
+      hasCriminalCase: false,
+      caseDetails: '',
+      caseDetails_np: '',
+      eligibilityDeclaration: '',
+      eligibilityDeclaration_np: '',
+    },
+    // 9. Vision & Goals
+    visionGoals: {
+      vision: '',
+      vision_np: '',
+      goals: '',
+      goals_np: '',
+      declaration: '',
+      declaration_np: '',
+    },
+    // Social Media
+    socialMedia: {
+      facebook: '',
+      twitter: '',
+      instagram: '',
+      youtube: '',
+      tiktok: '',
+      linkedin: '',
+    },
+    // Campaign
+    campaign: {
+      campaignSlogan: '',
+      campaignSlogan_np: '',
+    },
+    // File uploads
     profilePhotoFile: null as File | null,
-    facebook: '',
-    twitter: '',
-    instagram: '',
-    youtube: '',
-    website: '',
-    achievements: [] as Array<{
-      achievementTitle_en: string;
-      achievementDescription_en: string;
-      achievementDate: string;
-      achievementCategory: string;
-    }>,
-    isActive: true
-  });
+    electionSymbolImageFile: null as File | null,
+    isActive: true,
+    isVerified: false,
+  };
+  
+  const [candidateForm, setCandidateForm] = useState(initialCandidateForm);
   
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isPostsLoading, setIsPostsLoading] = useState<boolean>(false);
   const [isStatsLoading, setIsStatsLoading] = useState<boolean>(false);
   const [isMembersLoading, setIsMembersLoading] = useState<boolean>(false);
   const [isCandidatesLoading, setIsCandidatesLoading] = useState<boolean>(false);
+  const [isFeedbackLoading, setIsFeedbackLoading] = useState<boolean>(false);
   
   const [error, setError] = useState<string | null>(null);
   const [postsError, setPostsError] = useState<string | null>(null);
   const [membersError, setMembersError] = useState<string | null>(null);
   const [candidatesError, setCandidatesError] = useState<string | null>(null);
+  const [feedbackError, setFeedbackError] = useState<string | null>(null);
+
+  // Feedback state
+  const [candidateFeedback, setCandidateFeedback] = useState<CandidateFeedback[]>([]);
+  const [feedbackStats, setFeedbackStats] = useState({ total: 0, pending: 0, approved: 0, rejected: 0 });
+  const [feedbackFilter, setFeedbackFilter] = useState<string>('');
+  const [feedbackCandidateFilter, setFeedbackCandidateFilter] = useState<string>('');
 
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [totalPages, setTotalPages] = useState<number>(1);
@@ -169,7 +285,8 @@ const AdminDashboard: React.FC = () => {
         fetchPosts(),
         fetchStats(),
         fetchMembershipStats(),
-        fetchCandidates()
+        fetchCandidates(),
+        fetchCandidateFeedback()
       ]);
     } catch (error) {
       console.error('Fetch user info error:', error);
@@ -269,6 +386,88 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
+  const fetchCandidateFeedback = async () => {
+    setIsFeedbackLoading(true);
+    setFeedbackError(null);
+
+    try {
+      const query: { status?: string; candidateId?: string } = {};
+      if (feedbackFilter) query.status = feedbackFilter;
+      if (feedbackCandidateFilter) query.candidateId = feedbackCandidateFilter;
+      
+      const response = await API.candidateFeedback.getAllFeedback(query);
+      setCandidateFeedback(response.data || []);
+      if (response.stats) {
+        setFeedbackStats(response.stats);
+      }
+    } catch (error) {
+      const errorMessage = API.utils.formatErrorMessage(error);
+      setFeedbackError(errorMessage);
+      toast({
+        title: "Error",
+        description: `Failed to fetch feedback: ${errorMessage}`,
+        variant: "destructive",
+      });
+    } finally {
+      setIsFeedbackLoading(false);
+    }
+  };
+
+  const handleUpdateFeedbackStatus = async (feedbackId: string, status: 'pending' | 'approved' | 'rejected', isPublic?: boolean) => {
+    try {
+      const feedback = candidateFeedback.find(f => f._id === feedbackId);
+      if (!feedback) return;
+      
+      await API.candidateFeedback.updateFeedbackStatus(
+        (feedback as any).candidate?._id || (feedback as any).candidate,
+        feedbackId,
+        { status, isPublic: status === 'approved' ? true : false }
+      );
+      
+      toast({
+        title: "Success",
+        description: `Feedback ${status} successfully`,
+      });
+      
+      fetchCandidateFeedback();
+    } catch (error) {
+      const errorMessage = API.utils.formatErrorMessage(error);
+      toast({
+        title: "Error",
+        description: `Failed to update feedback: ${errorMessage}`,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteFeedback = async (feedbackId: string) => {
+    if (!confirm('Are you sure you want to delete this feedback?')) return;
+    
+    try {
+      const feedback = candidateFeedback.find(f => f._id === feedbackId);
+      if (!feedback) return;
+      
+      await API.candidateFeedback.deleteFeedback(
+        (feedback as any).candidate?._id || (feedback as any).candidate,
+        feedbackId
+      );
+      
+      toast({
+        title: "Success",
+        description: "Feedback deleted successfully",
+      });
+      
+      fetchCandidateFeedback();
+    } catch (error) {
+      const errorMessage = API.utils.formatErrorMessage(error);
+      toast({
+        title: "Error",
+        description: `Failed to delete feedback: ${errorMessage}`,
+        variant: "destructive",
+      });
+    }
+  };
+
   const fetchMembershipStats = async () => {
     try {
       const response: StatsResponse = await API.members.getMembershipStats();
@@ -298,7 +497,8 @@ const AdminDashboard: React.FC = () => {
         fetchPosts(),
         fetchStats(),
         fetchMembershipStats(),
-        fetchCandidates()
+        fetchCandidates(),
+        fetchCandidateFeedback()
       ]);
       
       toast({
@@ -364,6 +564,17 @@ const AdminDashboard: React.FC = () => {
         variant: "destructive",
       });
       throw error;
+    }
+  };
+
+  const handleCreatePoll = async (pollData: { title: string; description?: string; choices: Array<{ label: string }>; startAt?: string; endAt?: string; allowAnonymous?: boolean }) => {
+    try {
+      const res = await API.polls.createPoll(pollData);
+      toast({ title: 'Poll created', description: 'Poll created successfully' });
+      setIsPollDialogOpen(false);
+    } catch (error) {
+      const errorMessage = API.utils.formatErrorMessage(error);
+      toast({ title: 'Error', description: `Failed to create poll: ${errorMessage}`, variant: 'destructive' });
     }
   };
 
@@ -516,51 +727,71 @@ const AdminDashboard: React.FC = () => {
     try {
       const formData = new FormData();
       
-      // Personal Info
-      formData.append('personalInfo[fullName]', candidateForm.fullName);
-      formData.append('personalInfo[position]', candidateForm.position);
-      formData.append('personalInfo[constituency]', candidateForm.constituency);
-      formData.append('personalInfo[dateOfBirth]', candidateForm.dateOfBirth);
-      formData.append('personalInfo[gender]', candidateForm.gender);
-      formData.append('personalInfo[contactNumber]', candidateForm.contactNumber);
-      formData.append('personalInfo[email]', candidateForm.email);
-      formData.append('personalInfo[address]', candidateForm.address);
-      
-      // Biography
-      formData.append('biography[bio_en]', candidateForm.bio_en);
-      formData.append('biography[backgroundEducation]', candidateForm.backgroundEducation);
-      formData.append('biography[experience]', candidateForm.experience);
-      if (candidateForm.profilePhotoFile) {
-        formData.append('profilePhoto', candidateForm.profilePhotoFile);
-      } else if (candidateForm.profilePhoto) {
-        formData.append('biography[profilePhoto]', candidateForm.profilePhoto);
-      }
-      
-      // Manifesto
-      formData.append('manifesto[title_en]', candidateForm.manifestoTitle);
-      formData.append('manifesto[content_en]', candidateForm.manifestoContent);
-      if (candidateForm.manifestoBrochureFile) {
-        formData.append('manifestoBrochure', candidateForm.manifestoBrochureFile);
-      } else if (candidateForm.manifestoBrochure) {
-        formData.append('manifesto[manifestoBrochure]', candidateForm.manifestoBrochure);
-      }
-      
-      // Social Media
-      formData.append('socialMedia[facebook]', candidateForm.facebook);
-      formData.append('socialMedia[twitter]', candidateForm.twitter);
-      formData.append('socialMedia[instagram]', candidateForm.instagram);
-      formData.append('socialMedia[youtube]', candidateForm.youtube);
-      formData.append('socialMedia[website]', candidateForm.website);
-      
-      // Achievements
-      candidateForm.achievements.forEach((achievement, index) => {
-        formData.append(`achievements[${index}][achievementTitle_en]`, achievement.achievementTitle_en);
-        formData.append(`achievements[${index}][achievementDescription_en]`, achievement.achievementDescription_en);
-        formData.append(`achievements[${index}][achievementDate]`, achievement.achievementDate);
-        formData.append(`achievements[${index}][achievementCategory]`, achievement.achievementCategory);
+      // 1. Personal Info
+      Object.entries(candidateForm.personalInfo).forEach(([key, value]) => {
+        formData.append(`personalInfo[${key}]`, String(value));
       });
       
+      // 2. Political Info
+      Object.entries(candidateForm.politicalInfo).forEach(([key, value]) => {
+        formData.append(`politicalInfo[${key}]`, String(value));
+      });
+      
+      // 3. Education
+      Object.entries(candidateForm.education).forEach(([key, value]) => {
+        formData.append(`education[${key}]`, String(value));
+      });
+      
+      // 4. Professional Experience
+      Object.entries(candidateForm.professionalExperience).forEach(([key, value]) => {
+        formData.append(`professionalExperience[${key}]`, String(value));
+      });
+      
+      // 5. Political Experience
+      Object.entries(candidateForm.politicalExperience).forEach(([key, value]) => {
+        formData.append(`politicalExperience[${key}]`, String(value));
+      });
+      
+      // 6. Social Engagement
+      Object.entries(candidateForm.socialEngagement).forEach(([key, value]) => {
+        formData.append(`socialEngagement[${key}]`, String(value));
+      });
+      
+      // 7. Financial Info
+      Object.entries(candidateForm.financialInfo).forEach(([key, value]) => {
+        formData.append(`financialInfo[${key}]`, String(value));
+      });
+      
+      // 8. Legal Status
+      Object.entries(candidateForm.legalStatus).forEach(([key, value]) => {
+        formData.append(`legalStatus[${key}]`, String(value));
+      });
+      
+      // 9. Vision & Goals
+      Object.entries(candidateForm.visionGoals).forEach(([key, value]) => {
+        formData.append(`visionGoals[${key}]`, String(value));
+      });
+      
+      // Social Media
+      Object.entries(candidateForm.socialMedia).forEach(([key, value]) => {
+        formData.append(`socialMedia[${key}]`, String(value));
+      });
+      
+      // Campaign
+      Object.entries(candidateForm.campaign).forEach(([key, value]) => {
+        formData.append(`campaign[${key}]`, String(value));
+      });
+      
+      // File uploads
+      if (candidateForm.profilePhotoFile) {
+        formData.append('profilePhoto', candidateForm.profilePhotoFile);
+      }
+      if (candidateForm.electionSymbolImageFile) {
+        formData.append('electionSymbolImage', candidateForm.electionSymbolImageFile);
+      }
+      
       formData.append('isActive', String(candidateForm.isActive));
+      formData.append('isVerified', String(candidateForm.isVerified));
 
       const response = await API.candidates.createCandidate(formData);
       setCandidates([...candidates, response.data]);
@@ -587,51 +818,71 @@ const AdminDashboard: React.FC = () => {
     try {
       const formData = new FormData();
       
-      // Personal Info
-      formData.append('personalInfo[fullName]', candidateForm.fullName);
-      formData.append('personalInfo[position]', candidateForm.position);
-      formData.append('personalInfo[constituency]', candidateForm.constituency);
-      formData.append('personalInfo[dateOfBirth]', candidateForm.dateOfBirth);
-      formData.append('personalInfo[gender]', candidateForm.gender);
-      formData.append('personalInfo[contactNumber]', candidateForm.contactNumber);
-      formData.append('personalInfo[email]', candidateForm.email);
-      formData.append('personalInfo[address]', candidateForm.address);
-      
-      // Biography
-      formData.append('biography[bio_en]', candidateForm.bio_en);
-      formData.append('biography[backgroundEducation]', candidateForm.backgroundEducation);
-      formData.append('biography[experience]', candidateForm.experience);
-      if (candidateForm.profilePhotoFile) {
-        formData.append('profilePhoto', candidateForm.profilePhotoFile);
-      } else if (candidateForm.profilePhoto) {
-        formData.append('biography[profilePhoto]', candidateForm.profilePhoto);
-      }
-      
-      // Manifesto
-      formData.append('manifesto[title_en]', candidateForm.manifestoTitle);
-      formData.append('manifesto[content_en]', candidateForm.manifestoContent);
-      if (candidateForm.manifestoBrochureFile) {
-        formData.append('manifestoBrochure', candidateForm.manifestoBrochureFile);
-      } else if (candidateForm.manifestoBrochure) {
-        formData.append('manifesto[manifestoBrochure]', candidateForm.manifestoBrochure);
-      }
-      
-      // Social Media
-      formData.append('socialMedia[facebook]', candidateForm.facebook);
-      formData.append('socialMedia[twitter]', candidateForm.twitter);
-      formData.append('socialMedia[instagram]', candidateForm.instagram);
-      formData.append('socialMedia[youtube]', candidateForm.youtube);
-      formData.append('socialMedia[website]', candidateForm.website);
-      
-      // Achievements
-      candidateForm.achievements.forEach((achievement, index) => {
-        formData.append(`achievements[${index}][achievementTitle_en]`, achievement.achievementTitle_en);
-        formData.append(`achievements[${index}][achievementDescription_en]`, achievement.achievementDescription_en);
-        formData.append(`achievements[${index}][achievementDate]`, achievement.achievementDate);
-        formData.append(`achievements[${index}][achievementCategory]`, achievement.achievementCategory);
+      // 1. Personal Info
+      Object.entries(candidateForm.personalInfo).forEach(([key, value]) => {
+        formData.append(`personalInfo[${key}]`, String(value));
       });
       
+      // 2. Political Info
+      Object.entries(candidateForm.politicalInfo).forEach(([key, value]) => {
+        formData.append(`politicalInfo[${key}]`, String(value));
+      });
+      
+      // 3. Education
+      Object.entries(candidateForm.education).forEach(([key, value]) => {
+        formData.append(`education[${key}]`, String(value));
+      });
+      
+      // 4. Professional Experience
+      Object.entries(candidateForm.professionalExperience).forEach(([key, value]) => {
+        formData.append(`professionalExperience[${key}]`, String(value));
+      });
+      
+      // 5. Political Experience
+      Object.entries(candidateForm.politicalExperience).forEach(([key, value]) => {
+        formData.append(`politicalExperience[${key}]`, String(value));
+      });
+      
+      // 6. Social Engagement
+      Object.entries(candidateForm.socialEngagement).forEach(([key, value]) => {
+        formData.append(`socialEngagement[${key}]`, String(value));
+      });
+      
+      // 7. Financial Info
+      Object.entries(candidateForm.financialInfo).forEach(([key, value]) => {
+        formData.append(`financialInfo[${key}]`, String(value));
+      });
+      
+      // 8. Legal Status
+      Object.entries(candidateForm.legalStatus).forEach(([key, value]) => {
+        formData.append(`legalStatus[${key}]`, String(value));
+      });
+      
+      // 9. Vision & Goals
+      Object.entries(candidateForm.visionGoals).forEach(([key, value]) => {
+        formData.append(`visionGoals[${key}]`, String(value));
+      });
+      
+      // Social Media
+      Object.entries(candidateForm.socialMedia).forEach(([key, value]) => {
+        formData.append(`socialMedia[${key}]`, String(value));
+      });
+      
+      // Campaign
+      Object.entries(candidateForm.campaign).forEach(([key, value]) => {
+        formData.append(`campaign[${key}]`, String(value));
+      });
+      
+      // File uploads
+      if (candidateForm.profilePhotoFile) {
+        formData.append('profilePhoto', candidateForm.profilePhotoFile);
+      }
+      if (candidateForm.electionSymbolImageFile) {
+        formData.append('electionSymbolImage', candidateForm.electionSymbolImageFile);
+      }
+      
       formData.append('isActive', String(candidateForm.isActive));
+      formData.append('isVerified', String(candidateForm.isVerified));
 
       const response = await API.candidates.updateCandidate(editingCandidate._id, formData);
       setCandidates(candidates.map(c => c._id === editingCandidate._id ? response.data : c));
@@ -676,66 +927,264 @@ const AdminDashboard: React.FC = () => {
 
   const handleEditCandidate = (candidate: Candidate) => {
     setEditingCandidate(candidate);
+    const c = candidate as any; // Type assertion for flexible access
     setCandidateForm({
-      fullName: candidate.personalInfo.fullName,
-      position: candidate.personalInfo.position,
-      constituency: candidate.personalInfo.constituency,
-      dateOfBirth: candidate.personalInfo.dateOfBirth.split('T')[0],
-      gender: candidate.personalInfo.gender,
-      contactNumber: candidate.personalInfo.contactNumber,
-      email: candidate.personalInfo.email,
-      address: candidate.personalInfo.address || '',
-      bio_en: candidate.biography.bio_en || '',
-      backgroundEducation: candidate.biography.backgroundEducation || '',
-      experience: candidate.biography.experience || '',
-      manifestoTitle: candidate.manifesto.title_en || '',
-      manifestoContent: candidate.manifesto.content_en || '',
-      manifestoBrochure: candidate.manifesto.manifestoBrochure || '',
-      manifestoBrochureFile: null,
-      profilePhoto: candidate.biography.profilePhoto || '',
+      personalInfo: {
+        fullName: c.personalInfo?.fullName || '',
+        fullName_np: c.personalInfo?.fullName_np || '',
+        nickname: c.personalInfo?.nickname || '',
+        nickname_np: c.personalInfo?.nickname_np || '',
+        dateOfBirth: c.personalInfo?.dateOfBirth ? c.personalInfo.dateOfBirth.split('T')[0] : '',
+        gender: c.personalInfo?.gender || 'Male',
+        gender_np: c.personalInfo?.gender_np || 'पुरुष',
+        maritalStatus: c.personalInfo?.maritalStatus || '',
+        maritalStatus_np: c.personalInfo?.maritalStatus_np || '',
+        permanentAddress: c.personalInfo?.permanentAddress || '',
+        permanentAddress_np: c.personalInfo?.permanentAddress_np || '',
+        currentAddress: c.personalInfo?.currentAddress || '',
+        currentAddress_np: c.personalInfo?.currentAddress_np || '',
+        citizenshipNumber: c.personalInfo?.citizenshipNumber || '',
+        citizenshipIssuedDistrict: c.personalInfo?.citizenshipIssuedDistrict || '',
+        citizenshipIssuedDistrict_np: c.personalInfo?.citizenshipIssuedDistrict_np || '',
+        contactNumber: c.personalInfo?.contactNumber || '',
+        email: c.personalInfo?.email || '',
+        website: c.personalInfo?.website || '',
+      },
+      politicalInfo: {
+        partyName: c.politicalInfo?.partyName || 'नेपाल कम्युनिष्ट पार्टी',
+        partyName_np: c.politicalInfo?.partyName_np || 'नेपाल कम्युनिष्ट पार्टी',
+        currentPosition: c.politicalInfo?.currentPosition || '',
+        currentPosition_np: c.politicalInfo?.currentPosition_np || '',
+        candidacyLevel: c.politicalInfo?.candidacyLevel || '',
+        candidacyLevel_np: c.politicalInfo?.candidacyLevel_np || '',
+        constituencyNumber: c.politicalInfo?.constituencyNumber || '',
+        constituency: c.politicalInfo?.constituency || '',
+        constituency_np: c.politicalInfo?.constituency_np || '',
+        electionSymbol: c.politicalInfo?.electionSymbol || '',
+        electionSymbol_np: c.politicalInfo?.electionSymbol_np || '',
+        isFirstTimeCandidate: c.politicalInfo?.isFirstTimeCandidate || false,
+        previousElectionHistory: c.politicalInfo?.previousElectionHistory || '',
+        previousElectionHistory_np: c.politicalInfo?.previousElectionHistory_np || '',
+      },
+      education: {
+        highestQualification: c.education?.highestQualification || '',
+        highestQualification_np: c.education?.highestQualification_np || '',
+        subject: c.education?.subject || '',
+        subject_np: c.education?.subject_np || '',
+        institution: c.education?.institution || '',
+        institution_np: c.education?.institution_np || '',
+        country: c.education?.country || 'Nepal',
+        country_np: c.education?.country_np || 'नेपाल',
+        additionalTraining: c.education?.additionalTraining || '',
+        additionalTraining_np: c.education?.additionalTraining_np || '',
+      },
+      professionalExperience: {
+        currentProfession: c.professionalExperience?.currentProfession || '',
+        currentProfession_np: c.professionalExperience?.currentProfession_np || '',
+        previousExperience: c.professionalExperience?.previousExperience || '',
+        previousExperience_np: c.professionalExperience?.previousExperience_np || '',
+        organizationResponsibility: c.professionalExperience?.organizationResponsibility || '',
+        organizationResponsibility_np: c.professionalExperience?.organizationResponsibility_np || '',
+        leadershipExperience: c.professionalExperience?.leadershipExperience || '',
+        leadershipExperience_np: c.professionalExperience?.leadershipExperience_np || '',
+      },
+      politicalExperience: {
+        partyJoinYear: c.politicalExperience?.partyJoinYear || '',
+        movementRole: c.politicalExperience?.movementRole || '',
+        movementRole_np: c.politicalExperience?.movementRole_np || '',
+        previousRepresentativePosition: c.politicalExperience?.previousRepresentativePosition || '',
+        previousRepresentativePosition_np: c.politicalExperience?.previousRepresentativePosition_np || '',
+        majorAchievements: c.politicalExperience?.majorAchievements || '',
+        majorAchievements_np: c.politicalExperience?.majorAchievements_np || '',
+      },
+      socialEngagement: {
+        ngoInvolvement: c.socialEngagement?.ngoInvolvement || '',
+        ngoInvolvement_np: c.socialEngagement?.ngoInvolvement_np || '',
+        sectorWork: c.socialEngagement?.sectorWork || '',
+        sectorWork_np: c.socialEngagement?.sectorWork_np || '',
+        awardsHonors: c.socialEngagement?.awardsHonors || '',
+        awardsHonors_np: c.socialEngagement?.awardsHonors_np || '',
+      },
+      financialInfo: {
+        movableAssets: c.financialInfo?.movableAssets || '',
+        movableAssets_np: c.financialInfo?.movableAssets_np || '',
+        immovableAssets: c.financialInfo?.immovableAssets || '',
+        immovableAssets_np: c.financialInfo?.immovableAssets_np || '',
+        annualIncomeSource: c.financialInfo?.annualIncomeSource || '',
+        annualIncomeSource_np: c.financialInfo?.annualIncomeSource_np || '',
+        bankLoans: c.financialInfo?.bankLoans || '',
+        bankLoans_np: c.financialInfo?.bankLoans_np || '',
+        taxStatus: c.financialInfo?.taxStatus || '',
+        taxStatus_np: c.financialInfo?.taxStatus_np || '',
+      },
+      legalStatus: {
+        hasCriminalCase: c.legalStatus?.hasCriminalCase || false,
+        caseDetails: c.legalStatus?.caseDetails || '',
+        caseDetails_np: c.legalStatus?.caseDetails_np || '',
+        eligibilityDeclaration: c.legalStatus?.eligibilityDeclaration || '',
+        eligibilityDeclaration_np: c.legalStatus?.eligibilityDeclaration_np || '',
+      },
+      visionGoals: {
+        vision: c.visionGoals?.vision || '',
+        vision_np: c.visionGoals?.vision_np || '',
+        goals: c.visionGoals?.goals || '',
+        goals_np: c.visionGoals?.goals_np || '',
+        declaration: c.visionGoals?.declaration || '',
+        declaration_np: c.visionGoals?.declaration_np || '',
+      },
+      socialMedia: {
+        facebook: c.socialMedia?.facebook || '',
+        twitter: c.socialMedia?.twitter || '',
+        instagram: c.socialMedia?.instagram || '',
+        youtube: c.socialMedia?.youtube || '',
+        tiktok: c.socialMedia?.tiktok || '',
+        linkedin: c.socialMedia?.linkedin || '',
+      },
+      campaign: {
+        campaignSlogan: c.campaign?.campaignSlogan || '',
+        campaignSlogan_np: c.campaign?.campaignSlogan_np || '',
+      },
       profilePhotoFile: null,
-      facebook: candidate.socialMedia?.facebook || '',
-      twitter: candidate.socialMedia?.twitter || '',
-      instagram: candidate.socialMedia?.instagram || '',
-      youtube: candidate.socialMedia?.youtube || '',
-      website: candidate.socialMedia?.website || '',
-      achievements: candidate.achievements?.map(a => ({
-        achievementTitle_en: a.achievementTitle_en || '',
-        achievementDescription_en: a.achievementDescription_en || '',
-        achievementDate: a.achievementDate ? new Date(a.achievementDate).toISOString().split('T')[0] : '',
-        achievementCategory: a.achievementCategory || 'Other'
-      })) || [],
-      isActive: candidate.isActive
+      electionSymbolImageFile: null,
+      isActive: c.isActive ?? true,
+      isVerified: c.isVerified ?? false,
     });
     setIsCandidateEditDialogOpen(true);
   };
 
   const resetCandidateForm = () => {
     setCandidateForm({
-      fullName: '',
-      position: 'Parliamentary',
-      constituency: '',
-      dateOfBirth: '',
-      gender: 'Male',
-      contactNumber: '',
-      email: '',
-      address: '',
-      bio_en: '',
-      backgroundEducation: '',
-      experience: '',
-      manifestoTitle: '',
-      manifestoContent: '',
-      manifestoBrochure: '',
-      manifestoBrochureFile: null,
-      profilePhoto: '',
+      // 1. Personal Info
+      personalInfo: {
+        fullName: '',
+        fullName_np: '',
+        nickname: '',
+        nickname_np: '',
+        dateOfBirth: '',
+        gender: 'Male',
+        gender_np: 'पुरुष',
+        maritalStatus: '',
+        maritalStatus_np: '',
+        permanentAddress: '',
+        permanentAddress_np: '',
+        currentAddress: '',
+        currentAddress_np: '',
+        citizenshipNumber: '',
+        citizenshipIssuedDistrict: '',
+        citizenshipIssuedDistrict_np: '',
+        contactNumber: '',
+        email: '',
+        website: '',
+      },
+      // 2. Political Info
+      politicalInfo: {
+        partyName: 'नेपाल कम्युनिष्ट पार्टी',
+        partyName_np: 'नेपाल कम्युनिष्ट पार्टी',
+        currentPosition: '',
+        currentPosition_np: '',
+        candidacyLevel: '',
+        candidacyLevel_np: '',
+        constituencyNumber: '',
+        constituency: '',
+        constituency_np: '',
+        electionSymbol: '',
+        electionSymbol_np: '',
+        isFirstTimeCandidate: false,
+        previousElectionHistory: '',
+        previousElectionHistory_np: '',
+      },
+      // 3. Education
+      education: {
+        highestQualification: '',
+        highestQualification_np: '',
+        subject: '',
+        subject_np: '',
+        institution: '',
+        institution_np: '',
+        country: 'Nepal',
+        country_np: 'नेपाल',
+        additionalTraining: '',
+        additionalTraining_np: '',
+      },
+      // 4. Professional Experience
+      professionalExperience: {
+        currentProfession: '',
+        currentProfession_np: '',
+        previousExperience: '',
+        previousExperience_np: '',
+        organizationResponsibility: '',
+        organizationResponsibility_np: '',
+        leadershipExperience: '',
+        leadershipExperience_np: '',
+      },
+      // 5. Political Experience
+      politicalExperience: {
+        partyJoinYear: '',
+        movementRole: '',
+        movementRole_np: '',
+        previousRepresentativePosition: '',
+        previousRepresentativePosition_np: '',
+        majorAchievements: '',
+        majorAchievements_np: '',
+      },
+      // 6. Social Engagement
+      socialEngagement: {
+        ngoInvolvement: '',
+        ngoInvolvement_np: '',
+        sectorWork: '',
+        sectorWork_np: '',
+        awardsHonors: '',
+        awardsHonors_np: '',
+      },
+      // 7. Financial Info
+      financialInfo: {
+        movableAssets: '',
+        movableAssets_np: '',
+        immovableAssets: '',
+        immovableAssets_np: '',
+        annualIncomeSource: '',
+        annualIncomeSource_np: '',
+        bankLoans: '',
+        bankLoans_np: '',
+        taxStatus: '',
+        taxStatus_np: '',
+      },
+      // 8. Legal Status
+      legalStatus: {
+        hasCriminalCase: false,
+        caseDetails: '',
+        caseDetails_np: '',
+        eligibilityDeclaration: '',
+        eligibilityDeclaration_np: '',
+      },
+      // 9. Vision & Goals
+      visionGoals: {
+        vision: '',
+        vision_np: '',
+        goals: '',
+        goals_np: '',
+        declaration: '',
+        declaration_np: '',
+      },
+      // Social Media
+      socialMedia: {
+        facebook: '',
+        twitter: '',
+        instagram: '',
+        youtube: '',
+        tiktok: '',
+        linkedin: '',
+      },
+      // Campaign
+      campaign: {
+        campaignSlogan: '',
+        campaignSlogan_np: '',
+      },
+      // File uploads
       profilePhotoFile: null,
-      facebook: '',
-      twitter: '',
-      instagram: '',
-      youtube: '',
-      website: '',
-      achievements: [],
-      isActive: true
+      electionSymbolImageFile: null,
+      isActive: true,
+      isVerified: false,
     });
   };
 
@@ -939,18 +1388,24 @@ const AdminDashboard: React.FC = () => {
         </div>
 
         <Tabs defaultValue="posts" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5 lg:w-[750px] bg-white shadow-lg border-0">
+          <TabsList className="grid w-full grid-cols-6 lg:w-[900px] bg-white shadow-lg border-0">
             <TabsTrigger value="posts" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-blue-600 data-[state=active]:text-white">
               Posts ({totalPosts})
             </TabsTrigger>
             <TabsTrigger value="candidates" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-500 data-[state=active]:to-red-600 data-[state=active]:text-white">
               Candidates ({candidates.length})
             </TabsTrigger>
+            <TabsTrigger value="feedback" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-yellow-500 data-[state=active]:to-yellow-600 data-[state=active]:text-white">
+              Feedback ({feedbackStats.total})
+            </TabsTrigger>
             <TabsTrigger value="members" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-green-600 data-[state=active]:text-white">
               Members ({membersTotal})
             </TabsTrigger>
             <TabsTrigger value="media" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-purple-600 data-[state=active]:text-white">
               Media Library
+            </TabsTrigger>
+            <TabsTrigger value="polls" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-teal-500 data-[state=active]:to-teal-600 data-[state=active]:text-white">
+              Polls
             </TabsTrigger>
             <TabsTrigger value="analytics" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-orange-600 data-[state=active]:text-white">
               Analytics
@@ -1118,6 +1573,308 @@ const AdminDashboard: React.FC = () => {
                   <Plus className="mr-2" size={16} />
                   Create Your First Post
                 </Button>
+              </div>
+            )}
+          </TabsContent>
+
+          {/* Polls Management Tab */}
+          <TabsContent value="polls" className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">Polls Management</h2>
+                <p className="text-gray-600">Create and manage polls</p>
+              </div>
+              <Dialog open={isPollDialogOpen} onOpenChange={setIsPollDialogOpen}>
+                <DialogTrigger asChild>
+                  <div>
+                    <Button className="bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 shadow-lg px-4 py-2">
+                      <Plus className="mr-2" size={16} />
+                      Create Poll
+                    </Button>
+                  </div>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl">
+                  <DialogHeader>
+                    <DialogTitle className="text-2xl font-bold">Create New Poll</DialogTitle>
+                  </DialogHeader>
+                  <PollCreateForm onCreate={handleCreatePoll} onCancel={() => setIsPollDialogOpen(false)} />
+                </DialogContent>
+              </Dialog>
+            </div>
+
+            <div className="mt-6">
+              <p className="text-sm text-gray-600">Use the button above to create a new poll. Active polls will be visible on the public Polls page.</p>
+            </div>
+          </TabsContent>
+
+          {/* Feedback Management Tab */}
+          <TabsContent value="feedback" className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">Candidate Feedback Management</h2>
+                <p className="text-gray-600">Review and manage feedback submitted for candidates</p>
+              </div>
+              <Button 
+                onClick={fetchCandidateFeedback}
+                variant="outline"
+                className="border-yellow-500 text-yellow-600 hover:bg-yellow-50"
+              >
+                <RefreshCw className="mr-2" size={16} />
+                Refresh
+              </Button>
+            </div>
+
+            {/* Feedback Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <Card className="border-0 shadow-lg bg-gradient-to-br from-gray-500 to-gray-600 text-white">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-gray-100 text-sm">Total Feedback</p>
+                      <p className="text-3xl font-bold">{feedbackStats.total}</p>
+                    </div>
+                    <MessageCircle size={32} className="opacity-80" />
+                  </div>
+                </CardContent>
+              </Card>
+              <Card className="border-0 shadow-lg bg-gradient-to-br from-yellow-500 to-yellow-600 text-white">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-yellow-100 text-sm">Pending</p>
+                      <p className="text-3xl font-bold">{feedbackStats.pending}</p>
+                    </div>
+                    <AlertCircle size={32} className="opacity-80" />
+                  </div>
+                </CardContent>
+              </Card>
+              <Card className="border-0 shadow-lg bg-gradient-to-br from-green-500 to-green-600 text-white">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-green-100 text-sm">Approved</p>
+                      <p className="text-3xl font-bold">{feedbackStats.approved}</p>
+                    </div>
+                    <CheckCircle size={32} className="opacity-80" />
+                  </div>
+                </CardContent>
+              </Card>
+              <Card className="border-0 shadow-lg bg-gradient-to-br from-red-500 to-red-600 text-white">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-red-100 text-sm">Rejected</p>
+                      <p className="text-3xl font-bold">{feedbackStats.rejected}</p>
+                    </div>
+                    <XCircle size={32} className="opacity-80" />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Filters */}
+            <Card className="border-0 shadow-lg">
+              <CardContent className="p-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <Label>Filter by Status</Label>
+                    <Select value={feedbackFilter || 'all'} onValueChange={(val) => { setFeedbackFilter(val === 'all' ? '' : val); }}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="All Statuses" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Statuses</SelectItem>
+                        <SelectItem value="pending">Pending</SelectItem>
+                        <SelectItem value="approved">Approved</SelectItem>
+                        <SelectItem value="rejected">Rejected</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Filter by Candidate</Label>
+                    <Select value={feedbackCandidateFilter || 'all'} onValueChange={(val) => { setFeedbackCandidateFilter(val === 'all' ? '' : val); }}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="All Candidates" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Candidates</SelectItem>
+                        {candidates.map((c) => (
+                          <SelectItem key={c._id} value={c._id}>
+                            {(c as any).personalInfo?.fullName || c.fullName || 'Unknown'}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex items-end">
+                    <Button onClick={fetchCandidateFeedback} className="bg-yellow-500 hover:bg-yellow-600 w-full">
+                      <Filter className="mr-2" size={16} />
+                      Apply Filters
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {feedbackError && (
+              <Alert className="border-red-200 bg-red-50">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription className="text-red-800">
+                  {feedbackError}
+                  <Button variant="link" className="ml-2 p-0 h-auto text-red-800 underline" onClick={fetchCandidateFeedback}>
+                    Try again
+                  </Button>
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {isFeedbackLoading && (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-yellow-600 mr-3" />
+                <span className="text-gray-600">Loading feedback...</span>
+              </div>
+            )}
+
+            {!isFeedbackLoading && (
+              <Card className="border-0 shadow-xl">
+                <CardContent className="p-0">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Candidate</TableHead>
+                        <TableHead>Type</TableHead>
+                        <TableHead>Rating</TableHead>
+                        <TableHead>Comment</TableHead>
+                        <TableHead>Submitted By</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Date</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {candidateFeedback.map((feedback) => (
+                        <TableRow key={feedback._id} className="hover:bg-gray-50">
+                          <TableCell className="font-medium">
+                            <div className="flex items-center gap-2">
+                              {(feedback as any).candidate?.personalInfo?.profilePhoto && (
+                                <Avatar className="h-8 w-8">
+                                  <AvatarImage src={(feedback as any).candidate.personalInfo.profilePhoto} />
+                                  <AvatarFallback>
+                                    {((feedback as any).candidate?.personalInfo?.fullName || 'C').charAt(0)}
+                                  </AvatarFallback>
+                                </Avatar>
+                              )}
+                              <span>{(feedback as any).candidate?.personalInfo?.fullName || 'Unknown Candidate'}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={
+                              feedback.type === 'support' ? 'default' :
+                              feedback.type === 'concern' ? 'destructive' :
+                              feedback.type === 'question' ? 'secondary' : 'outline'
+                            }>
+                              {feedback.type}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1">
+                              {[1, 2, 3, 4, 5].map((star) => (
+                                <Star
+                                  key={star}
+                                  size={14}
+                                  className={star <= feedback.rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}
+                                />
+                              ))}
+                            </div>
+                          </TableCell>
+                          <TableCell className="max-w-xs truncate" title={feedback.comment}>
+                            {feedback.comment.substring(0, 50)}...
+                          </TableCell>
+                          <TableCell>
+                            {feedback.anonymous ? (
+                              <span className="text-gray-400 italic">Anonymous</span>
+                            ) : (
+                              <div>
+                                <p className="font-medium">{feedback.name || 'N/A'}</p>
+                                <p className="text-xs text-gray-500">{feedback.email}</p>
+                              </div>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={
+                              feedback.status === 'approved' ? 'default' :
+                              feedback.status === 'rejected' ? 'destructive' : 'secondary'
+                            }>
+                              {feedback.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {new Date(feedback.createdAt).toLocaleDateString()}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex items-center justify-end space-x-2">
+                              {feedback.status === 'pending' && (
+                                <>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleUpdateFeedbackStatus(feedback._id, 'approved')}
+                                    className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                                    title="Approve"
+                                  >
+                                    <CheckCircle size={14} />
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleUpdateFeedbackStatus(feedback._id, 'rejected')}
+                                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                    title="Reject"
+                                  >
+                                    <XCircle size={14} />
+                                  </Button>
+                                </>
+                              )}
+                              {feedback.status !== 'pending' && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleUpdateFeedbackStatus(feedback._id, 'pending')}
+                                  className="text-yellow-600 hover:text-yellow-700 hover:bg-yellow-50"
+                                  title="Set Pending"
+                                >
+                                  <AlertCircle size={14} />
+                                </Button>
+                              )}
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleDeleteFeedback(feedback._id)}
+                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                title="Delete"
+                              >
+                                <Trash2 size={14} />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            )}
+
+            {!isFeedbackLoading && candidateFeedback.length === 0 && !feedbackError && (
+              <div className="text-center py-12">
+                <MessageCircle size={64} className="mx-auto text-gray-400 mb-4" />
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">No feedback found</h3>
+                <p className="text-gray-600">
+                  {feedbackFilter || feedbackCandidateFilter 
+                    ? 'No feedback matches your current filters' 
+                    : 'No feedback has been submitted yet'
+                  }
+                </p>
               </div>
             )}
           </TabsContent>
@@ -1350,388 +2107,742 @@ const AdminDashboard: React.FC = () => {
                 <h2 className="text-2xl font-bold text-gray-900">Candidates Management</h2>
                 <p className="text-gray-600">Manage parliamentary and local candidates</p>
               </div>
-              <Dialog open={isCandidateDialogOpen} onOpenChange={setIsCandidateDialogOpen}>
+              <Dialog open={isCandidateDialogOpen} onOpenChange={(open) => {
+                if (open) {
+                  resetCandidateForm();
+                }
+                setIsCandidateDialogOpen(open);
+              }}>
                 <DialogTrigger asChild>
                   <Button className="bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700 shadow-lg hover:shadow-xl transition-all duration-300 px-6 py-3">
                     <Plus className="mr-2" size={18} />
-                    Add New Candidate
+                    नयाँ उम्मेदवार थप्नुहोस्
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-4xl max-h-[95vh] overflow-y-auto">
+                <DialogContent className="max-w-5xl max-h-[95vh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-red-600 to-pink-600 bg-clip-text text-transparent">
-                      Add New Candidate
+                      नयाँ उम्मेदवार दर्ता फारम
                     </DialogTitle>
                   </DialogHeader>
                   <div className="space-y-6">
-                    {/* Personal Information */}
+                    {/* Section 1: Personal Information */}
                     <div className="bg-gradient-to-r from-red-50 to-pink-50 p-4 rounded-lg">
-                      <h3 className="text-lg font-semibold mb-4 text-gray-800">Personal Information</h3>
+                      <h3 className="text-lg font-semibold mb-4 text-gray-800">१. आधारभूत व्यक्तिगत विवरण</h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <Label htmlFor="fullName">Full Name *</Label>
+                          <Label>पूरा नाम (English) *</Label>
                           <Input
-                            id="fullName"
-                            value={candidateForm.fullName}
-                            onChange={(e) => setCandidateForm({...candidateForm, fullName: e.target.value})}
-                            placeholder="Enter full name"
+                            value={candidateForm.personalInfo.fullName}
+                            onChange={(e) => setCandidateForm({...candidateForm, personalInfo: {...candidateForm.personalInfo, fullName: e.target.value}})}
+                            placeholder="Full Name in English"
                           />
                         </div>
                         <div>
-                          <Label htmlFor="position">Position *</Label>
-                          <Select
-                            value={candidateForm.position}
-                            onValueChange={(value) => setCandidateForm({...candidateForm, position: value})}
-                          >
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="Parliamentary">Parliamentary</SelectItem>
-                              <SelectItem value="Provincial">Provincial</SelectItem>
-                              <SelectItem value="Local">Local</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div>
-                          <Label htmlFor="constituency">Constituency *</Label>
+                          <Label>पूरा नाम (नेपाली) *</Label>
                           <Input
-                            id="constituency"
-                            value={candidateForm.constituency}
-                            onChange={(e) => setCandidateForm({...candidateForm, constituency: e.target.value})}
-                            placeholder="e.g., Kathmandu-1"
+                            value={candidateForm.personalInfo.fullName_np}
+                            onChange={(e) => setCandidateForm({...candidateForm, personalInfo: {...candidateForm.personalInfo, fullName_np: e.target.value}})}
+                            placeholder="पूरा नाम नेपालीमा"
                           />
                         </div>
                         <div>
-                          <Label htmlFor="dateOfBirth">Date of Birth *</Label>
+                          <Label>उपनाम / चिनिने नाम (English)</Label>
                           <Input
-                            id="dateOfBirth"
+                            value={candidateForm.personalInfo.nickname}
+                            onChange={(e) => setCandidateForm({...candidateForm, personalInfo: {...candidateForm.personalInfo, nickname: e.target.value}})}
+                            placeholder="Nickname"
+                          />
+                        </div>
+                        <div>
+                          <Label>उपनाम / चिनिने नाम (नेपाली)</Label>
+                          <Input
+                            value={candidateForm.personalInfo.nickname_np}
+                            onChange={(e) => setCandidateForm({...candidateForm, personalInfo: {...candidateForm.personalInfo, nickname_np: e.target.value}})}
+                            placeholder="उपनाम"
+                          />
+                        </div>
+                        <div>
+                          <Label>जन्म मिति *</Label>
+                          <Input
                             type="date"
-                            value={candidateForm.dateOfBirth}
-                            onChange={(e) => setCandidateForm({...candidateForm, dateOfBirth: e.target.value})}
+                            value={candidateForm.personalInfo.dateOfBirth}
+                            onChange={(e) => setCandidateForm({...candidateForm, personalInfo: {...candidateForm.personalInfo, dateOfBirth: e.target.value}})}
                           />
                         </div>
                         <div>
-                          <Label htmlFor="gender">Gender</Label>
+                          <Label>लिङ्ग *</Label>
                           <Select
-                            value={candidateForm.gender}
-                            onValueChange={(value) => setCandidateForm({...candidateForm, gender: value})}
+                            value={candidateForm.personalInfo.gender}
+                            onValueChange={(value) => setCandidateForm({...candidateForm, personalInfo: {...candidateForm.personalInfo, gender: value, gender_np: value === 'Male' ? 'पुरुष' : value === 'Female' ? 'महिला' : 'अन्य'}})}
                           >
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="Male">Male</SelectItem>
-                              <SelectItem value="Female">Female</SelectItem>
-                              <SelectItem value="Other">Other</SelectItem>
+                              <SelectItem value="Male">पुरुष (Male)</SelectItem>
+                              <SelectItem value="Female">महिला (Female)</SelectItem>
+                              <SelectItem value="Other">अन्य (Other)</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
                         <div>
-                          <Label htmlFor="contactNumber">Contact Number</Label>
+                          <Label>वैवाहिक स्थिति</Label>
                           <Input
-                            id="contactNumber"
-                            value={candidateForm.contactNumber}
-                            onChange={(e) => setCandidateForm({...candidateForm, contactNumber: e.target.value})}
-                            placeholder="+977-9801234567"
+                            value={candidateForm.personalInfo.maritalStatus}
+                            onChange={(e) => setCandidateForm({...candidateForm, personalInfo: {...candidateForm.personalInfo, maritalStatus: e.target.value}})}
+                            placeholder="Marital Status"
                           />
                         </div>
                         <div>
-                          <Label htmlFor="email">Email</Label>
+                          <Label>वैवाहिक स्थिति (नेपाली)</Label>
                           <Input
-                            id="email"
+                            value={candidateForm.personalInfo.maritalStatus_np}
+                            onChange={(e) => setCandidateForm({...candidateForm, personalInfo: {...candidateForm.personalInfo, maritalStatus_np: e.target.value}})}
+                            placeholder="विवाहित / अविवाहित"
+                          />
+                        </div>
+                        <div>
+                          <Label>स्थायी ठेगाना (English)</Label>
+                          <Input
+                            value={candidateForm.personalInfo.permanentAddress}
+                            onChange={(e) => setCandidateForm({...candidateForm, personalInfo: {...candidateForm.personalInfo, permanentAddress: e.target.value}})}
+                            placeholder="Permanent Address"
+                          />
+                        </div>
+                        <div>
+                          <Label>स्थायी ठेगाना (नेपाली)</Label>
+                          <Input
+                            value={candidateForm.personalInfo.permanentAddress_np}
+                            onChange={(e) => setCandidateForm({...candidateForm, personalInfo: {...candidateForm.personalInfo, permanentAddress_np: e.target.value}})}
+                            placeholder="स्थायी ठेगाना"
+                          />
+                        </div>
+                        <div>
+                          <Label>हालको ठेगाना (English)</Label>
+                          <Input
+                            value={candidateForm.personalInfo.currentAddress}
+                            onChange={(e) => setCandidateForm({...candidateForm, personalInfo: {...candidateForm.personalInfo, currentAddress: e.target.value}})}
+                            placeholder="Current Address"
+                          />
+                        </div>
+                        <div>
+                          <Label>हालको ठेगाना (नेपाली)</Label>
+                          <Input
+                            value={candidateForm.personalInfo.currentAddress_np}
+                            onChange={(e) => setCandidateForm({...candidateForm, personalInfo: {...candidateForm.personalInfo, currentAddress_np: e.target.value}})}
+                            placeholder="हालको ठेगाना"
+                          />
+                        </div>
+                        <div>
+                          <Label>नागरिकता नं.</Label>
+                          <Input
+                            value={candidateForm.personalInfo.citizenshipNumber}
+                            onChange={(e) => setCandidateForm({...candidateForm, personalInfo: {...candidateForm.personalInfo, citizenshipNumber: e.target.value}})}
+                            placeholder="Citizenship Number"
+                          />
+                        </div>
+                        <div>
+                          <Label>जारी जिल्ला</Label>
+                          <Input
+                            value={candidateForm.personalInfo.citizenshipIssuedDistrict}
+                            onChange={(e) => setCandidateForm({...candidateForm, personalInfo: {...candidateForm.personalInfo, citizenshipIssuedDistrict: e.target.value}})}
+                            placeholder="Issued District"
+                          />
+                        </div>
+                        <div>
+                          <Label>सम्पर्क नम्बर *</Label>
+                          <Input
+                            value={candidateForm.personalInfo.contactNumber}
+                            onChange={(e) => setCandidateForm({...candidateForm, personalInfo: {...candidateForm.personalInfo, contactNumber: e.target.value}})}
+                            placeholder="+977-98XXXXXXXX"
+                          />
+                        </div>
+                        <div>
+                          <Label>इमेल</Label>
+                          <Input
                             type="email"
-                            value={candidateForm.email}
-                            onChange={(e) => setCandidateForm({...candidateForm, email: e.target.value})}
-                            placeholder="candidate@email.com"
+                            value={candidateForm.personalInfo.email}
+                            onChange={(e) => setCandidateForm({...candidateForm, personalInfo: {...candidateForm.personalInfo, email: e.target.value}})}
+                            placeholder="email@example.com"
                           />
                         </div>
                         <div>
-                          <Label htmlFor="profilePhoto">Profile Photo URL</Label>
+                          <Label>वेबसाइट</Label>
                           <Input
-                            id="profilePhoto"
-                            value={candidateForm.profilePhoto}
-                            onChange={(e) => setCandidateForm({...candidateForm, profilePhoto: e.target.value})}
+                            value={candidateForm.personalInfo.website}
+                            onChange={(e) => setCandidateForm({...candidateForm, personalInfo: {...candidateForm.personalInfo, website: e.target.value}})}
                             placeholder="https://..."
+                          />
+                        </div>
+                        <div>
+                          <Label>प्रोफाइल फोटो</Label>
+                          <Input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => setCandidateForm({...candidateForm, profilePhotoFile: e.target.files?.[0] || null})}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Section 2: Political Information */}
+                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg">
+                      <h3 className="text-lg font-semibold mb-4 text-gray-800">२. राजनीतिक परिचय</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <Label>पार्टीको नाम</Label>
+                          <Input
+                            value={candidateForm.politicalInfo.partyName}
+                            onChange={(e) => setCandidateForm({...candidateForm, politicalInfo: {...candidateForm.politicalInfo, partyName: e.target.value}})}
+                            placeholder="Party Name"
+                          />
+                        </div>
+                        <div>
+                          <Label>पार्टीको नाम (नेपाली)</Label>
+                          <Input
+                            value={candidateForm.politicalInfo.partyName_np}
+                            onChange={(e) => setCandidateForm({...candidateForm, politicalInfo: {...candidateForm.politicalInfo, partyName_np: e.target.value}})}
+                            placeholder="नेपाल कम्युनिष्ट पार्टी"
+                          />
+                        </div>
+                        <div>
+                          <Label>हालको पद</Label>
+                          <Input
+                            value={candidateForm.politicalInfo.currentPosition}
+                            onChange={(e) => setCandidateForm({...candidateForm, politicalInfo: {...candidateForm.politicalInfo, currentPosition: e.target.value}})}
+                            placeholder="Current Position"
+                          />
+                        </div>
+                        <div>
+                          <Label>हालको पद (नेपाली)</Label>
+                          <Input
+                            value={candidateForm.politicalInfo.currentPosition_np}
+                            onChange={(e) => setCandidateForm({...candidateForm, politicalInfo: {...candidateForm.politicalInfo, currentPosition_np: e.target.value}})}
+                            placeholder="हालको पद"
+                          />
+                        </div>
+                        <div>
+                          <Label>उम्मेदवारीको तह *</Label>
+                          <Select
+                            value={candidateForm.politicalInfo.candidacyLevel}
+                            onValueChange={(value) => setCandidateForm({...candidateForm, politicalInfo: {...candidateForm.politicalInfo, candidacyLevel: value}})}
+                          >
+                            <SelectTrigger><SelectValue placeholder="तह छान्नुहोस्" /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Federal">संघीय (Federal)</SelectItem>
+                              <SelectItem value="Provincial">प्रदेश (Provincial)</SelectItem>
+                              <SelectItem value="Local">स्थानीय (Local)</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label>निर्वाचन क्षेत्र नम्बर</Label>
+                          <Input
+                            value={candidateForm.politicalInfo.constituencyNumber}
+                            onChange={(e) => setCandidateForm({...candidateForm, politicalInfo: {...candidateForm.politicalInfo, constituencyNumber: e.target.value}})}
+                            placeholder="1, 2, 3..."
+                          />
+                        </div>
+                        <div>
+                          <Label>निर्वाचन क्षेत्र (English) *</Label>
+                          <Input
+                            value={candidateForm.politicalInfo.constituency}
+                            onChange={(e) => setCandidateForm({...candidateForm, politicalInfo: {...candidateForm.politicalInfo, constituency: e.target.value}})}
+                            placeholder="Kathmandu-1"
+                          />
+                        </div>
+                        <div>
+                          <Label>निर्वाचन क्षेत्र (नेपाली) *</Label>
+                          <Input
+                            value={candidateForm.politicalInfo.constituency_np}
+                            onChange={(e) => setCandidateForm({...candidateForm, politicalInfo: {...candidateForm.politicalInfo, constituency_np: e.target.value}})}
+                            placeholder="काठमाडौं-१"
+                          />
+                        </div>
+                        <div>
+                          <Label>चुनाव चिन्ह</Label>
+                          <Input
+                            value={candidateForm.politicalInfo.electionSymbol}
+                            onChange={(e) => setCandidateForm({...candidateForm, politicalInfo: {...candidateForm.politicalInfo, electionSymbol: e.target.value}})}
+                            placeholder="Election Symbol"
+                          />
+                        </div>
+                        <div>
+                          <Label>चुनाव चिन्ह (नेपाली)</Label>
+                          <Input
+                            value={candidateForm.politicalInfo.electionSymbol_np}
+                            onChange={(e) => setCandidateForm({...candidateForm, politicalInfo: {...candidateForm.politicalInfo, electionSymbol_np: e.target.value}})}
+                            placeholder="चुनाव चिन्ह"
+                          />
+                        </div>
+                        <div>
+                          <Label>चुनाव चिन्ह फोटो</Label>
+                          <Input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => setCandidateForm({...candidateForm, electionSymbolImageFile: e.target.files?.[0] || null})}
+                          />
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <input
+                            type="checkbox"
+                            checked={candidateForm.politicalInfo.isFirstTimeCandidate}
+                            onChange={(e) => setCandidateForm({...candidateForm, politicalInfo: {...candidateForm.politicalInfo, isFirstTimeCandidate: e.target.checked}})}
+                          />
+                          <Label>पहिलो पटक उम्मेदवार हो?</Label>
+                        </div>
+                        <div className="md:col-span-2">
+                          <Label>पहिलेको निर्वाचन इतिहास</Label>
+                          <Textarea
+                            value={candidateForm.politicalInfo.previousElectionHistory}
+                            onChange={(e) => setCandidateForm({...candidateForm, politicalInfo: {...candidateForm.politicalInfo, previousElectionHistory: e.target.value}})}
+                            placeholder="Previous election history..."
+                            rows={2}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Section 3: Education */}
+                    <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-4 rounded-lg">
+                      <h3 className="text-lg font-semibold mb-4 text-gray-800">३. शैक्षिक योग्यता</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <Label>उच्चतम शैक्षिक योग्यता</Label>
+                          <Input
+                            value={candidateForm.education.highestQualification}
+                            onChange={(e) => setCandidateForm({...candidateForm, education: {...candidateForm.education, highestQualification: e.target.value}})}
+                            placeholder="Masters, Bachelors, etc."
+                          />
+                        </div>
+                        <div>
+                          <Label>उच्चतम शैक्षिक योग्यता (नेपाली)</Label>
+                          <Input
+                            value={candidateForm.education.highestQualification_np}
+                            onChange={(e) => setCandidateForm({...candidateForm, education: {...candidateForm.education, highestQualification_np: e.target.value}})}
+                            placeholder="स्नातकोत्तर, स्नातक, आदि"
+                          />
+                        </div>
+                        <div>
+                          <Label>विषय</Label>
+                          <Input
+                            value={candidateForm.education.subject}
+                            onChange={(e) => setCandidateForm({...candidateForm, education: {...candidateForm.education, subject: e.target.value}})}
+                            placeholder="Subject/Major"
+                          />
+                        </div>
+                        <div>
+                          <Label>विषय (नेपाली)</Label>
+                          <Input
+                            value={candidateForm.education.subject_np}
+                            onChange={(e) => setCandidateForm({...candidateForm, education: {...candidateForm.education, subject_np: e.target.value}})}
+                            placeholder="विषय"
+                          />
+                        </div>
+                        <div>
+                          <Label>शिक्षण संस्था</Label>
+                          <Input
+                            value={candidateForm.education.institution}
+                            onChange={(e) => setCandidateForm({...candidateForm, education: {...candidateForm.education, institution: e.target.value}})}
+                            placeholder="Institution Name"
+                          />
+                        </div>
+                        <div>
+                          <Label>शिक्षण संस्था (नेपाली)</Label>
+                          <Input
+                            value={candidateForm.education.institution_np}
+                            onChange={(e) => setCandidateForm({...candidateForm, education: {...candidateForm.education, institution_np: e.target.value}})}
+                            placeholder="संस्थाको नाम"
+                          />
+                        </div>
+                        <div>
+                          <Label>देश</Label>
+                          <Input
+                            value={candidateForm.education.country}
+                            onChange={(e) => setCandidateForm({...candidateForm, education: {...candidateForm.education, country: e.target.value}})}
+                            placeholder="Nepal"
+                          />
+                        </div>
+                        <div>
+                          <Label>देश (नेपाली)</Label>
+                          <Input
+                            value={candidateForm.education.country_np}
+                            onChange={(e) => setCandidateForm({...candidateForm, education: {...candidateForm.education, country_np: e.target.value}})}
+                            placeholder="नेपाल"
                           />
                         </div>
                         <div className="md:col-span-2">
-                          <Label htmlFor="address">Address</Label>
-                          <Input
-                            id="address"
-                            value={candidateForm.address}
-                            onChange={(e) => setCandidateForm({...candidateForm, address: e.target.value})}
-                            placeholder="Complete address"
+                          <Label>थप तालिम / सर्टिफिकेट</Label>
+                          <Textarea
+                            value={candidateForm.education.additionalTraining}
+                            onChange={(e) => setCandidateForm({...candidateForm, education: {...candidateForm.education, additionalTraining: e.target.value}})}
+                            placeholder="Additional training or certifications..."
+                            rows={2}
                           />
                         </div>
                       </div>
                     </div>
 
-                    {/* Biography */}
-                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg">
-                      <h3 className="text-lg font-semibold mb-4 text-gray-800">Biography</h3>
-                      <div className="space-y-4">
+                    {/* Section 4: Professional Experience */}
+                    <div className="bg-gradient-to-r from-yellow-50 to-orange-50 p-4 rounded-lg">
+                      <h3 className="text-lg font-semibold mb-4 text-gray-800">४. पेशागत अनुभव</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <Label htmlFor="bio_en">Biography</Label>
-                          <Textarea
-                            id="bio_en"
-                            value={candidateForm.bio_en}
-                            onChange={(e) => setCandidateForm({...candidateForm, bio_en: e.target.value})}
-                            placeholder="Write a brief biography..."
-                            rows={4}
+                          <Label>हालको पेशा</Label>
+                          <Input
+                            value={candidateForm.professionalExperience.currentProfession}
+                            onChange={(e) => setCandidateForm({...candidateForm, professionalExperience: {...candidateForm.professionalExperience, currentProfession: e.target.value}})}
+                            placeholder="Current Profession"
                           />
                         </div>
                         <div>
-                          <Label htmlFor="backgroundEducation">Education Background</Label>
-                          <Textarea
-                            id="backgroundEducation"
-                            value={candidateForm.backgroundEducation}
-                            onChange={(e) => setCandidateForm({...candidateForm, backgroundEducation: e.target.value})}
-                            placeholder="Educational qualifications..."
-                            rows={3}
+                          <Label>हालको पेशा (नेपाली)</Label>
+                          <Input
+                            value={candidateForm.professionalExperience.currentProfession_np}
+                            onChange={(e) => setCandidateForm({...candidateForm, professionalExperience: {...candidateForm.professionalExperience, currentProfession_np: e.target.value}})}
+                            placeholder="हालको पेशा"
                           />
                         </div>
-                        <div>
-                          <Label htmlFor="experience">Experience</Label>
+                        <div className="md:col-span-2">
+                          <Label>अघिल्लो पेशागत अनुभव</Label>
                           <Textarea
-                            id="experience"
-                            value={candidateForm.experience}
-                            onChange={(e) => setCandidateForm({...candidateForm, experience: e.target.value})}
-                            placeholder="Political and professional experience..."
-                            rows={3}
+                            value={candidateForm.professionalExperience.previousExperience}
+                            onChange={(e) => setCandidateForm({...candidateForm, professionalExperience: {...candidateForm.professionalExperience, previousExperience: e.target.value}})}
+                            placeholder="Previous work experience..."
+                            rows={2}
+                          />
+                        </div>
+                        <div className="md:col-span-2">
+                          <Label>संस्था/संगठनमा जिम्मेवारी</Label>
+                          <Textarea
+                            value={candidateForm.professionalExperience.organizationResponsibility}
+                            onChange={(e) => setCandidateForm({...candidateForm, professionalExperience: {...candidateForm.professionalExperience, organizationResponsibility: e.target.value}})}
+                            placeholder="Organization responsibilities..."
+                            rows={2}
+                          />
+                        </div>
+                        <div className="md:col-span-2">
+                          <Label>नेतृत्व अनुभव</Label>
+                          <Textarea
+                            value={candidateForm.professionalExperience.leadershipExperience}
+                            onChange={(e) => setCandidateForm({...candidateForm, professionalExperience: {...candidateForm.professionalExperience, leadershipExperience: e.target.value}})}
+                            placeholder="Leadership experience..."
+                            rows={2}
                           />
                         </div>
                       </div>
                     </div>
 
-                    {/* Manifesto */}
-                    <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-4 rounded-lg">
-                      <h3 className="text-lg font-semibold mb-4 text-gray-800">Manifesto</h3>
-                      <div className="space-y-4">
+                    {/* Section 5: Political Experience */}
+                    <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-4 rounded-lg">
+                      <h3 className="text-lg font-semibold mb-4 text-gray-800">५. राजनीतिक अनुभव</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <Label htmlFor="manifestoTitle">Manifesto Title</Label>
+                          <Label>पार्टी प्रवेश वर्ष</Label>
                           <Input
-                            id="manifestoTitle"
-                            value={candidateForm.manifestoTitle}
-                            onChange={(e) => setCandidateForm({...candidateForm, manifestoTitle: e.target.value})}
-                            placeholder="Main manifesto title"
+                            value={candidateForm.politicalExperience.partyJoinYear}
+                            onChange={(e) => setCandidateForm({...candidateForm, politicalExperience: {...candidateForm.politicalExperience, partyJoinYear: e.target.value}})}
+                            placeholder="2050, 2060..."
                           />
                         </div>
                         <div>
-                          <Label htmlFor="manifestoContent">Manifesto Content</Label>
+                          <Label>आन्दोलनमा भूमिका</Label>
+                          <Input
+                            value={candidateForm.politicalExperience.movementRole}
+                            onChange={(e) => setCandidateForm({...candidateForm, politicalExperience: {...candidateForm.politicalExperience, movementRole: e.target.value}})}
+                            placeholder="Role in movements"
+                          />
+                        </div>
+                        <div className="md:col-span-2">
+                          <Label>अघिल्लो जनप्रतिनिधि पद</Label>
                           <Textarea
-                            id="manifestoContent"
-                            value={candidateForm.manifestoContent}
-                            onChange={(e) => setCandidateForm({...candidateForm, manifestoContent: e.target.value})}
-                            placeholder="Detailed manifesto content..."
-                            rows={5}
+                            value={candidateForm.politicalExperience.previousRepresentativePosition}
+                            onChange={(e) => setCandidateForm({...candidateForm, politicalExperience: {...candidateForm.politicalExperience, previousRepresentativePosition: e.target.value}})}
+                            placeholder="Previous representative positions..."
+                            rows={2}
+                          />
+                        </div>
+                        <div className="md:col-span-2">
+                          <Label>प्रमुख उपलब्धिहरू</Label>
+                          <Textarea
+                            value={candidateForm.politicalExperience.majorAchievements}
+                            onChange={(e) => setCandidateForm({...candidateForm, politicalExperience: {...candidateForm.politicalExperience, majorAchievements: e.target.value}})}
+                            placeholder="Major achievements..."
+                            rows={2}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Section 6: Social Engagement */}
+                    <div className="bg-gradient-to-r from-teal-50 to-cyan-50 p-4 rounded-lg">
+                      <h3 className="text-lg font-semibold mb-4 text-gray-800">६. सामाजिक संलग्नता</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="md:col-span-2">
+                          <Label>गैरसरकारी संस्था संलग्नता</Label>
+                          <Textarea
+                            value={candidateForm.socialEngagement.ngoInvolvement}
+                            onChange={(e) => setCandidateForm({...candidateForm, socialEngagement: {...candidateForm.socialEngagement, ngoInvolvement: e.target.value}})}
+                            placeholder="NGO involvement..."
+                            rows={2}
+                          />
+                        </div>
+                        <div className="md:col-span-2">
+                          <Label>क्षेत्रगत कार्य (शिक्षा, स्वास्थ्य, पर्यावरण, आदि)</Label>
+                          <Textarea
+                            value={candidateForm.socialEngagement.sectorWork}
+                            onChange={(e) => setCandidateForm({...candidateForm, socialEngagement: {...candidateForm.socialEngagement, sectorWork: e.target.value}})}
+                            placeholder="Sector-wise work..."
+                            rows={2}
+                          />
+                        </div>
+                        <div className="md:col-span-2">
+                          <Label>पुरस्कार / सम्मान</Label>
+                          <Textarea
+                            value={candidateForm.socialEngagement.awardsHonors}
+                            onChange={(e) => setCandidateForm({...candidateForm, socialEngagement: {...candidateForm.socialEngagement, awardsHonors: e.target.value}})}
+                            placeholder="Awards and honors..."
+                            rows={2}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Section 7: Financial Information */}
+                    <div className="bg-gradient-to-r from-amber-50 to-yellow-50 p-4 rounded-lg">
+                      <h3 className="text-lg font-semibold mb-4 text-gray-800">७. आर्थिक विवरण</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <Label>चल सम्पत्ति</Label>
+                          <Textarea
+                            value={candidateForm.financialInfo.movableAssets}
+                            onChange={(e) => setCandidateForm({...candidateForm, financialInfo: {...candidateForm.financialInfo, movableAssets: e.target.value}})}
+                            placeholder="Movable assets..."
+                            rows={2}
                           />
                         </div>
                         <div>
-                          <Label htmlFor="manifestoBrochureFile">Upload Manifesto PDF/Brochure</Label>
-                          <Input
-                            id="manifestoBrochureFile"
-                            type="file"
-                            accept=".pdf,.jpg,.jpeg,.png"
-                            onChange={(e) => {
-                              const file = e.target.files?.[0] || null;
-                              setCandidateForm({...candidateForm, manifestoBrochureFile: file});
-                            }}
-                            className="cursor-pointer"
+                          <Label>अचल सम्पत्ति</Label>
+                          <Textarea
+                            value={candidateForm.financialInfo.immovableAssets}
+                            onChange={(e) => setCandidateForm({...candidateForm, financialInfo: {...candidateForm.financialInfo, immovableAssets: e.target.value}})}
+                            placeholder="Immovable assets..."
+                            rows={2}
                           />
-                          {candidateForm.manifestoBrochure && (
-                            <p className="text-sm text-gray-600 mt-1">Current: {candidateForm.manifestoBrochure}</p>
-                          )}
                         </div>
                         <div>
-                          <Label htmlFor="manifestoBrochure">Or provide URL</Label>
+                          <Label>वार्षिक आय स्रोत</Label>
                           <Input
-                            id="manifestoBrochure"
-                            value={candidateForm.manifestoBrochure}
-                            onChange={(e) => setCandidateForm({...candidateForm, manifestoBrochure: e.target.value})}
-                            placeholder="https://..."
+                            value={candidateForm.financialInfo.annualIncomeSource}
+                            onChange={(e) => setCandidateForm({...candidateForm, financialInfo: {...candidateForm.financialInfo, annualIncomeSource: e.target.value}})}
+                            placeholder="Annual income source"
+                          />
+                        </div>
+                        <div>
+                          <Label>बैंक ऋण</Label>
+                          <Input
+                            value={candidateForm.financialInfo.bankLoans}
+                            onChange={(e) => setCandidateForm({...candidateForm, financialInfo: {...candidateForm.financialInfo, bankLoans: e.target.value}})}
+                            placeholder="Bank loans if any"
+                          />
+                        </div>
+                        <div className="md:col-span-2">
+                          <Label>कर चुक्ता स्थिति</Label>
+                          <Input
+                            value={candidateForm.financialInfo.taxStatus}
+                            onChange={(e) => setCandidateForm({...candidateForm, financialInfo: {...candidateForm.financialInfo, taxStatus: e.target.value}})}
+                            placeholder="Tax clearance status"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Section 8: Legal Status */}
+                    <div className="bg-gradient-to-r from-rose-50 to-red-50 p-4 rounded-lg">
+                      <h3 className="text-lg font-semibold mb-4 text-gray-800">८. कानुनी अवस्था</h3>
+                      <div className="grid grid-cols-1 gap-4">
+                        <div className="flex items-center space-x-2">
+                          <input
+                            type="checkbox"
+                            checked={candidateForm.legalStatus.hasCriminalCase}
+                            onChange={(e) => setCandidateForm({...candidateForm, legalStatus: {...candidateForm.legalStatus, hasCriminalCase: e.target.checked}})}
+                          />
+                          <Label>के कुनै फौजदारी मुद्दा छ?</Label>
+                        </div>
+                        {candidateForm.legalStatus.hasCriminalCase && (
+                          <div>
+                            <Label>मुद्दाको विवरण</Label>
+                            <Textarea
+                              value={candidateForm.legalStatus.caseDetails}
+                              onChange={(e) => setCandidateForm({...candidateForm, legalStatus: {...candidateForm.legalStatus, caseDetails: e.target.value}})}
+                              placeholder="Case details..."
+                              rows={2}
+                            />
+                          </div>
+                        )}
+                        <div>
+                          <Label>योग्यता घोषणा</Label>
+                          <Textarea
+                            value={candidateForm.legalStatus.eligibilityDeclaration}
+                            onChange={(e) => setCandidateForm({...candidateForm, legalStatus: {...candidateForm.legalStatus, eligibilityDeclaration: e.target.value}})}
+                            placeholder="Declaration of eligibility..."
+                            rows={2}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Section 9: Vision & Goals */}
+                    <div className="bg-gradient-to-r from-indigo-50 to-violet-50 p-4 rounded-lg">
+                      <h3 className="text-lg font-semibold mb-4 text-gray-800">९. दृष्टि र लक्ष्य</h3>
+                      <div className="grid grid-cols-1 gap-4">
+                        <div>
+                          <Label>दृष्टि (Vision)</Label>
+                          <Textarea
+                            value={candidateForm.visionGoals.vision}
+                            onChange={(e) => setCandidateForm({...candidateForm, visionGoals: {...candidateForm.visionGoals, vision: e.target.value}})}
+                            placeholder="Your vision..."
+                            rows={3}
+                          />
+                        </div>
+                        <div>
+                          <Label>दृष्टि (नेपाली)</Label>
+                          <Textarea
+                            value={candidateForm.visionGoals.vision_np}
+                            onChange={(e) => setCandidateForm({...candidateForm, visionGoals: {...candidateForm.visionGoals, vision_np: e.target.value}})}
+                            placeholder="तपाईंको दृष्टि..."
+                            rows={3}
+                          />
+                        </div>
+                        <div>
+                          <Label>लक्ष्यहरू (Goals)</Label>
+                          <Textarea
+                            value={candidateForm.visionGoals.goals}
+                            onChange={(e) => setCandidateForm({...candidateForm, visionGoals: {...candidateForm.visionGoals, goals: e.target.value}})}
+                            placeholder="Your goals..."
+                            rows={3}
+                          />
+                        </div>
+                        <div>
+                          <Label>लक्ष्यहरू (नेपाली)</Label>
+                          <Textarea
+                            value={candidateForm.visionGoals.goals_np}
+                            onChange={(e) => setCandidateForm({...candidateForm, visionGoals: {...candidateForm.visionGoals, goals_np: e.target.value}})}
+                            placeholder="तपाईंका लक्ष्यहरू..."
+                            rows={3}
+                          />
+                        </div>
+                        <div>
+                          <Label>घोषणा / प्रतिज्ञा</Label>
+                          <Textarea
+                            value={candidateForm.visionGoals.declaration}
+                            onChange={(e) => setCandidateForm({...candidateForm, visionGoals: {...candidateForm.visionGoals, declaration: e.target.value}})}
+                            placeholder="Declaration/Pledge..."
+                            rows={2}
                           />
                         </div>
                       </div>
                     </div>
 
                     {/* Social Media */}
-                    <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-4 rounded-lg">
-                      <h3 className="text-lg font-semibold mb-4 text-gray-800">Social Media & Links</h3>
+                    <div className="bg-gradient-to-r from-sky-50 to-blue-50 p-4 rounded-lg">
+                      <h3 className="text-lg font-semibold mb-4 text-gray-800">सामाजिक सञ्जाल</h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <Label htmlFor="facebook">Facebook</Label>
+                          <Label>Facebook</Label>
                           <Input
-                            id="facebook"
-                            value={candidateForm.facebook}
-                            onChange={(e) => setCandidateForm({...candidateForm, facebook: e.target.value})}
+                            value={candidateForm.socialMedia.facebook}
+                            onChange={(e) => setCandidateForm({...candidateForm, socialMedia: {...candidateForm.socialMedia, facebook: e.target.value}})}
                             placeholder="https://facebook.com/..."
                           />
                         </div>
                         <div>
-                          <Label htmlFor="twitter">Twitter/X</Label>
+                          <Label>Twitter/X</Label>
                           <Input
-                            id="twitter"
-                            value={candidateForm.twitter}
-                            onChange={(e) => setCandidateForm({...candidateForm, twitter: e.target.value})}
+                            value={candidateForm.socialMedia.twitter}
+                            onChange={(e) => setCandidateForm({...candidateForm, socialMedia: {...candidateForm.socialMedia, twitter: e.target.value}})}
                             placeholder="https://twitter.com/..."
                           />
                         </div>
                         <div>
-                          <Label htmlFor="instagram">Instagram</Label>
+                          <Label>Instagram</Label>
                           <Input
-                            id="instagram"
-                            value={candidateForm.instagram}
-                            onChange={(e) => setCandidateForm({...candidateForm, instagram: e.target.value})}
+                            value={candidateForm.socialMedia.instagram}
+                            onChange={(e) => setCandidateForm({...candidateForm, socialMedia: {...candidateForm.socialMedia, instagram: e.target.value}})}
                             placeholder="https://instagram.com/..."
                           />
                         </div>
                         <div>
-                          <Label htmlFor="youtube">YouTube</Label>
+                          <Label>YouTube</Label>
                           <Input
-                            id="youtube"
-                            value={candidateForm.youtube}
-                            onChange={(e) => setCandidateForm({...candidateForm, youtube: e.target.value})}
+                            value={candidateForm.socialMedia.youtube}
+                            onChange={(e) => setCandidateForm({...candidateForm, socialMedia: {...candidateForm.socialMedia, youtube: e.target.value}})}
                             placeholder="https://youtube.com/..."
                           />
                         </div>
-                        <div className="md:col-span-2">
-                          <Label htmlFor="website">Website</Label>
+                        <div>
+                          <Label>TikTok</Label>
                           <Input
-                            id="website"
-                            value={candidateForm.website}
-                            onChange={(e) => setCandidateForm({...candidateForm, website: e.target.value})}
-                            placeholder="https://..."
+                            value={candidateForm.socialMedia.tiktok}
+                            onChange={(e) => setCandidateForm({...candidateForm, socialMedia: {...candidateForm.socialMedia, tiktok: e.target.value}})}
+                            placeholder="https://tiktok.com/..."
+                          />
+                        </div>
+                        <div>
+                          <Label>LinkedIn</Label>
+                          <Input
+                            value={candidateForm.socialMedia.linkedin}
+                            onChange={(e) => setCandidateForm({...candidateForm, socialMedia: {...candidateForm.socialMedia, linkedin: e.target.value}})}
+                            placeholder="https://linkedin.com/..."
                           />
                         </div>
                       </div>
                     </div>
 
-                    {/* Achievements */}
-                    <div className="bg-gradient-to-r from-yellow-50 to-orange-50 p-4 rounded-lg">
-                      <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-lg font-semibold text-gray-800">Achievements</h3>
-                        <Button
-                          type="button"
-                          size="sm"
-                          onClick={() => {
-                            setCandidateForm({
-                              ...candidateForm,
-                              achievements: [...candidateForm.achievements, {
-                                achievementTitle_en: '',
-                                achievementDescription_en: '',
-                                achievementDate: '',
-                                achievementCategory: 'Other'
-                              }]
-                            });
-                          }}
-                          className="bg-orange-600 hover:bg-orange-700"
-                        >
-                          <Plus className="h-4 w-4 mr-1" />
-                          Add Achievement
-                        </Button>
-                      </div>
-                      {candidateForm.achievements.length === 0 ? (
-                        <p className="text-sm text-gray-500 text-center py-4">No achievements added yet. Click "Add Achievement" to start.</p>
-                      ) : (
-                        <div className="space-y-4">
-                          {candidateForm.achievements.map((achievement, index) => (
-                            <div key={index} className="border border-orange-200 rounded-lg p-4 bg-white">
-                              <div className="flex items-center justify-between mb-3">
-                                <h4 className="font-medium text-gray-700">Achievement #{index + 1}</h4>
-                                <Button
-                                  type="button"
-                                  size="sm"
-                                  variant="destructive"
-                                  onClick={() => {
-                                    setCandidateForm({
-                                      ...candidateForm,
-                                      achievements: candidateForm.achievements.filter((_, i) => i !== index)
-                                    });
-                                  }}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
-                              <div className="space-y-3">
-                                <div>
-                                  <Label>Title *</Label>
-                                  <Input
-                                    value={achievement.achievementTitle_en}
-                                    onChange={(e) => {
-                                      const updated = [...candidateForm.achievements];
-                                      updated[index].achievementTitle_en = e.target.value;
-                                      setCandidateForm({...candidateForm, achievements: updated});
-                                    }}
-                                    placeholder="Achievement title"
-                                  />
-                                </div>
-                                <div>
-                                  <Label>Description</Label>
-                                  <Textarea
-                                    value={achievement.achievementDescription_en}
-                                    onChange={(e) => {
-                                      const updated = [...candidateForm.achievements];
-                                      updated[index].achievementDescription_en = e.target.value;
-                                      setCandidateForm({...candidateForm, achievements: updated});
-                                    }}
-                                    placeholder="Describe the achievement..."
-                                    rows={2}
-                                  />
-                                </div>
-                                <div className="grid grid-cols-2 gap-3">
-                                  <div>
-                                    <Label>Date</Label>
-                                    <Input
-                                      type="date"
-                                      value={achievement.achievementDate}
-                                      onChange={(e) => {
-                                        const updated = [...candidateForm.achievements];
-                                        updated[index].achievementDate = e.target.value;
-                                        setCandidateForm({...candidateForm, achievements: updated});
-                                      }}
-                                    />
-                                  </div>
-                                  <div>
-                                    <Label>Category</Label>
-                                    <Select
-                                      value={achievement.achievementCategory}
-                                      onValueChange={(value) => {
-                                        const updated = [...candidateForm.achievements];
-                                        updated[index].achievementCategory = value;
-                                        setCandidateForm({...candidateForm, achievements: updated});
-                                      }}
-                                    >
-                                      <SelectTrigger>
-                                        <SelectValue />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        <SelectItem value="Award">Award</SelectItem>
-                                        <SelectItem value="Project">Project</SelectItem>
-                                        <SelectItem value="Initiative">Initiative</SelectItem>
-                                        <SelectItem value="Community Work">Community Work</SelectItem>
-                                        <SelectItem value="Public Service">Public Service</SelectItem>
-                                        <SelectItem value="Other">Other</SelectItem>
-                                      </SelectContent>
-                                    </Select>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          ))}
+                    {/* Campaign */}
+                    <div className="bg-gradient-to-r from-fuchsia-50 to-pink-50 p-4 rounded-lg">
+                      <h3 className="text-lg font-semibold mb-4 text-gray-800">अभियान</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <Label>चुनावी नारा (English)</Label>
+                          <Input
+                            value={candidateForm.campaign.campaignSlogan}
+                            onChange={(e) => setCandidateForm({...candidateForm, campaign: {...candidateForm.campaign, campaignSlogan: e.target.value}})}
+                            placeholder="Campaign Slogan"
+                          />
                         </div>
-                      )}
+                        <div>
+                          <Label>चुनावी नारा (नेपाली)</Label>
+                          <Input
+                            value={candidateForm.campaign.campaignSlogan_np}
+                            onChange={(e) => setCandidateForm({...candidateForm, campaign: {...candidateForm.campaign, campaignSlogan_np: e.target.value}})}
+                            placeholder="चुनावी नारा"
+                          />
+                        </div>
+                      </div>
                     </div>
 
-                    <div className="flex items-center space-x-2">
-                      <input
-                        type="checkbox"
-                        id="isActive"
-                        checked={candidateForm.isActive}
-                        onChange={(e) => setCandidateForm({...candidateForm, isActive: e.target.checked})}
-                        className="w-4 h-4"
-                      />
-                      <Label htmlFor="isActive">Active Candidate</Label>
+                    {/* Status */}
+                    <div className="flex items-center space-x-6">
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          id="isActive"
+                          checked={candidateForm.isActive}
+                          onChange={(e) => setCandidateForm({...candidateForm, isActive: e.target.checked})}
+                          className="w-4 h-4"
+                        />
+                        <Label htmlFor="isActive">सक्रिय उम्मेदवार</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          id="isVerified"
+                          checked={candidateForm.isVerified}
+                          onChange={(e) => setCandidateForm({...candidateForm, isVerified: e.target.checked})}
+                          className="w-4 h-4"
+                        />
+                        <Label htmlFor="isVerified">प्रमाणित उम्मेदवार</Label>
+                      </div>
                     </div>
 
                     <div className="flex justify-end space-x-3">
@@ -1742,13 +2853,13 @@ const AdminDashboard: React.FC = () => {
                           resetCandidateForm();
                         }}
                       >
-                        Cancel
+                        रद्द गर्नुहोस्
                       </Button>
                       <Button
                         onClick={handleCreateCandidate}
                         className="bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700"
                       >
-                        Create Candidate
+                        उम्मेदवार सिर्जना गर्नुहोस्
                       </Button>
                     </div>
                   </div>
@@ -1758,367 +2869,664 @@ const AdminDashboard: React.FC = () => {
 
             {/* Edit Dialog */}
             <Dialog open={isCandidateEditDialogOpen} onOpenChange={setIsCandidateEditDialogOpen}>
-              <DialogContent className="max-w-4xl max-h-[95vh] overflow-y-auto">
+              <DialogContent className="max-w-5xl max-h-[95vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-red-600 to-pink-600 bg-clip-text text-transparent">
-                    Edit Candidate
+                    उम्मेदवार सम्पादन गर्नुहोस्
                   </DialogTitle>
                 </DialogHeader>
                 <div className="space-y-6">
-                  {/* Same form as create */}
+                  {/* Section 1: Personal Information */}
                   <div className="bg-gradient-to-r from-red-50 to-pink-50 p-4 rounded-lg">
-                    <h3 className="text-lg font-semibold mb-4 text-gray-800">Personal Information</h3>
+                    <h3 className="text-lg font-semibold mb-4 text-gray-800">१. आधारभूत व्यक्तिगत विवरण</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <Label htmlFor="edit-fullName">Full Name *</Label>
+                        <Label>पूरा नाम (English) *</Label>
                         <Input
-                          id="edit-fullName"
-                          value={candidateForm.fullName}
-                          onChange={(e) => setCandidateForm({...candidateForm, fullName: e.target.value})}
+                          value={candidateForm.personalInfo.fullName}
+                          onChange={(e) => setCandidateForm({...candidateForm, personalInfo: {...candidateForm.personalInfo, fullName: e.target.value}})}
                         />
                       </div>
                       <div>
-                        <Label htmlFor="edit-position">Position *</Label>
-                        <Select
-                          value={candidateForm.position}
-                          onValueChange={(value) => setCandidateForm({...candidateForm, position: value})}
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Parliamentary">Parliamentary</SelectItem>
-                            <SelectItem value="Provincial">Provincial</SelectItem>
-                            <SelectItem value="Local">Local</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label htmlFor="edit-constituency">Constituency *</Label>
+                        <Label>पूरा नाम (नेपाली) *</Label>
                         <Input
-                          id="edit-constituency"
-                          value={candidateForm.constituency}
-                          onChange={(e) => setCandidateForm({...candidateForm, constituency: e.target.value})}
+                          value={candidateForm.personalInfo.fullName_np}
+                          onChange={(e) => setCandidateForm({...candidateForm, personalInfo: {...candidateForm.personalInfo, fullName_np: e.target.value}})}
                         />
                       </div>
                       <div>
-                        <Label htmlFor="edit-dateOfBirth">Date of Birth *</Label>
+                        <Label>उपनाम (English)</Label>
                         <Input
-                          id="edit-dateOfBirth"
+                          value={candidateForm.personalInfo.nickname}
+                          onChange={(e) => setCandidateForm({...candidateForm, personalInfo: {...candidateForm.personalInfo, nickname: e.target.value}})}
+                        />
+                      </div>
+                      <div>
+                        <Label>उपनाम (नेपाली)</Label>
+                        <Input
+                          value={candidateForm.personalInfo.nickname_np}
+                          onChange={(e) => setCandidateForm({...candidateForm, personalInfo: {...candidateForm.personalInfo, nickname_np: e.target.value}})}
+                        />
+                      </div>
+                      <div>
+                        <Label>जन्म मिति *</Label>
+                        <Input
                           type="date"
-                          value={candidateForm.dateOfBirth}
-                          onChange={(e) => setCandidateForm({...candidateForm, dateOfBirth: e.target.value})}
+                          value={candidateForm.personalInfo.dateOfBirth}
+                          onChange={(e) => setCandidateForm({...candidateForm, personalInfo: {...candidateForm.personalInfo, dateOfBirth: e.target.value}})}
                         />
                       </div>
                       <div>
-                        <Label htmlFor="edit-gender">Gender</Label>
+                        <Label>लिङ्ग *</Label>
                         <Select
-                          value={candidateForm.gender}
-                          onValueChange={(value) => setCandidateForm({...candidateForm, gender: value})}
+                          value={candidateForm.personalInfo.gender}
+                          onValueChange={(value) => setCandidateForm({...candidateForm, personalInfo: {...candidateForm.personalInfo, gender: value}})}
                         >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="Male">Male</SelectItem>
-                            <SelectItem value="Female">Female</SelectItem>
-                            <SelectItem value="Other">Other</SelectItem>
+                            <SelectItem value="Male">पुरुष</SelectItem>
+                            <SelectItem value="Female">महिला</SelectItem>
+                            <SelectItem value="Other">अन्य</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
                       <div>
-                        <Label htmlFor="edit-contactNumber">Contact Number</Label>
+                        <Label>वैवाहिक स्थिति</Label>
                         <Input
-                          id="edit-contactNumber"
-                          value={candidateForm.contactNumber}
-                          onChange={(e) => setCandidateForm({...candidateForm, contactNumber: e.target.value})}
+                          value={candidateForm.personalInfo.maritalStatus}
+                          onChange={(e) => setCandidateForm({...candidateForm, personalInfo: {...candidateForm.personalInfo, maritalStatus: e.target.value}})}
                         />
                       </div>
                       <div>
-                        <Label htmlFor="edit-email">Email</Label>
+                        <Label>वैवाहिक स्थिति (नेपाली)</Label>
                         <Input
-                          id="edit-email"
+                          value={candidateForm.personalInfo.maritalStatus_np}
+                          onChange={(e) => setCandidateForm({...candidateForm, personalInfo: {...candidateForm.personalInfo, maritalStatus_np: e.target.value}})}
+                        />
+                      </div>
+                      <div>
+                        <Label>स्थायी ठेगाना</Label>
+                        <Input
+                          value={candidateForm.personalInfo.permanentAddress}
+                          onChange={(e) => setCandidateForm({...candidateForm, personalInfo: {...candidateForm.personalInfo, permanentAddress: e.target.value}})}
+                        />
+                      </div>
+                      <div>
+                        <Label>स्थायी ठेगाना (नेपाली)</Label>
+                        <Input
+                          value={candidateForm.personalInfo.permanentAddress_np}
+                          onChange={(e) => setCandidateForm({...candidateForm, personalInfo: {...candidateForm.personalInfo, permanentAddress_np: e.target.value}})}
+                        />
+                      </div>
+                      <div>
+                        <Label>हालको ठेगाना</Label>
+                        <Input
+                          value={candidateForm.personalInfo.currentAddress}
+                          onChange={(e) => setCandidateForm({...candidateForm, personalInfo: {...candidateForm.personalInfo, currentAddress: e.target.value}})}
+                        />
+                      </div>
+                      <div>
+                        <Label>हालको ठेगाना (नेपाली)</Label>
+                        <Input
+                          value={candidateForm.personalInfo.currentAddress_np}
+                          onChange={(e) => setCandidateForm({...candidateForm, personalInfo: {...candidateForm.personalInfo, currentAddress_np: e.target.value}})}
+                        />
+                      </div>
+                      <div>
+                        <Label>नागरिकता नं.</Label>
+                        <Input
+                          value={candidateForm.personalInfo.citizenshipNumber}
+                          onChange={(e) => setCandidateForm({...candidateForm, personalInfo: {...candidateForm.personalInfo, citizenshipNumber: e.target.value}})}
+                        />
+                      </div>
+                      <div>
+                        <Label>जारी जिल्ला</Label>
+                        <Input
+                          value={candidateForm.personalInfo.citizenshipIssuedDistrict}
+                          onChange={(e) => setCandidateForm({...candidateForm, personalInfo: {...candidateForm.personalInfo, citizenshipIssuedDistrict: e.target.value}})}
+                        />
+                      </div>
+                      <div>
+                        <Label>सम्पर्क नम्बर *</Label>
+                        <Input
+                          value={candidateForm.personalInfo.contactNumber}
+                          onChange={(e) => setCandidateForm({...candidateForm, personalInfo: {...candidateForm.personalInfo, contactNumber: e.target.value}})}
+                        />
+                      </div>
+                      <div>
+                        <Label>इमेल</Label>
+                        <Input
                           type="email"
-                          value={candidateForm.email}
-                          onChange={(e) => setCandidateForm({...candidateForm, email: e.target.value})}
+                          value={candidateForm.personalInfo.email}
+                          onChange={(e) => setCandidateForm({...candidateForm, personalInfo: {...candidateForm.personalInfo, email: e.target.value}})}
                         />
                       </div>
                       <div>
-                        <Label htmlFor="edit-profilePhoto">Profile Photo URL</Label>
+                        <Label>वेबसाइट</Label>
                         <Input
-                          id="edit-profilePhoto"
-                          value={candidateForm.profilePhoto}
-                          onChange={(e) => setCandidateForm({...candidateForm, profilePhoto: e.target.value})}
+                          value={candidateForm.personalInfo.website}
+                          onChange={(e) => setCandidateForm({...candidateForm, personalInfo: {...candidateForm.personalInfo, website: e.target.value}})}
+                        />
+                      </div>
+                      <div>
+                        <Label>नयाँ प्रोफाइल फोटो</Label>
+                        <Input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => setCandidateForm({...candidateForm, profilePhotoFile: e.target.files?.[0] || null})}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Section 2: Political Information */}
+                  <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg">
+                    <h3 className="text-lg font-semibold mb-4 text-gray-800">२. राजनीतिक परिचय</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label>पार्टीको नाम</Label>
+                        <Input
+                          value={candidateForm.politicalInfo.partyName}
+                          onChange={(e) => setCandidateForm({...candidateForm, politicalInfo: {...candidateForm.politicalInfo, partyName: e.target.value}})}
+                        />
+                      </div>
+                      <div>
+                        <Label>पार्टीको नाम (नेपाली)</Label>
+                        <Input
+                          value={candidateForm.politicalInfo.partyName_np}
+                          onChange={(e) => setCandidateForm({...candidateForm, politicalInfo: {...candidateForm.politicalInfo, partyName_np: e.target.value}})}
+                        />
+                      </div>
+                      <div>
+                        <Label>हालको पद</Label>
+                        <Input
+                          value={candidateForm.politicalInfo.currentPosition}
+                          onChange={(e) => setCandidateForm({...candidateForm, politicalInfo: {...candidateForm.politicalInfo, currentPosition: e.target.value}})}
+                        />
+                      </div>
+                      <div>
+                        <Label>हालको पद (नेपाली)</Label>
+                        <Input
+                          value={candidateForm.politicalInfo.currentPosition_np}
+                          onChange={(e) => setCandidateForm({...candidateForm, politicalInfo: {...candidateForm.politicalInfo, currentPosition_np: e.target.value}})}
+                        />
+                      </div>
+                      <div>
+                        <Label>उम्मेदवारीको तह *</Label>
+                        <Select
+                          value={candidateForm.politicalInfo.candidacyLevel}
+                          onValueChange={(value) => setCandidateForm({...candidateForm, politicalInfo: {...candidateForm.politicalInfo, candidacyLevel: value}})}
+                        >
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Federal">संघीय</SelectItem>
+                            <SelectItem value="Provincial">प्रदेश</SelectItem>
+                            <SelectItem value="Local">स्थानीय</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label>निर्वाचन क्षेत्र नम्बर</Label>
+                        <Input
+                          value={candidateForm.politicalInfo.constituencyNumber}
+                          onChange={(e) => setCandidateForm({...candidateForm, politicalInfo: {...candidateForm.politicalInfo, constituencyNumber: e.target.value}})}
+                        />
+                      </div>
+                      <div>
+                        <Label>निर्वाचन क्षेत्र (English) *</Label>
+                        <Input
+                          value={candidateForm.politicalInfo.constituency}
+                          onChange={(e) => setCandidateForm({...candidateForm, politicalInfo: {...candidateForm.politicalInfo, constituency: e.target.value}})}
+                        />
+                      </div>
+                      <div>
+                        <Label>निर्वाचन क्षेत्र (नेपाली) *</Label>
+                        <Input
+                          value={candidateForm.politicalInfo.constituency_np}
+                          onChange={(e) => setCandidateForm({...candidateForm, politicalInfo: {...candidateForm.politicalInfo, constituency_np: e.target.value}})}
+                        />
+                      </div>
+                      <div>
+                        <Label>चुनाव चिन्ह</Label>
+                        <Input
+                          value={candidateForm.politicalInfo.electionSymbol}
+                          onChange={(e) => setCandidateForm({...candidateForm, politicalInfo: {...candidateForm.politicalInfo, electionSymbol: e.target.value}})}
+                        />
+                      </div>
+                      <div>
+                        <Label>चुनाव चिन्ह (नेपाली)</Label>
+                        <Input
+                          value={candidateForm.politicalInfo.electionSymbol_np}
+                          onChange={(e) => setCandidateForm({...candidateForm, politicalInfo: {...candidateForm.politicalInfo, electionSymbol_np: e.target.value}})}
+                        />
+                      </div>
+                      <div>
+                        <Label>नयाँ चुनाव चिन्ह फोटो</Label>
+                        <Input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => setCandidateForm({...candidateForm, electionSymbolImageFile: e.target.files?.[0] || null})}
+                        />
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          checked={candidateForm.politicalInfo.isFirstTimeCandidate}
+                          onChange={(e) => setCandidateForm({...candidateForm, politicalInfo: {...candidateForm.politicalInfo, isFirstTimeCandidate: e.target.checked}})}
+                        />
+                        <Label>पहिलो पटक उम्मेदवार?</Label>
+                      </div>
+                      <div className="md:col-span-2">
+                        <Label>पहिलेको निर्वाचन इतिहास</Label>
+                        <Textarea
+                          value={candidateForm.politicalInfo.previousElectionHistory}
+                          onChange={(e) => setCandidateForm({...candidateForm, politicalInfo: {...candidateForm.politicalInfo, previousElectionHistory: e.target.value}})}
+                          rows={2}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Section 3: Education */}
+                  <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-4 rounded-lg">
+                    <h3 className="text-lg font-semibold mb-4 text-gray-800">३. शैक्षिक योग्यता</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label>उच्चतम शैक्षिक योग्यता</Label>
+                        <Input
+                          value={candidateForm.education.highestQualification}
+                          onChange={(e) => setCandidateForm({...candidateForm, education: {...candidateForm.education, highestQualification: e.target.value}})}
+                        />
+                      </div>
+                      <div>
+                        <Label>उच्चतम शैक्षिक योग्यता (नेपाली)</Label>
+                        <Input
+                          value={candidateForm.education.highestQualification_np}
+                          onChange={(e) => setCandidateForm({...candidateForm, education: {...candidateForm.education, highestQualification_np: e.target.value}})}
+                        />
+                      </div>
+                      <div>
+                        <Label>विषय</Label>
+                        <Input
+                          value={candidateForm.education.subject}
+                          onChange={(e) => setCandidateForm({...candidateForm, education: {...candidateForm.education, subject: e.target.value}})}
+                        />
+                      </div>
+                      <div>
+                        <Label>विषय (नेपाली)</Label>
+                        <Input
+                          value={candidateForm.education.subject_np}
+                          onChange={(e) => setCandidateForm({...candidateForm, education: {...candidateForm.education, subject_np: e.target.value}})}
+                        />
+                      </div>
+                      <div>
+                        <Label>शिक्षण संस्था</Label>
+                        <Input
+                          value={candidateForm.education.institution}
+                          onChange={(e) => setCandidateForm({...candidateForm, education: {...candidateForm.education, institution: e.target.value}})}
+                        />
+                      </div>
+                      <div>
+                        <Label>शिक्षण संस्था (नेपाली)</Label>
+                        <Input
+                          value={candidateForm.education.institution_np}
+                          onChange={(e) => setCandidateForm({...candidateForm, education: {...candidateForm.education, institution_np: e.target.value}})}
+                        />
+                      </div>
+                      <div>
+                        <Label>देश</Label>
+                        <Input
+                          value={candidateForm.education.country}
+                          onChange={(e) => setCandidateForm({...candidateForm, education: {...candidateForm.education, country: e.target.value}})}
+                        />
+                      </div>
+                      <div>
+                        <Label>देश (नेपाली)</Label>
+                        <Input
+                          value={candidateForm.education.country_np}
+                          onChange={(e) => setCandidateForm({...candidateForm, education: {...candidateForm.education, country_np: e.target.value}})}
                         />
                       </div>
                       <div className="md:col-span-2">
-                        <Label htmlFor="edit-address">Address</Label>
-                        <Input
-                          id="edit-address"
-                          value={candidateForm.address}
-                          onChange={(e) => setCandidateForm({...candidateForm, address: e.target.value})}
+                        <Label>थप तालिम</Label>
+                        <Textarea
+                          value={candidateForm.education.additionalTraining}
+                          onChange={(e) => setCandidateForm({...candidateForm, education: {...candidateForm.education, additionalTraining: e.target.value}})}
+                          rows={2}
                         />
                       </div>
                     </div>
                   </div>
 
-                  <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg">
-                    <h3 className="text-lg font-semibold mb-4 text-gray-800">Biography</h3>
-                    <div className="space-y-4">
+                  {/* Section 4: Professional Experience */}
+                  <div className="bg-gradient-to-r from-yellow-50 to-orange-50 p-4 rounded-lg">
+                    <h3 className="text-lg font-semibold mb-4 text-gray-800">४. पेशागत अनुभव</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <Label htmlFor="edit-bio_en">Biography</Label>
-                        <Textarea
-                          id="edit-bio_en"
-                          value={candidateForm.bio_en}
-                          onChange={(e) => setCandidateForm({...candidateForm, bio_en: e.target.value})}
-                          rows={4}
+                        <Label>हालको पेशा</Label>
+                        <Input
+                          value={candidateForm.professionalExperience.currentProfession}
+                          onChange={(e) => setCandidateForm({...candidateForm, professionalExperience: {...candidateForm.professionalExperience, currentProfession: e.target.value}})}
                         />
                       </div>
                       <div>
-                        <Label htmlFor="edit-backgroundEducation">Education Background</Label>
-                        <Textarea
-                          id="edit-backgroundEducation"
-                          value={candidateForm.backgroundEducation}
-                          onChange={(e) => setCandidateForm({...candidateForm, backgroundEducation: e.target.value})}
-                          rows={3}
+                        <Label>हालको पेशा (नेपाली)</Label>
+                        <Input
+                          value={candidateForm.professionalExperience.currentProfession_np}
+                          onChange={(e) => setCandidateForm({...candidateForm, professionalExperience: {...candidateForm.professionalExperience, currentProfession_np: e.target.value}})}
                         />
                       </div>
-                      <div>
-                        <Label htmlFor="edit-experience">Experience</Label>
+                      <div className="md:col-span-2">
+                        <Label>अघिल्लो अनुभव</Label>
                         <Textarea
-                          id="edit-experience"
-                          value={candidateForm.experience}
-                          onChange={(e) => setCandidateForm({...candidateForm, experience: e.target.value})}
-                          rows={3}
+                          value={candidateForm.professionalExperience.previousExperience}
+                          onChange={(e) => setCandidateForm({...candidateForm, professionalExperience: {...candidateForm.professionalExperience, previousExperience: e.target.value}})}
+                          rows={2}
+                        />
+                      </div>
+                      <div className="md:col-span-2">
+                        <Label>संस्था जिम्मेवारी</Label>
+                        <Textarea
+                          value={candidateForm.professionalExperience.organizationResponsibility}
+                          onChange={(e) => setCandidateForm({...candidateForm, professionalExperience: {...candidateForm.professionalExperience, organizationResponsibility: e.target.value}})}
+                          rows={2}
+                        />
+                      </div>
+                      <div className="md:col-span-2">
+                        <Label>नेतृत्व अनुभव</Label>
+                        <Textarea
+                          value={candidateForm.professionalExperience.leadershipExperience}
+                          onChange={(e) => setCandidateForm({...candidateForm, professionalExperience: {...candidateForm.professionalExperience, leadershipExperience: e.target.value}})}
+                          rows={2}
                         />
                       </div>
                     </div>
                   </div>
 
-                  <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-4 rounded-lg">
-                    <h3 className="text-lg font-semibold mb-4 text-gray-800">Manifesto</h3>
-                    <div className="space-y-4">
+                  {/* Section 5: Political Experience */}
+                  <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-4 rounded-lg">
+                    <h3 className="text-lg font-semibold mb-4 text-gray-800">५. राजनीतिक अनुभव</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <Label htmlFor="edit-manifestoTitle">Manifesto Title</Label>
+                        <Label>पार्टी प्रवेश वर्ष</Label>
                         <Input
-                          id="edit-manifestoTitle"
-                          value={candidateForm.manifestoTitle}
-                          onChange={(e) => setCandidateForm({...candidateForm, manifestoTitle: e.target.value})}
+                          value={candidateForm.politicalExperience.partyJoinYear}
+                          onChange={(e) => setCandidateForm({...candidateForm, politicalExperience: {...candidateForm.politicalExperience, partyJoinYear: e.target.value}})}
                         />
                       </div>
                       <div>
-                        <Label htmlFor="edit-manifestoContent">Manifesto Content</Label>
+                        <Label>आन्दोलनमा भूमिका</Label>
+                        <Input
+                          value={candidateForm.politicalExperience.movementRole}
+                          onChange={(e) => setCandidateForm({...candidateForm, politicalExperience: {...candidateForm.politicalExperience, movementRole: e.target.value}})}
+                        />
+                      </div>
+                      <div className="md:col-span-2">
+                        <Label>अघिल्लो जनप्रतिनिधि पद</Label>
                         <Textarea
-                          id="edit-manifestoContent"
-                          value={candidateForm.manifestoContent}
-                          onChange={(e) => setCandidateForm({...candidateForm, manifestoContent: e.target.value})}
-                          rows={5}
+                          value={candidateForm.politicalExperience.previousRepresentativePosition}
+                          onChange={(e) => setCandidateForm({...candidateForm, politicalExperience: {...candidateForm.politicalExperience, previousRepresentativePosition: e.target.value}})}
+                          rows={2}
+                        />
+                      </div>
+                      <div className="md:col-span-2">
+                        <Label>प्रमुख उपलब्धिहरू</Label>
+                        <Textarea
+                          value={candidateForm.politicalExperience.majorAchievements}
+                          onChange={(e) => setCandidateForm({...candidateForm, politicalExperience: {...candidateForm.politicalExperience, majorAchievements: e.target.value}})}
+                          rows={2}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Section 6: Social Engagement */}
+                  <div className="bg-gradient-to-r from-teal-50 to-cyan-50 p-4 rounded-lg">
+                    <h3 className="text-lg font-semibold mb-4 text-gray-800">६. सामाजिक संलग्नता</h3>
+                    <div className="grid grid-cols-1 gap-4">
+                      <div>
+                        <Label>गैरसरकारी संस्था संलग्नता</Label>
+                        <Textarea
+                          value={candidateForm.socialEngagement.ngoInvolvement}
+                          onChange={(e) => setCandidateForm({...candidateForm, socialEngagement: {...candidateForm.socialEngagement, ngoInvolvement: e.target.value}})}
+                          rows={2}
                         />
                       </div>
                       <div>
-                        <Label htmlFor="edit-manifestoBrochureFile">Upload Manifesto PDF/Brochure</Label>
-                        <Input
-                          id="edit-manifestoBrochureFile"
-                          type="file"
-                          accept=".pdf,.jpg,.jpeg,.png"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0] || null;
-                            setCandidateForm({...candidateForm, manifestoBrochureFile: file});
-                          }}
-                          className="cursor-pointer"
+                        <Label>क्षेत्रगत कार्य</Label>
+                        <Textarea
+                          value={candidateForm.socialEngagement.sectorWork}
+                          onChange={(e) => setCandidateForm({...candidateForm, socialEngagement: {...candidateForm.socialEngagement, sectorWork: e.target.value}})}
+                          rows={2}
                         />
-                        {candidateForm.manifestoBrochure && (
-                          <p className="text-sm text-gray-600 mt-1">Current: {candidateForm.manifestoBrochure}</p>
-                        )}
                       </div>
                       <div>
-                        <Label htmlFor="edit-manifestoBrochure">Or provide URL</Label>
+                        <Label>पुरस्कार / सम्मान</Label>
+                        <Textarea
+                          value={candidateForm.socialEngagement.awardsHonors}
+                          onChange={(e) => setCandidateForm({...candidateForm, socialEngagement: {...candidateForm.socialEngagement, awardsHonors: e.target.value}})}
+                          rows={2}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Section 7: Financial Information */}
+                  <div className="bg-gradient-to-r from-amber-50 to-yellow-50 p-4 rounded-lg">
+                    <h3 className="text-lg font-semibold mb-4 text-gray-800">७. आर्थिक विवरण</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label>चल सम्पत्ति</Label>
+                        <Textarea
+                          value={candidateForm.financialInfo.movableAssets}
+                          onChange={(e) => setCandidateForm({...candidateForm, financialInfo: {...candidateForm.financialInfo, movableAssets: e.target.value}})}
+                          rows={2}
+                        />
+                      </div>
+                      <div>
+                        <Label>अचल सम्पत्ति</Label>
+                        <Textarea
+                          value={candidateForm.financialInfo.immovableAssets}
+                          onChange={(e) => setCandidateForm({...candidateForm, financialInfo: {...candidateForm.financialInfo, immovableAssets: e.target.value}})}
+                          rows={2}
+                        />
+                      </div>
+                      <div>
+                        <Label>वार्षिक आय स्रोत</Label>
                         <Input
-                          id="edit-manifestoBrochure"
-                          value={candidateForm.manifestoBrochure}
-                          onChange={(e) => setCandidateForm({...candidateForm, manifestoBrochure: e.target.value})}
+                          value={candidateForm.financialInfo.annualIncomeSource}
+                          onChange={(e) => setCandidateForm({...candidateForm, financialInfo: {...candidateForm.financialInfo, annualIncomeSource: e.target.value}})}
+                        />
+                      </div>
+                      <div>
+                        <Label>बैंक ऋण</Label>
+                        <Input
+                          value={candidateForm.financialInfo.bankLoans}
+                          onChange={(e) => setCandidateForm({...candidateForm, financialInfo: {...candidateForm.financialInfo, bankLoans: e.target.value}})}
+                        />
+                      </div>
+                      <div className="md:col-span-2">
+                        <Label>कर चुक्ता स्थिति</Label>
+                        <Input
+                          value={candidateForm.financialInfo.taxStatus}
+                          onChange={(e) => setCandidateForm({...candidateForm, financialInfo: {...candidateForm.financialInfo, taxStatus: e.target.value}})}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Section 8: Legal Status */}
+                  <div className="bg-gradient-to-r from-rose-50 to-red-50 p-4 rounded-lg">
+                    <h3 className="text-lg font-semibold mb-4 text-gray-800">८. कानुनी अवस्था</h3>
+                    <div className="grid grid-cols-1 gap-4">
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          checked={candidateForm.legalStatus.hasCriminalCase}
+                          onChange={(e) => setCandidateForm({...candidateForm, legalStatus: {...candidateForm.legalStatus, hasCriminalCase: e.target.checked}})}
+                        />
+                        <Label>के कुनै फौजदारी मुद्दा छ?</Label>
+                      </div>
+                      {candidateForm.legalStatus.hasCriminalCase && (
+                        <div>
+                          <Label>मुद्दाको विवरण</Label>
+                          <Textarea
+                            value={candidateForm.legalStatus.caseDetails}
+                            onChange={(e) => setCandidateForm({...candidateForm, legalStatus: {...candidateForm.legalStatus, caseDetails: e.target.value}})}
+                            rows={2}
+                          />
+                        </div>
+                      )}
+                      <div>
+                        <Label>योग्यता घोषणा</Label>
+                        <Textarea
+                          value={candidateForm.legalStatus.eligibilityDeclaration}
+                          onChange={(e) => setCandidateForm({...candidateForm, legalStatus: {...candidateForm.legalStatus, eligibilityDeclaration: e.target.value}})}
+                          rows={2}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Section 9: Vision & Goals */}
+                  <div className="bg-gradient-to-r from-indigo-50 to-violet-50 p-4 rounded-lg">
+                    <h3 className="text-lg font-semibold mb-4 text-gray-800">९. दृष्टि र लक्ष्य</h3>
+                    <div className="grid grid-cols-1 gap-4">
+                      <div>
+                        <Label>दृष्टि (English)</Label>
+                        <Textarea
+                          value={candidateForm.visionGoals.vision}
+                          onChange={(e) => setCandidateForm({...candidateForm, visionGoals: {...candidateForm.visionGoals, vision: e.target.value}})}
+                          rows={3}
+                        />
+                      </div>
+                      <div>
+                        <Label>दृष्टि (नेपाली)</Label>
+                        <Textarea
+                          value={candidateForm.visionGoals.vision_np}
+                          onChange={(e) => setCandidateForm({...candidateForm, visionGoals: {...candidateForm.visionGoals, vision_np: e.target.value}})}
+                          rows={3}
+                        />
+                      </div>
+                      <div>
+                        <Label>लक्ष्यहरू (English)</Label>
+                        <Textarea
+                          value={candidateForm.visionGoals.goals}
+                          onChange={(e) => setCandidateForm({...candidateForm, visionGoals: {...candidateForm.visionGoals, goals: e.target.value}})}
+                          rows={3}
+                        />
+                      </div>
+                      <div>
+                        <Label>लक्ष्यहरू (नेपाली)</Label>
+                        <Textarea
+                          value={candidateForm.visionGoals.goals_np}
+                          onChange={(e) => setCandidateForm({...candidateForm, visionGoals: {...candidateForm.visionGoals, goals_np: e.target.value}})}
+                          rows={3}
+                        />
+                      </div>
+                      <div>
+                        <Label>घोषणा</Label>
+                        <Textarea
+                          value={candidateForm.visionGoals.declaration}
+                          onChange={(e) => setCandidateForm({...candidateForm, visionGoals: {...candidateForm.visionGoals, declaration: e.target.value}})}
+                          rows={2}
                         />
                       </div>
                     </div>
                   </div>
 
                   {/* Social Media */}
-                  <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-4 rounded-lg">
-                    <h3 className="text-lg font-semibold mb-4 text-gray-800">Social Media & Links</h3>
+                  <div className="bg-gradient-to-r from-sky-50 to-blue-50 p-4 rounded-lg">
+                    <h3 className="text-lg font-semibold mb-4 text-gray-800">सामाजिक सञ्जाल</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <Label htmlFor="edit-facebook">Facebook</Label>
+                        <Label>Facebook</Label>
                         <Input
-                          id="edit-facebook"
-                          value={candidateForm.facebook}
-                          onChange={(e) => setCandidateForm({...candidateForm, facebook: e.target.value})}
-                          placeholder="https://facebook.com/..."
+                          value={candidateForm.socialMedia.facebook}
+                          onChange={(e) => setCandidateForm({...candidateForm, socialMedia: {...candidateForm.socialMedia, facebook: e.target.value}})}
                         />
                       </div>
                       <div>
-                        <Label htmlFor="edit-twitter">Twitter/X</Label>
+                        <Label>Twitter/X</Label>
                         <Input
-                          id="edit-twitter"
-                          value={candidateForm.twitter}
-                          onChange={(e) => setCandidateForm({...candidateForm, twitter: e.target.value})}
-                          placeholder="https://twitter.com/..."
+                          value={candidateForm.socialMedia.twitter}
+                          onChange={(e) => setCandidateForm({...candidateForm, socialMedia: {...candidateForm.socialMedia, twitter: e.target.value}})}
                         />
                       </div>
                       <div>
-                        <Label htmlFor="edit-instagram">Instagram</Label>
+                        <Label>Instagram</Label>
                         <Input
-                          id="edit-instagram"
-                          value={candidateForm.instagram}
-                          onChange={(e) => setCandidateForm({...candidateForm, instagram: e.target.value})}
-                          placeholder="https://instagram.com/..."
+                          value={candidateForm.socialMedia.instagram}
+                          onChange={(e) => setCandidateForm({...candidateForm, socialMedia: {...candidateForm.socialMedia, instagram: e.target.value}})}
                         />
                       </div>
                       <div>
-                        <Label htmlFor="edit-youtube">YouTube</Label>
+                        <Label>YouTube</Label>
                         <Input
-                          id="edit-youtube"
-                          value={candidateForm.youtube}
-                          onChange={(e) => setCandidateForm({...candidateForm, youtube: e.target.value})}
-                          placeholder="https://youtube.com/..."
+                          value={candidateForm.socialMedia.youtube}
+                          onChange={(e) => setCandidateForm({...candidateForm, socialMedia: {...candidateForm.socialMedia, youtube: e.target.value}})}
                         />
                       </div>
-                      <div className="md:col-span-2">
-                        <Label htmlFor="edit-website">Website</Label>
+                      <div>
+                        <Label>TikTok</Label>
                         <Input
-                          id="edit-website"
-                          value={candidateForm.website}
-                          onChange={(e) => setCandidateForm({...candidateForm, website: e.target.value})}
-                          placeholder="https://..."
+                          value={candidateForm.socialMedia.tiktok}
+                          onChange={(e) => setCandidateForm({...candidateForm, socialMedia: {...candidateForm.socialMedia, tiktok: e.target.value}})}
+                        />
+                      </div>
+                      <div>
+                        <Label>LinkedIn</Label>
+                        <Input
+                          value={candidateForm.socialMedia.linkedin}
+                          onChange={(e) => setCandidateForm({...candidateForm, socialMedia: {...candidateForm.socialMedia, linkedin: e.target.value}})}
                         />
                       </div>
                     </div>
                   </div>
 
-                  {/* Achievements */}
-                  <div className="bg-gradient-to-r from-yellow-50 to-orange-50 p-4 rounded-lg">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-lg font-semibold text-gray-800">Achievements</h3>
-                      <Button
-                        type="button"
-                        size="sm"
-                        onClick={() => {
-                          setCandidateForm({
-                            ...candidateForm,
-                            achievements: [...candidateForm.achievements, {
-                              achievementTitle_en: '',
-                              achievementDescription_en: '',
-                              achievementDate: '',
-                              achievementCategory: 'Other'
-                            }]
-                          });
-                        }}
-                        className="bg-orange-600 hover:bg-orange-700"
-                      >
-                        <Plus className="h-4 w-4 mr-1" />
-                        Add Achievement
-                      </Button>
-                    </div>
-                    {candidateForm.achievements.length === 0 ? (
-                      <p className="text-sm text-gray-500 text-center py-4">No achievements added yet. Click "Add Achievement" to start.</p>
-                    ) : (
-                      <div className="space-y-4">
-                        {candidateForm.achievements.map((achievement, index) => (
-                          <div key={index} className="border border-orange-200 rounded-lg p-4 bg-white">
-                            <div className="flex items-center justify-between mb-3">
-                              <h4 className="font-medium text-gray-700">Achievement #{index + 1}</h4>
-                              <Button
-                                type="button"
-                                size="sm"
-                                variant="destructive"
-                                onClick={() => {
-                                  setCandidateForm({
-                                    ...candidateForm,
-                                    achievements: candidateForm.achievements.filter((_, i) => i !== index)
-                                  });
-                                }}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                            <div className="space-y-3">
-                              <div>
-                                <Label>Title *</Label>
-                                <Input
-                                  value={achievement.achievementTitle_en}
-                                  onChange={(e) => {
-                                    const updated = [...candidateForm.achievements];
-                                    updated[index].achievementTitle_en = e.target.value;
-                                    setCandidateForm({...candidateForm, achievements: updated});
-                                  }}
-                                  placeholder="Achievement title"
-                                />
-                              </div>
-                              <div>
-                                <Label>Description</Label>
-                                <Textarea
-                                  value={achievement.achievementDescription_en}
-                                  onChange={(e) => {
-                                    const updated = [...candidateForm.achievements];
-                                    updated[index].achievementDescription_en = e.target.value;
-                                    setCandidateForm({...candidateForm, achievements: updated});
-                                  }}
-                                  placeholder="Describe the achievement..."
-                                  rows={2}
-                                />
-                              </div>
-                              <div className="grid grid-cols-2 gap-3">
-                                <div>
-                                  <Label>Date</Label>
-                                  <Input
-                                    type="date"
-                                    value={achievement.achievementDate}
-                                    onChange={(e) => {
-                                      const updated = [...candidateForm.achievements];
-                                      updated[index].achievementDate = e.target.value;
-                                      setCandidateForm({...candidateForm, achievements: updated});
-                                    }}
-                                  />
-                                </div>
-                                <div>
-                                  <Label>Category</Label>
-                                  <Select
-                                    value={achievement.achievementCategory}
-                                    onValueChange={(value) => {
-                                      const updated = [...candidateForm.achievements];
-                                      updated[index].achievementCategory = value;
-                                      setCandidateForm({...candidateForm, achievements: updated});
-                                    }}
-                                  >
-                                    <SelectTrigger>
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="Award">Award</SelectItem>
-                                      <SelectItem value="Project">Project</SelectItem>
-                                      <SelectItem value="Initiative">Initiative</SelectItem>
-                                      <SelectItem value="Community Work">Community Work</SelectItem>
-                                      <SelectItem value="Public Service">Public Service</SelectItem>
-                                      <SelectItem value="Other">Other</SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
+                  {/* Campaign */}
+                  <div className="bg-gradient-to-r from-fuchsia-50 to-pink-50 p-4 rounded-lg">
+                    <h3 className="text-lg font-semibold mb-4 text-gray-800">अभियान</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label>चुनावी नारा (English)</Label>
+                        <Input
+                          value={candidateForm.campaign.campaignSlogan}
+                          onChange={(e) => setCandidateForm({...candidateForm, campaign: {...candidateForm.campaign, campaignSlogan: e.target.value}})}
+                        />
                       </div>
-                    )}
+                      <div>
+                        <Label>चुनावी नारा (नेपाली)</Label>
+                        <Input
+                          value={candidateForm.campaign.campaignSlogan_np}
+                          onChange={(e) => setCandidateForm({...candidateForm, campaign: {...candidateForm.campaign, campaignSlogan_np: e.target.value}})}
+                        />
+                      </div>
+                    </div>
                   </div>
 
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id="edit-isActive"
-                      checked={candidateForm.isActive}
-                      onChange={(e) => setCandidateForm({...candidateForm, isActive: e.target.checked})}
-                      className="w-4 h-4"
-                    />
-                    <Label htmlFor="edit-isActive">Active Candidate</Label>
+                  {/* Status */}
+                  <div className="flex items-center space-x-6">
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        id="edit-isActive"
+                        checked={candidateForm.isActive}
+                        onChange={(e) => setCandidateForm({...candidateForm, isActive: e.target.checked})}
+                        className="w-4 h-4"
+                      />
+                      <Label htmlFor="edit-isActive">सक्रिय उम्मेदवार</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        id="edit-isVerified"
+                        checked={candidateForm.isVerified}
+                        onChange={(e) => setCandidateForm({...candidateForm, isVerified: e.target.checked})}
+                        className="w-4 h-4"
+                      />
+                      <Label htmlFor="edit-isVerified">प्रमाणित उम्मेदवार</Label>
+                    </div>
                   </div>
 
                   <div className="flex justify-end space-x-3">
@@ -2130,13 +3538,13 @@ const AdminDashboard: React.FC = () => {
                         resetCandidateForm();
                       }}
                     >
-                      Cancel
+                      रद्द गर्नुहोस्
                     </Button>
                     <Button
                       onClick={handleUpdateCandidate}
                       className="bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700"
                     >
-                      Update Candidate
+                      अपडेट गर्नुहोस्
                     </Button>
                   </div>
                 </div>
@@ -2181,61 +3589,74 @@ const AdminDashboard: React.FC = () => {
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {candidates.map((candidate) => (
+                    {candidates.map((candidate) => {
+                      const c = candidate as any; // Type assertion for flexible access
+                      const fullName = c.personalInfo?.fullName || c.fullName || 'N/A';
+                      const fullName_np = c.personalInfo?.fullName_np || '';
+                      const profilePhoto = c.profilePhoto || c.biography?.profilePhoto || '';
+                      const constituency = c.politicalInfo?.constituency || c.personalInfo?.constituency || 'N/A';
+                      const candidacyLevel = c.politicalInfo?.candidacyLevel || c.personalInfo?.position || 'N/A';
+                      const partyName = c.politicalInfo?.partyName_np || 'नेकपा';
+                      const vision = c.visionGoals?.vision || c.biography?.bio_en || '';
+                      
+                      return (
                       <Card key={candidate._id} className="border border-gray-200 hover:shadow-xl transition-all duration-300 overflow-hidden">
                         <div className="h-2 bg-gradient-to-r from-red-500 to-pink-500"></div>
                         <CardContent className="p-6">
                           <div className="flex items-start space-x-4">
                             <div className="relative">
                               <Avatar className="h-16 w-16 border-2 border-red-200">
-                                <AvatarImage src={candidate.biography.profilePhoto} alt={candidate.personalInfo.fullName} />
+                                <AvatarImage src={profilePhoto} alt={fullName} />
                                 <AvatarFallback className="bg-red-100 text-red-700">
-                                  {candidate.personalInfo.fullName.split(' ').map(n => n[0]).join('')}
+                                  {fullName.split(' ').map((n: string) => n[0]).join('')}
                                 </AvatarFallback>
                               </Avatar>
                               {candidate.isActive && (
                                 <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
                               )}
+                              {candidate.isVerified && (
+                                <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-blue-500 border-2 border-white rounded-full flex items-center justify-center">
+                                  <span className="text-white text-xs">✓</span>
+                                </div>
+                              )}
                             </div>
                             <div className="flex-1 min-w-0">
                               <h3 className="text-lg font-bold text-gray-900 truncate">
-                                {candidate.personalInfo.fullName}
+                                {fullName_np || fullName}
                               </h3>
-                              <div className="mt-1">
+                              <p className="text-sm text-gray-500">{fullName}</p>
+                              <div className="mt-1 flex flex-wrap gap-1">
                                 <Badge className="bg-red-100 text-red-800 hover:bg-red-200">
-                                  {candidate.personalInfo.position}
+                                  {candidacyLevel}
                                 </Badge>
+                                {candidate.isVerified && (
+                                  <Badge className="bg-blue-100 text-blue-800">प्रमाणित</Badge>
+                                )}
                               </div>
                               <p className="text-sm text-gray-600 mt-1">
-                                {candidate.personalInfo.constituency}
+                                {constituency}
                               </p>
                             </div>
                           </div>
 
-                          <div className="mt-4 grid grid-cols-3 gap-2 text-center">
-                            <div className="bg-blue-50 rounded-lg p-2">
-                              <p className="text-xs text-gray-600">Issues</p>
-                              <p className="text-lg font-bold text-blue-700">
-                                {candidate.issues?.length || 0}
+                          <div className="mt-4 grid grid-cols-2 gap-2 text-center">
+                            <div className="bg-red-50 rounded-lg p-2">
+                              <p className="text-xs text-gray-600">पार्टी</p>
+                              <p className="text-sm font-semibold text-red-700 truncate">
+                                {partyName}
                               </p>
                             </div>
                             <div className="bg-green-50 rounded-lg p-2">
-                              <p className="text-xs text-gray-600">Achievements</p>
-                              <p className="text-lg font-bold text-green-700">
-                                {candidate.achievements?.length || 0}
-                              </p>
-                            </div>
-                            <div className="bg-purple-50 rounded-lg p-2">
-                              <p className="text-xs text-gray-600">Manifesto</p>
-                              <p className="text-lg font-bold text-purple-700">
-                                {candidate.manifesto?.title_en ? '✓' : '✗'}
+                              <p className="text-xs text-gray-600">स्थिति</p>
+                              <p className="text-sm font-semibold text-green-700">
+                                {candidate.isActive ? 'सक्रिय' : 'निष्क्रिय'}
                               </p>
                             </div>
                           </div>
 
-                          {candidate.biography.bio_en && (
+                          {vision && (
                             <p className="text-sm text-gray-600 mt-4 line-clamp-2">
-                              {candidate.biography.bio_en}
+                              {vision}
                             </p>
                           )}
 
@@ -2247,7 +3668,7 @@ const AdminDashboard: React.FC = () => {
                               className="flex-1 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300"
                             >
                               <Edit className="mr-1 h-4 w-4" />
-                              Edit
+                              सम्पादन
                             </Button>
                             <Button
                               variant="outline"
@@ -2256,12 +3677,13 @@ const AdminDashboard: React.FC = () => {
                               className="flex-1 hover:bg-red-50 hover:text-red-700 hover:border-red-300"
                             >
                               <Trash2 className="mr-1 h-4 w-4" />
-                              Delete
+                              मेटाउनुहोस्
                             </Button>
                           </div>
                         </CardContent>
                       </Card>
-                    ))}
+                    );
+                    })}
                   </div>
                 )}
               </CardContent>

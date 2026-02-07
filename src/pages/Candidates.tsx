@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,6 +12,18 @@ import {
 } from '@/components/ui/select';
 import CandidateCard from '@/components/CandidateCard';
 import { Search, Users, Target, Award, ChevronLeft, ChevronRight } from 'lucide-react';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  Legend,
+} from 'recharts';
 
 interface Candidate {
   _id: string;
@@ -37,6 +49,8 @@ const CandidatesPage: React.FC = () => {
   const [selectedConstituency, setSelectedConstituency] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 12;
+  const [minAgeFilter, setMinAgeFilter] = useState<number | null>(null);
+  const [maxAgeFilter, setMaxAgeFilter] = useState<number | null>(null);
 
   const positions = ['Presidential', 'Vice Presidential', 'Parliamentary', 'Local Body', 'Other'];
 
@@ -78,6 +92,18 @@ const CandidatesPage: React.FC = () => {
       result = result.filter(c => c.personalInfo.constituency === selectedConstituency);
     }
 
+    // Age range filter
+    if ((minAgeFilter !== null && !isNaN(minAgeFilter)) || (maxAgeFilter !== null && !isNaN(maxAgeFilter))) {
+      result = result.filter(c => {
+        const dob = c.personalInfo?.dateOfBirth ? new Date(c.personalInfo.dateOfBirth) : null;
+        if (!dob || isNaN(dob.getTime())) return false;
+        const age = Math.floor((Date.now() - dob.getTime()) / (1000 * 60 * 60 * 24 * 365.25));
+        if (minAgeFilter !== null && age < minAgeFilter) return false;
+        if (maxAgeFilter !== null && age > maxAgeFilter) return false;
+        return true;
+      });
+    }
+
     setFilteredCandidates(result);
     setCurrentPage(1);
   }, [searchTerm, selectedPosition, selectedConstituency, candidates]);
@@ -87,6 +113,51 @@ const CandidatesPage: React.FC = () => {
   const paginatedCandidates = filteredCandidates.slice(startIndex, startIndex + itemsPerPage);
 
   const constituencies = [...new Set(candidates.map(c => c.personalInfo.constituency))];
+
+  // Derived age stats
+  const ages = useMemo(() => {
+    return candidates
+      .map(c => {
+        const dob = c.personalInfo?.dateOfBirth ? new Date(c.personalInfo.dateOfBirth) : null;
+        if (!dob || isNaN(dob.getTime())) return null;
+        return Math.floor((Date.now() - dob.getTime()) / (1000 * 60 * 60 * 24 * 365.25));
+      })
+      .filter(a => a !== null) as number[];
+  }, [candidates]);
+
+  const ageMin = ages.length ? Math.min(...ages) : 18;
+  const ageMax = ages.length ? Math.max(...ages) : 80;
+
+  // Chart data: age distribution buckets
+  const ageBuckets = useMemo(() => {
+    const buckets: Record<string, number> = {};
+    const step = 10;
+    ages.forEach(age => {
+      const key = `${Math.floor(age / step) * step}-${Math.floor(age / step) * step + step - 1}`;
+      buckets[key] = (buckets[key] || 0) + 1;
+    });
+    return Object.keys(buckets)
+      .sort((a, b) => parseInt(a.split('-')[0]) - parseInt(b.split('-')[0]) )
+      .map(k => ({ range: k, count: buckets[k] }));
+  }, [ages]);
+
+  const genderData = useMemo(() => {
+    const map: Record<string, number> = {};
+    candidates.forEach(c => {
+      const g = (c.personalInfo?.gender || 'Unknown').toString();
+      map[g] = (map[g] || 0) + 1;
+    });
+    return Object.keys(map).map(k => ({ name: k, value: map[k] }));
+  }, [candidates]);
+
+  const provinceData = useMemo(() => {
+    const map: Record<string, number> = {};
+    candidates.forEach(c => {
+      const p = (c.personalInfo?.province || c.personalInfo?.position || 'Unknown').toString();
+      map[p] = (map[p] || 0) + 1;
+    });
+    return Object.keys(map).map(k => ({ province: k, count: map[k] })).slice(0, 12);
+  }, [candidates]);
 
   const stats = [
     {
@@ -204,12 +275,95 @@ const CandidatesPage: React.FC = () => {
                     setSearchTerm('');
                     setSelectedPosition('all');
                     setSelectedConstituency('');
+                    setMinAgeFilter(null);
+                    setMaxAgeFilter(null);
                   }}
                   className="border-gray-200 text-primary hover:bg-primary/10 text-xs xs:text-sm h-9 xs:h-10"
                 >
                   Clear All
                 </Button>
               )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Age Filter + Charts */}
+      <div className="max-w-7xl mx-auto px-2 xs:px-4 sm:px-6 lg:px-8 mb-6 xs:mb-8">
+        <Card className="border-0 shadow-lg">
+          <CardHeader className="pb-3 xs:pb-4">
+            <CardTitle className="text-sm xs:text-base sm:text-lg text-foreground">Age Filter & Visualizations</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              <div className="col-span-1">
+                <p className="text-xs text-muted-foreground mb-2">Filter by age (years)</p>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    value={minAgeFilter ?? ageMin}
+                    min={ageMin}
+                    max={ageMax}
+                    onChange={(e) => setMinAgeFilter(e.target.value === '' ? null : Number(e.target.value))}
+                    className="w-24"
+                  />
+                  <span className="text-sm">to</span>
+                  <Input
+                    type="number"
+                    value={maxAgeFilter ?? ageMax}
+                    min={ageMin}
+                    max={ageMax}
+                    onChange={(e) => setMaxAgeFilter(e.target.value === '' ? null : Number(e.target.value))}
+                    className="w-24"
+                  />
+                  <Button
+                    onClick={() => { setMinAgeFilter(null); setMaxAgeFilter(null); }}
+                    className="ml-2"
+                  >Clear</Button>
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">Detected age range: {ageMin}–{ageMax}</p>
+              </div>
+
+              <div className="col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="h-48">
+                  <p className="text-xs text-muted-foreground mb-2">Age Distribution</p>
+                  <ResponsiveContainer width="100%" height={160}>
+                    <BarChart data={ageBuckets} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                      <XAxis dataKey="range" tick={{ fontSize: 11 }} />
+                      <YAxis />
+                      <Tooltip />
+                      <Bar dataKey="count" fill="#0ea5e9" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+
+                <div className="h-48">
+                  <p className="text-xs text-muted-foreground mb-2">Gender Breakdown</p>
+                  <ResponsiveContainer width="100%" height={160}>
+                    <PieChart>
+                      <Pie data={genderData} dataKey="value" nameKey="name" outerRadius={60} fill="#8884d8">
+                        {genderData.map((entry, idx) => (
+                          <Cell key={`cell-${idx}`} fill={['#60a5fa', '#34d399', '#f97316', '#f43f5e'][idx % 4]} />
+                        ))}
+                      </Pie>
+                      <Legend verticalAlign="bottom" height={20} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            </div>
+            <div className="mt-4">
+              <p className="text-xs text-muted-foreground mb-2">Top provinces (sample)</p>
+              <div className="h-40">
+                <ResponsiveContainer width="100%" height={160}>
+                  <BarChart data={provinceData} layout="vertical" margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                    <XAxis type="number" />
+                    <YAxis dataKey="province" type="category" width={120} />
+                    <Tooltip />
+                    <Bar dataKey="count" fill="#06b6d4" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
             </div>
           </CardContent>
         </Card>
