@@ -60,7 +60,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
         <div className="text-center mb-8">
           <div className="relative inline-block">
               <img
-                src={`${import.meta.env.BASE_URL || '/'}assets/images/ncp-logo.jpg`}
+                src="https://scontent.fktm17-1.fna.fbcdn.net/v/t39.30808-6/616828104_1195780432670354_4211802509173510793_n.jpg?_nc_cat=109&ccb=1-7&_nc_sid=6ee11a&_nc_ohc=DWWoN3G-9jwQ7kNvwFE8gn5&_nc_oc=Adnw9gXWkSGXEpx6XyDgjqMH0v5zQDLgaexXjeXeaSmI0l_DeVgkj6t4POD8ZvAXVIyjlrWNT7_KfiOLAdB4GMGi&_nc_zt=23&_nc_ht=scontent.fktm17-1.fna&_nc_gid=biDCrjtNZCNBxjaCe5osnA&oh=00_AftyZvAQkcXLqth0uFx2y0QquL_f4aJSYA-VUNUkdh9GsQ&oe=698DF086"
                 alt="Nepali Communist Party"
                 className="h-20 w-20 mx-auto rounded-full object-cover border-4 border-white shadow-2xl mb-6"
               />
