@@ -1227,9 +1227,13 @@ const AdminDashboard: React.FC = () => {
     return colors[category] || 'bg-gradient-to-r from-gray-500 to-gray-600 text-white';
   };
 
-  const API_ASSET_URL = import.meta.env.MODE === 'production'
-    ? import.meta.env.VITE_PROD_URL || 'https://api.abhushangallery.com/'
-    : import.meta.env.VITE_DEV_URL || 'http://localhost:3000/';
+  const API_ASSET_URL = (() => {
+    const vite = import.meta.env.VITE_API_URL as string | undefined;
+    if (vite) return `${vite.replace(/\/+$/g, '')}/`;
+    return import.meta.env.MODE === 'production'
+      ? (import.meta.env.VITE_PROD_URL || 'https://api.abhushangallery.com/')
+      : (import.meta.env.VITE_DEV_URL || 'http://localhost:3000/');
+  })();
 
   const getImageUrl = (post: Post) => {
     if (!post?.image) return '/placeholder-image.jpg';

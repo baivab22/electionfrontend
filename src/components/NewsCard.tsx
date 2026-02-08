@@ -36,15 +36,21 @@ interface NewsCardProps {
 }
 
 // Get API URL based on environment (Vite)
-const API_URL = 
-  import.meta.env.MODE === 'production'
-    ? import.meta.env.VITE_PROD_URL || 'https://api.abhushangallery.com/api'
-    : import.meta.env.VITE_DEV_URL || 'http://localhost:3000/api';
+const API_URL = (() => {
+  const vite = import.meta.env.VITE_API_URL as string | undefined;
+  if (vite) return `${vite.replace(/\/+$/g, '')}/api`;
+  return import.meta.env.MODE === 'production'
+    ? (import.meta.env.VITE_PROD_URL || 'https://api.abhushangallery.com/api')
+    : (import.meta.env.VITE_DEV_URL || 'http://localhost:3000/api');
+})();
 
-const API_ASSET_URL = 
-  import.meta.env.MODE === 'production'
-    ? import.meta.env.VITE_PROD_URL || 'https://api.abhushangallery.com/'
-    : import.meta.env.VITE_DEV_URL || 'http://localhost:3000/';
+const API_ASSET_URL = (() => {
+  const vite = import.meta.env.VITE_API_URL as string | undefined;
+  if (vite) return `${vite.replace(/\/+$/g, '')}/`;
+  return import.meta.env.MODE === 'production'
+    ? (import.meta.env.VITE_PROD_URL || 'https://api.abhushangallery.com/')
+    : (import.meta.env.VITE_DEV_URL || 'http://localhost:3000/');
+})();
 
 // Social Media Icons (keep your existing icons)
 const FacebookIcon = ({ size = 18 }: { size?: number }) => (

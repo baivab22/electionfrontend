@@ -60,7 +60,7 @@ const About = () => {
               {t('about.title')}
             </h1>
             <p className="text-xs xs:text-sm sm:text-base md:text-lg lg:text-xl text-gray-200 leading-relaxed px-2">
-              नेपाल कम्युनिस्ट पार्टी is a revolutionary political party dedicated to building 
+              नेपाली कम्युनिस्ट पार्टी is a revolutionary political party dedicated to building 
               a socialist society based on social justice, equality, and people's democracy.
             </p>
           </div>

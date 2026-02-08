@@ -464,7 +464,7 @@ const CandidateDetailPage: React.FC = () => {
                 <div className="flex flex-wrap items-center justify-between gap-2 xs:gap-3 sm:gap-4">
                   <div className="flex flex-wrap gap-2 xs:gap-3 sm:gap-4">
                     <Button
-                      variant={isLiked ? "default" : "outline"}
+                      variant={isLiked ? "default" : "ghost"}
                       className={`h-8 xs:h-9 sm:h-10 text-xs xs:text-sm ${isLiked ? "bg-red-500 hover:bg-red-600 text-white" : ""}`}
                       onClick={handleLike}
                     >
@@ -473,7 +473,7 @@ const CandidateDetailPage: React.FC = () => {
                     </Button>
                     
                     <Button
-                      variant="outline"
+                      variant="ghost"
                       onClick={() => setShowCommentForm(!showCommentForm)}
                       className="h-8 xs:h-9 sm:h-10 text-xs xs:text-sm"
                     >
@@ -482,7 +482,7 @@ const CandidateDetailPage: React.FC = () => {
                     </Button>
                     
                     <Button
-                      variant="outline"
+                      variant="ghost"
                       onClick={handleShare}
                       className="h-8 xs:h-9 sm:h-10 text-xs xs:text-sm"
                     >

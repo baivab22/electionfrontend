@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import API from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
+import CandidateFeedbackSection from '@/components/CandidateFeedbackSection';
 
 interface Candidate {
   _id: string;
@@ -157,6 +158,7 @@ const CandidateDetailPage: React.FC = () => {
   const [isLiked, setIsLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(0);
   const [sharesCount, setSharesCount] = useState(0);
+  const [showShareMenu, setShowShareMenu] = useState(false);
 
   useEffect(() => {
     const fetchCandidate = async () => {
@@ -201,18 +203,125 @@ const CandidateDetailPage: React.FC = () => {
   };
 
   const handleShare = async () => {
+    // Toggle inline share menu on desktop; use native share on supporting devices
     const url = window.location.href;
     if (navigator.share) {
       try {
-        await navigator.share({
-          title: candidate?.personalInfo.fullName,
-          url: url
-        });
-      } catch (error) {}
-    } else {
-      navigator.clipboard.writeText(url);
-      toast({ title: "Link Copied!", description: "Profile link copied to clipboard" });
+        await navigator.share({ title: candidate?.personalInfo.fullName, url });
+        await recordShare();
+      } catch (err) {
+        // user cancelled or error
+      }
+      return;
     }
+
+    // Show custom share menu for non-supported devices
+    setShowShareMenu(prev => !prev);
+  };
+
+  const recordShare = async () => {
+    if (!id) return;
+    try {
+      const res = await API.candidates.shareCandidate(id);
+      setSharesCount(res.data.shares ?? (sharesCount + 1));
+    } catch (e) {
+      // ignore server errors
+      setSharesCount(prev => prev + 1);
+    }
+  };
+
+  const openShareWindow = async (url: string) => {
+    window.open(url, '_blank', 'noopener,noreferrer');
+    await recordShare();
+    setShowShareMenu(false);
+  };
+
+  const handleShareTo = async (platform: 'facebook' | 'twitter' | 'whatsapp' | 'linkedin' | 'email' | 'copy') => {
+    const pageUrl = encodeURIComponent(window.location.href);
+    const title = encodeURIComponent(candidate?.personalInfo.fullName || '');
+    const text = encodeURIComponent(`Check out ${candidate?.personalInfo.fullName}`);
+
+    if (platform === 'facebook') {
+      const shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${pageUrl}`;
+      await openShareWindow(shareUrl);
+      return;
+    }
+
+    if (platform === 'twitter') {
+      const shareUrl = `https://twitter.com/intent/tweet?text=${text}&url=${pageUrl}`;
+      await openShareWindow(shareUrl);
+      return;
+    }
+
+    if (platform === 'whatsapp') {
+      const shareUrl = `https://api.whatsapp.com/send?text=${text}%20${pageUrl}`;
+      await openShareWindow(shareUrl);
+      return;
+    }
+
+    if (platform === 'linkedin') {
+      const shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${pageUrl}`;
+      await openShareWindow(shareUrl);
+      return;
+    }
+
+    if (platform === 'email') {
+      const mailto = `mailto:?subject=${title}&body=${text}%0A%0A${pageUrl}`;
+      window.location.href = mailto;
+      await recordShare();
+      setShowShareMenu(false);
+      return;
+    }
+
+    if (platform === 'copy') {
+      try {
+        await navigator.clipboard.writeText(window.location.href);
+        toast({ title: 'Link Copied', description: 'Profile link copied to clipboard' });
+        await recordShare();
+      } catch (e) {
+        toast({ title: 'Copy failed', description: 'Could not copy link', variant: 'destructive' });
+      }
+      setShowShareMenu(false);
+      return;
+    }
+  };
+
+  const SocialLinks = ({ socialMedia }: { socialMedia?: Candidate['socialMedia'] }) => {
+    if (!socialMedia) return null;
+
+    const links: Array<{ key: string; url?: string; Icon: any; label: string }> = [
+      { key: 'facebook', url: socialMedia.facebook, Icon: Facebook, label: 'Facebook' },
+      { key: 'twitter', url: socialMedia.twitter, Icon: Twitter, label: 'Twitter' },
+      { key: 'instagram', url: socialMedia.instagram, Icon: Instagram, label: 'Instagram' },
+      { key: 'youtube', url: socialMedia.youtube, Icon: Youtube, label: 'YouTube' },
+      { key: 'linkedin', url: socialMedia.linkedin, Icon: Users, label: 'LinkedIn' },
+      { key: 'tiktok', url: socialMedia.tiktok, Icon: Users, label: 'TikTok' },
+      { key: 'website', url: candidate?.personalInfo.website, Icon: Globe, label: 'Website' }
+    ];
+
+    const visible = links.filter(l => l.url && l.url.trim() !== '');
+    if (visible.length === 0) return null;
+
+    return (
+      <div className="mt-4">
+        <p className="text-sm text-white/90 mb-2 font-medium">Connect on</p>
+        <div className="flex flex-wrap gap-3">
+          {visible.map(link => (
+            <a
+              key={link.key}
+              href={link.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={`Open ${link.label}`}
+              className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-3 py-2 rounded-md transition"
+            >
+              <link.Icon className="w-4 h-4" />
+              <span className="hidden sm:inline text-sm">{link.label}</span>
+            </a>
+          ))}
+        </div>
+      </div>
+    );
   };
 
   const calculateAge = (dateOfBirth: string) => {
@@ -392,16 +501,46 @@ const CandidateDetailPage: React.FC = () => {
                 <Button
                   onClick={handleLike}
                   variant={isLiked ? "default" : "outline"}
-                  className={isLiked ? "bg-pink-500 hover:bg-pink-600" : "border-white text-white hover:bg-white/20"}
+                  aria-pressed={isLiked}
+                  className={`flex items-center gap-2 ${isLiked ? 'bg-pink-500 hover:bg-pink-600 text-white' : 'border-white text-black hover:bg-white/20'}`}
                 >
-                  <Heart className={`w-4 h-4 mr-2 ${isLiked ? "fill-current" : ""}`} />
+                  <Heart className={`w-4 h-4 mr-2 ${isLiked ? 'fill-current text-white' : ''}`} />
                   {likesCount} Likes
                 </Button>
-                <Button onClick={handleShare} variant="outline" className="border-white text-white hover:bg-white/20">
-                  <Share2 className="w-4 h-4 mr-2" />
-                  Share
-                </Button>
+                <div className="relative">
+                  <Button onClick={handleShare} variant="outline" className="border-white text-black hover:bg-white/20">
+                    <Share2 className="w-4 h-4 mr-2" />
+                    Share ({sharesCount})
+                  </Button>
+                  {/* Share menu for non-native share-capable browsers */}
+                  {showShareMenu && (
+                    <div className="absolute mt-2 bg-white rounded-lg shadow-lg right-0 z-50 w-56 text-sm">
+                      <div className="p-2">
+                        <button onClick={() => handleShareTo('facebook')} className="flex items-center gap-2 w-full p-2 hover:bg-gray-50 rounded">
+                          <Facebook className="w-4 h-4" /> Share on Facebook
+                        </button>
+                        <button onClick={() => handleShareTo('twitter')} className="flex items-center gap-2 w-full p-2 hover:bg-gray-50 rounded">
+                          <Twitter className="w-4 h-4" /> Share on Twitter
+                        </button>
+                        <button onClick={() => handleShareTo('whatsapp')} className="flex items-center gap-2 w-full p-2 hover:bg-gray-50 rounded">
+                          <Instagram className="w-4 h-4" /> Share on WhatsApp
+                        </button>
+                        <button onClick={() => handleShareTo('linkedin')} className="flex items-center gap-2 w-full p-2 hover:bg-gray-50 rounded">
+                          <Globe className="w-4 h-4" /> Share on LinkedIn
+                        </button>
+                        <div className="border-t my-1" />
+                      <button onClick={() => handleShareTo('copy')} className="flex items-center gap-2 w-full p-2 hover:bg-gray-50 rounded">
+                        <FileText className="w-4 h-4" /> Copy Link
+                      </button>
+                      <button onClick={() => handleShareTo('email')} className="flex items-center gap-2 w-full p-2 hover:bg-gray-50 rounded">
+                        <Mail className="w-4 h-4" /> Share via Email
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
+              {/* Social links */}
+              <SocialLinks socialMedia={candidate.socialMedia} />
             </div>
           </div>
         </div>
@@ -609,12 +748,17 @@ const CandidateDetailPage: React.FC = () => {
 
         {/* Back Button */}
         <div className="mt-8 text-center">
+          {/* Candidate feedback section */}
+          <div className="max-w-3xl mx-auto mb-6">
+            <CandidateFeedbackSection candidateId={id as string} candidateName={candidate.personalInfo.fullName} />
+          </div>
           <Button onClick={() => navigate('/candidates')} variant="outline" className="border-red-600 text-red-600 hover:bg-red-50">
             <ArrowLeft className="w-4 h-4 mr-2" />
             सबै उम्मेदवारहरू हेर्नुहोस् / View All Candidates
           </Button>
         </div>
       </div>
+    </div>
     </div>
   );
 };

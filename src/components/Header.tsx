@@ -79,7 +79,7 @@ const Header = () => {
             />
             <div className="hidden min-w-0">
               <h1 className="text-sm sm:text-xl md:text-2xl font-bold gradient-text line-clamp-1">
-                नेपाल कम्युनिस्ट पार्टी 
+                नेपाली कम्युनिस्ट पार्टी 
               </h1>
               <p className="hidden sm:block text-xs text-muted-foreground font-medium tracking-wide">Nepali Communist Party</p>
             </div>

@@ -41,6 +41,44 @@ interface Candidate {
 }
 
 const CandidatesPage: React.FC = () => {
+  // Robust age parser: returns integer years or null if invalid/unrealistic
+  const parseAge = (dobRaw: any): number | null => {
+    if (!dobRaw) return null;
+    // If already a Date
+    let d: Date | null = null;
+    if (dobRaw instanceof Date) d = dobRaw;
+    else if (typeof dobRaw === 'number') {
+      // timestamp
+      d = new Date(dobRaw);
+    } else if (typeof dobRaw === 'string') {
+      // Try ISO first
+      let tryDate = new Date(dobRaw);
+      if (!isNaN(tryDate.getTime())) d = tryDate;
+      else {
+        // Try common DD/MM/YYYY or DD-MM-YYYY
+        const parts = dobRaw.split(/[\/\-\.\s]+/).map(p => p.trim()).filter(Boolean);
+        if (parts.length === 3) {
+          // detect ordering by length: if first is year
+          let year = Number(parts[0]);
+          let month = Number(parts[1]);
+          let day = Number(parts[2]);
+          if (year > 31) {
+            // YYYY MM DD or YYYY DD MM - assume YYYY MM DD
+            tryDate = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+          } else {
+            // assume DD MM YYYY
+            tryDate = new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
+          }
+          if (!isNaN(tryDate.getTime())) d = tryDate;
+        }
+      }
+    }
+
+    if (!d || isNaN(d.getTime())) return null;
+    const age = Math.floor((Date.now() - d.getTime()) / (1000 * 60 * 60 * 24 * 365.25));
+    if (age < 0 || age > 120) return null; // unrealistic
+    return age;
+  };
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [filteredCandidates, setFilteredCandidates] = useState<Candidate[]>([]);
   const [loading, setLoading] = useState(true);
@@ -95,9 +133,8 @@ const CandidatesPage: React.FC = () => {
     // Age range filter
     if ((minAgeFilter !== null && !isNaN(minAgeFilter)) || (maxAgeFilter !== null && !isNaN(maxAgeFilter))) {
       result = result.filter(c => {
-        const dob = c.personalInfo?.dateOfBirth ? new Date(c.personalInfo.dateOfBirth) : null;
-        if (!dob || isNaN(dob.getTime())) return false;
-        const age = Math.floor((Date.now() - dob.getTime()) / (1000 * 60 * 60 * 24 * 365.25));
+        const age = parseAge(c.personalInfo?.dateOfBirth);
+        if (age === null) return false; // skip candidates with invalid DOB
         if (minAgeFilter !== null && age < minAgeFilter) return false;
         if (maxAgeFilter !== null && age > maxAgeFilter) return false;
         return true;
@@ -106,7 +143,7 @@ const CandidatesPage: React.FC = () => {
 
     setFilteredCandidates(result);
     setCurrentPage(1);
-  }, [searchTerm, selectedPosition, selectedConstituency, candidates]);
+  }, [searchTerm, selectedPosition, selectedConstituency, candidates, minAgeFilter, maxAgeFilter]);
 
   const totalPages = Math.ceil(filteredCandidates.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -118,9 +155,8 @@ const CandidatesPage: React.FC = () => {
   const ages = useMemo(() => {
     return candidates
       .map(c => {
-        const dob = c.personalInfo?.dateOfBirth ? new Date(c.personalInfo.dateOfBirth) : null;
-        if (!dob || isNaN(dob.getTime())) return null;
-        return Math.floor((Date.now() - dob.getTime()) / (1000 * 60 * 60 * 24 * 365.25));
+        const age = parseAge(c.personalInfo?.dateOfBirth);
+        return age;
       })
       .filter(a => a !== null) as number[];
   }, [candidates]);
@@ -298,30 +334,77 @@ const CandidatesPage: React.FC = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
               <div className="col-span-1">
                 <p className="text-xs text-muted-foreground mb-2">Filter by age (years)</p>
-                <div className="flex items-center gap-2">
-                  <Input
-                    type="number"
-                    value={minAgeFilter ?? ageMin}
-                    min={ageMin}
-                    max={ageMax}
-                    onChange={(e) => setMinAgeFilter(e.target.value === '' ? null : Number(e.target.value))}
-                    className="w-24"
-                  />
-                  <span className="text-sm">to</span>
-                  <Input
-                    type="number"
-                    value={maxAgeFilter ?? ageMax}
-                    min={ageMin}
-                    max={ageMax}
-                    onChange={(e) => setMaxAgeFilter(e.target.value === '' ? null : Number(e.target.value))}
-                    className="w-24"
-                  />
-                  <Button
-                    onClick={() => { setMinAgeFilter(null); setMaxAgeFilter(null); }}
-                    className="ml-2"
-                  >Clear</Button>
+
+                <div className="px-2 py-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="text-sm">{minAgeFilter ?? ageMin}</div>
+                    <div className="text-sm text-muted-foreground">to</div>
+                    <div className="text-sm">{maxAgeFilter ?? ageMax}</div>
+                  </div>
+
+                  <div className="relative h-8">
+                    <input
+                      type="range"
+                      min={ageMin}
+                      max={ageMax}
+                      value={minAgeFilter ?? ageMin}
+                      onChange={(e) => {
+                        const v = Number(e.target.value);
+                        // Prevent crossing over
+                        if (maxAgeFilter !== null && v > maxAgeFilter) {
+                          setMinAgeFilter(maxAgeFilter);
+                        } else {
+                          setMinAgeFilter(v);
+                        }
+                      }}
+                      className="absolute inset-0 w-full h-2 appearance-none bg-transparent pointer-events-auto"
+                    />
+
+                    <input
+                      type="range"
+                      min={ageMin}
+                      max={ageMax}
+                      value={maxAgeFilter ?? ageMax}
+                      onChange={(e) => {
+                        const v = Number(e.target.value);
+                        if (minAgeFilter !== null && v < minAgeFilter) {
+                          setMaxAgeFilter(minAgeFilter);
+                        } else {
+                          setMaxAgeFilter(v);
+                        }
+                      }}
+                      className="absolute inset-0 w-full h-2 appearance-none bg-transparent pointer-events-auto"
+                    />
+
+                    {/* Visual track */}
+                    <div className="absolute left-0 right-0 top-3 h-1 bg-gray-200 rounded" />
+                    <div
+                      className="absolute top-3 h-1 bg-primary rounded"
+                      style={{
+                        left: `${((minAgeFilter ?? ageMin) - ageMin) / (ageMax - ageMin) * 100}%`,
+                        right: `${100 - ((maxAgeFilter ?? ageMax) - ageMin) / (ageMax - ageMin) * 100}%`
+                      }}
+                    />
+
+                    {/* Thumbs */}
+                    <div
+                      style={{ left: `${((minAgeFilter ?? ageMin) - ageMin) / (ageMax - ageMin) * 100}%` }}
+                      className="absolute top-0 transform -translate-y-1/2 w-4 h-4 bg-white border border-gray-300 rounded-full shadow"
+                    />
+                    <div
+                      style={{ left: `${((maxAgeFilter ?? ageMax) - ageMin) / (ageMax - ageMin) * 100}%` }}
+                      className="absolute top-0 transform -translate-y-1/2 w-4 h-4 bg-white border border-gray-300 rounded-full shadow"
+                    />
+                  </div>
+
+                  <div className="mt-2 flex items-center gap-2">
+                    <Button
+                      onClick={() => { setMinAgeFilter(null); setMaxAgeFilter(null); }}
+                      className="text-xs"
+                    >Clear</Button>
+                    <div className="text-xs text-muted-foreground">Detected age range: {ageMin}–{ageMax}</div>
+                  </div>
                 </div>
-                <p className="text-xs text-muted-foreground mt-2">Detected age range: {ageMin}–{ageMax}</p>
               </div>
 
               <div className="col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">

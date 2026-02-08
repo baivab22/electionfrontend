@@ -11,6 +11,7 @@ import API, { Post, StatsResponse } from '@/lib/api';
 import { ModernYoutubeSection } from '@/components/youtubeSection';
 import CandidateCard from '@/components/CandidateCard';
 // import API, { Post, StatsResponse } from '@/services/api';
+import ActivePolls from '@/components/ActivePolls';
 
 const StatsSkeleton = () => (
   <div className="grid grid-cols-2 md:grid-cols-4 gap-3 xs:gap-6 sm:gap-8">
@@ -291,17 +292,25 @@ const Home = () => {
     <div className="min-h-screen">
       {/* Hero Section with Background Image */}
       <section className="relative text-white overflow-hidden min-h-[60vh] xs:min-h-[70vh] sm:min-h-[80vh] flex items-center">
-        {/* Background Image */}
-        <div 
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{
-            backgroundImage: "url('https://scontent.fktm17-1.fna.fbcdn.net/v/t39.30808-6/359250480_804205261069872_879369025133702046_n.png?_nc_cat=104&ccb=1-7&_nc_sid=cc71e4&_nc_ohc=ssxSTS59sRsQ7kNvwFxuH1b&_nc_oc=Admvr-OWrw0Z3u_xHgkbtVIXmXrFqUfLSdZQFUGpjTYl4RSDRZWboWs92lrFf8hYrltJ1O2ay-ulCtWP0K-mCEfB&_nc_zt=23&_nc_ht=scontent.fktm17-1.fna&_nc_gid=wPtablTgZfR_tTMm6NbYzA&oh=00_AfuI5wm7PVe1uaxlY_yYBO0MH1IJjIwIOOLS3zd4lsEsxw&oe=69862F3F')"
-          }}
-        ></div>
+        {/* Banner image using <img> with object-fit to avoid clipping */}
+        <img
+          src="/assets/images/banner.png"
+          alt="banner"
+          className="absolute inset-0 w-full h-full object-contain object-center"
+          style={{ zIndex: 0 }}
+        />
+        {/* Dark overlay for contrast */}
+        <div className="absolute inset-0 bg-black/40" style={{ zIndex: 1 }} />
+
+        {/* Hero content intentionally left minimal */}
+        <div className="relative z-10 container mx-auto px-4 py-24 text-center" />
       </section>
 
       {/* Featured Candidates Section */}
       <FeaturedCandidatesSection />
+
+      {/* Active Polls (public) */}
+      <ActivePolls />
 
       {/* Stats Section */}
       <section className="py-12 xs:py-16 sm:py-20 bg-gradient-to-r from-primary/5 to-secondary/10">

@@ -60,10 +60,10 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
         <div className="text-center mb-8">
           <div className="relative inline-block">
               <img
-              src="/assets/images/ncp-logo.jpg"
-              alt="Nepali Communist Party"
-              className="h-20 w-20 mx-auto rounded-full object-cover border-4 border-white shadow-2xl mb-6"
-            />
+                src={`${import.meta.env.BASE_URL || '/'}assets/images/ncp-logo.jpg`}
+                alt="Nepali Communist Party"
+                className="h-20 w-20 mx-auto rounded-full object-cover border-4 border-white shadow-2xl mb-6"
+              />
             <div className="absolute -top-2 -right-2 w-8 h-8 bg-gradient-to-r from-red-400 to-yellow-500 rounded-full flex items-center justify-center shadow-lg">
               <Shield className="text-white" size={16} />
             </div>

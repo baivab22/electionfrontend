@@ -144,9 +144,13 @@ const PostDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
-  const API_URL = import.meta.env.MODE === 'production'
-    ? import.meta.env.VITE_PROD_URL || 'https://api.abhushangallery.com/api'
-    : import.meta.env.VITE_DEV_URL || 'http://localhost:3000/api';
+  const API_URL = (() => {
+    const vite = import.meta.env.VITE_API_URL as string | undefined;
+    if (vite) return `${vite.replace(/\/+$/g, '')}/api`;
+    return import.meta.env.MODE === 'production'
+      ? (import.meta.env.VITE_PROD_URL || 'https://api.abhushangallery.com/api')
+      : (import.meta.env.VITE_DEV_URL || 'http://localhost:3000/api');
+  })();
   
   const [post, setPost] = useState<Post | null>(null);
   const [relatedPosts, setRelatedPosts] = useState<RelatedPost[]>([]);
@@ -187,13 +191,13 @@ const PostDetails: React.FC = () => {
     });
   };
 
-      const API_ASSET_URL = 
- import.meta.env.MODE === 'production'
-   ? import.meta.env.VITE_PROD_URL ||
-  
-  'https://api.abhushangallery.com/'
-  :
-    import.meta.env.VITE_DEV_URL || 'http://localhost:3000/';
+      const API_ASSET_URL = (() => {
+        const vite = import.meta.env.VITE_API_URL as string | undefined;
+        if (vite) return `${vite.replace(/\/+$/g, '')}/`;
+        return import.meta.env.MODE === 'production'
+          ? (import.meta.env.VITE_PROD_URL || 'https://api.abhushangallery.com/')
+          : (import.meta.env.VITE_DEV_URL || 'http://localhost:3000/');
+      })();
 
   const getImageUrl = () => {
     if (!post?.image) return '/placeholder-image.jpg';

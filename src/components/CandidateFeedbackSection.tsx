@@ -43,6 +43,26 @@ export default function CandidateFeedbackSection({ candidateId, candidateName }:
     loadFeedback();
   }, [candidateId]);
 
+  const pendingKey = `pendingFeedback:${candidateId}`;
+
+  const readPendingLocal = (): CandidateFeedback[] => {
+    try {
+      const raw = localStorage.getItem(pendingKey);
+      if (!raw) return [];
+      return JSON.parse(raw) as CandidateFeedback[];
+    } catch (e) {
+      return [];
+    }
+  };
+
+  const writePendingLocal = (list: CandidateFeedback[]) => {
+    try {
+      localStorage.setItem(pendingKey, JSON.stringify(list));
+    } catch (e) {
+      // ignore
+    }
+  };
+
   const loadFeedback = async () => {
     setLoading(true);
     try {
@@ -51,7 +71,17 @@ export default function CandidateFeedbackSection({ candidateId, candidateName }:
         limit: 10,
         sort: 'newest'
       });
-      setFeedbackList(response.feedback);
+      // Merge server-approved feedback with any locally-pending submissions
+      const serverItems = response.feedback || [];
+      const pendingLocal = readPendingLocal();
+
+      // Remove any pending items that are now present on server (approved)
+      const serverIds = new Set(serverItems.map((f: CandidateFeedback) => f._id));
+      const remainingPending = pendingLocal.filter(p => !serverIds.has(p._id));
+      if (remainingPending.length !== pendingLocal.length) writePendingLocal(remainingPending);
+
+      // Final list: server approved first, then pending local
+      setFeedbackList([...serverItems, ...remainingPending]);
       setStats(response.stats);
       setError(null);
     } catch (err) {
@@ -86,16 +116,46 @@ export default function CandidateFeedbackSection({ candidateId, candidateName }:
         feedbackData.phone = phone;
       }
 
-      await API.candidateFeedback.submitFeedback(candidateId, feedbackData);
-      
-      setSuccessMessage('Thank you! Your feedback has been submitted.');
-      resetForm();
-      setTimeout(() => {
-        loadFeedback();
-        setShowForm(false);
-      }, 2000);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to submit feedback';
+      const resp = await API.candidateFeedback.submitFeedback(candidateId, feedbackData);
+      const created = resp.feedback;
+
+      if (created) {
+        const localItem = { ...created } as CandidateFeedback;
+        if (!created.isPublic) {
+          const existing = readPendingLocal();
+          const updated = [localItem, ...existing];
+          writePendingLocal(updated);
+        }
+
+        setFeedbackList(prev => [localItem, ...prev]);
+
+        setStats(prev => {
+          const prevTotal = prev.totalFeedback || 0;
+          const newTotal = prevTotal + 1;
+          const newDist = { ...prev.ratingDistribution };
+          const rkey = created.rating as number;
+          newDist[rkey] = (newDist[rkey] || 0) + 1;
+          const newAvg = ((prev.averageRating * prevTotal) + created.rating) / newTotal;
+          return {
+            averageRating: parseFloat(newAvg.toFixed(1)),
+            totalFeedback: newTotal,
+            ratingDistribution: newDist
+          };
+        });
+
+        setSuccessMessage('Thank you! Your feedback has been submitted and is pending approval.');
+      }
+
+      // reset form and close
+      setComment('');
+      setAnonymous(true);
+      setEmail('');
+      setName('');
+      setPhone('');
+      setTimeout(() => setShowForm(false), 900);
+      setTimeout(() => loadFeedback(), 2000);
+    } catch (err: any) {
+      const message = err?.message || 'Failed to submit feedback';
       setError(message);
     } finally {
       setSubmitting(false);
@@ -386,11 +446,18 @@ export default function CandidateFeedbackSection({ candidateId, candidateName }:
                   <div className="flex items-center gap-2 xs:gap-3">
                     <div className="text-xl xs:text-2xl sm:text-3xl">{getTypeIcon(feedback.type)}</div>
                     <div>
-                      <p className="font-semibold text-gray-800 text-xs xs:text-sm sm:text-base">
-                        {feedback.anonymous ? 'Anonymous' : feedback.name || 'Community Member'}
-                      </p>
+                      <div className="flex items-center gap-2">
+                        <p className="font-semibold text-gray-800 text-xs xs:text-sm sm:text-base">
+                          {feedback.anonymous ? 'Anonymous' : feedback.name || 'Community Member'}
+                        </p>
+                        {feedback.status !== 'approved' && (
+                          <span className="text-[10px] xs:text-xs text-yellow-600 bg-yellow-50 px-2 py-0.5 rounded-full">
+                            Pending approval
+                          </span>
+                        )}
+                      </div>
                       <p className="text-[10px] xs:text-xs text-gray-500">
-                        {new Date(feedback.createdAt).toLocaleDateString()}
+                        {feedback.createdAt ? new Date(feedback.createdAt).toLocaleDateString() : 'Just now'}
                       </p>
                     </div>
                   </div>

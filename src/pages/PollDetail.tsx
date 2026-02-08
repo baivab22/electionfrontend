@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import API from '@/lib/api';
 import { Card, CardContent } from '@/components/ui/card';
@@ -23,12 +23,16 @@ const PollDetail: React.FC = () => {
   // API client
   // Note: use API.polls helpers from client lib
   const [hasVoted, setHasVoted] = useState<boolean>(false);
-  const [pollingIntervalId, setPollingIntervalId] = useState<any>(null);
+  const resultsIntervalRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (id) fetchPoll();
     return () => {
-      if (pollingIntervalId) clearInterval(pollingIntervalId);
+      // cleanup polling interval
+      if (resultsIntervalRef.current) {
+        window.clearInterval(resultsIntervalRef.current);
+        resultsIntervalRef.current = null;
+      }
     };
   }, [id]);
 
@@ -47,13 +51,17 @@ const PollDetail: React.FC = () => {
           // ignore check errors
         }
 
-        // Start polling results if poll is active/open
-        if (res.data && res.data.isActive) {
-          await fetchResults();
-          const iv = setInterval(() => fetchResults(), 5000);
-          setPollingIntervalId(iv);
-        } else {
-          await fetchResults();
+        // Fetch initial results and start polling for updates (every 5s)
+        await fetchResults();
+        try {
+          if (res.data.isActive) {
+            if (resultsIntervalRef.current) window.clearInterval(resultsIntervalRef.current);
+            resultsIntervalRef.current = window.setInterval(() => {
+              fetchResults();
+            }, 5000) as unknown as number;
+          }
+        } catch (e) {
+          console.warn('Polling setup failed', e);
         }
       }
     } catch (e) {
@@ -80,11 +88,6 @@ const PollDetail: React.FC = () => {
         if (voterId) localStorage.setItem('voterId', voterId);
         setHasVoted(true);
         await fetchResults();
-        // stop polling updates after vote to reduce noise
-        if (pollingIntervalId) {
-          clearInterval(pollingIntervalId);
-          setPollingIntervalId(null);
-        }
       }
     } catch (err: any) {
       const msg = err.response?.data?.message || 'Failed to vote';
