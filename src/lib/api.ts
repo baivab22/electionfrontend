@@ -1,6 +1,32 @@
 // api.ts - Frontend API Service
 import axios, { AxiosResponse, AxiosError } from 'axios';
 
+// ============================================================
+// Cloudinary Configuration & Upload Function
+// ============================================================
+const CLOUDINARY_CLOUD_NAME = 'dpipulbgm';
+const CLOUDINARY_UPLOAD_PRESET = 'tu_reports';
+const CLOUDINARY_UPLOAD_URL = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/upload`;
+
+export const uploadToCloudinary = async (
+  file: File,
+  resourceType: 'image' | 'raw' = 'image'
+): Promise<string> => {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+
+  try {
+    const response = await axios.post(CLOUDINARY_UPLOAD_URL, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data.secure_url;
+  } catch (error) {
+    console.error('Error uploading to Cloudinary:', error);
+    throw new Error('Failed to upload file to Cloudinary');
+  }
+};
+
 // Types
 export interface User {
   id: string;

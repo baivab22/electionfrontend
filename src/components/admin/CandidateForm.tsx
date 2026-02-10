@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, X } from 'lucide-react';
+import { uploadToCloudinary } from '@/lib/api';
 
 interface CandidateFormProps {
   onSubmit: (data: any) => void;
@@ -62,6 +63,9 @@ const CandidateForm: React.FC<CandidateFormProps> = ({ onSubmit, initialData, is
       }
     }
   });
+
+  const [uploadingProfilePhoto, setUploadingProfilePhoto] = useState(false);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
 
   const [newIssue, setNewIssue] = useState({
     issueTitle_en: '',
@@ -271,12 +275,65 @@ const CandidateForm: React.FC<CandidateFormProps> = ({ onSubmit, initialData, is
             <CardContent className="space-y-4">
               <div>
                 <label className="text-sm font-semibold mb-2 block">Profile Photo</label>
+                {photoPreview && (
+                  <div className="mb-4 relative inline-block">
+                    <img src={photoPreview} alt="Preview" className="max-w-[200px] max-h-[200px] rounded-lg" />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setPhotoPreview(null);
+                        setFormData({
+                          ...formData,
+                          biography: { ...formData.biography, profilePhoto: null }
+                        });
+                      }}
+                      className="absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white"
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                )}
                 <Input
                   type="file"
                   accept="image/*"
-                  onChange={(e) => handleInputChange('biography', 'profilePhoto', e.target.files?.[0])}
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      setUploadingProfilePhoto(true);
+                      try {
+                        // Show preview
+                        const reader = new FileReader();
+                        reader.onload = (event) => {
+                          setPhotoPreview(event.target?.result as string);
+                        };
+                        reader.readAsDataURL(file);
+
+                        // Upload to Cloudinary
+                        const imageUrl = await uploadToCloudinary(file, 'image');
+                        
+                        // Store the URL in form data
+                        setFormData({
+                          ...formData,
+                          biography: {
+                            ...formData.biography,
+                            profilePhoto: imageUrl
+                          }
+                        });
+                      } catch (error) {
+                        console.error('Error uploading profile photo:', error);
+                        alert('Failed to upload profile photo. Please try again.');
+                        setPhotoPreview(null);
+                      } finally {
+                        setUploadingProfilePhoto(false);
+                      }
+                    }
+                  }}
+                  disabled={uploadingProfilePhoto}
                   className="border-primary/20 focus:border-primary"
                 />
+                {uploadingProfilePhoto && <p className="text-sm text-gray-500 mt-2">Uploading profile photo...</p>}
               </div>
 
               <Textarea

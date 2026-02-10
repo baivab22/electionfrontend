@@ -21,7 +21,7 @@ import { toast } from '@/hooks/use-toast';
 import CreatePostForm from '@/components/admin/CreatePostForm';
 import LoginForm from '@/components/admin/LoginForm';
 import PollCreateForm from '@/components/admin/PollCreateForm';
-import API, { CreatePostData, Post, UpdatePostData, User, Member, MembersQuery, StatsResponse, Candidate, CreateCandidateData, UpdateCandidateData, CandidateFeedback } from '@/lib/api';
+import API, { CreatePostData, Post, UpdatePostData, User, Member, MembersQuery, StatsResponse, Candidate, CreateCandidateData, UpdateCandidateData, CandidateFeedback, uploadToCloudinary } from '@/lib/api';
 
 interface Stats {
   totalPosts: number;
@@ -213,6 +213,11 @@ const AdminDashboard: React.FC = () => {
   };
   
   const [candidateForm, setCandidateForm] = useState(initialCandidateForm);
+  
+  const [uploadingProfilePhoto, setUploadingProfilePhoto] = useState(false);
+  const [uploadingSymbolImage, setUploadingSymbolImage] = useState(false);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [symbolPreview, setSymbolPreview] = useState<string | null>(null);
   
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isPostsLoading, setIsPostsLoading] = useState<boolean>(false);
@@ -1186,6 +1191,8 @@ const AdminDashboard: React.FC = () => {
       isActive: true,
       isVerified: false,
     });
+    setPhotoPreview(null);
+    setSymbolPreview(null);
   };
 
   const handleEditClick = (post: Post) => {
@@ -2279,11 +2286,66 @@ const AdminDashboard: React.FC = () => {
                         </div>
                         <div>
                           <Label>प्रोफाइल फोटो</Label>
+                          {photoPreview && (
+                            <div className="mb-2 relative inline-block">
+                              <img src={photoPreview} alt="Preview" className="max-w-[150px] max-h-[150px] rounded-lg" />
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  setPhotoPreview(null);
+                                  setCandidateForm({...candidateForm, personalInfo: {...candidateForm.personalInfo, profilePhoto: ''}});
+                                }}
+                                className="absolute top-0 right-0 bg-red-500 hover:bg-red-600 text-white rounded-full p-1"
+                              >
+                                ✕
+                              </Button>
+                            </div>
+                          )}
                           <Input
                             type="file"
                             accept="image/*"
-                            onChange={(e) => setCandidateForm({...candidateForm, profilePhotoFile: e.target.files?.[0] || null})}
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                setUploadingProfilePhoto(true);
+                                try {
+                                  const reader = new FileReader();
+                                  reader.onload = (event) => {
+                                    setPhotoPreview(event.target?.result as string);
+                                  };
+                                  reader.readAsDataURL(file);
+
+                                  const imageUrl = await uploadToCloudinary(file, 'image');
+                                  setCandidateForm({
+                                    ...candidateForm,
+                                    personalInfo: {
+                                      ...candidateForm.personalInfo,
+                                      profilePhoto: imageUrl
+                                    },
+                                    profilePhotoFile: null
+                                  });
+                                  toast({
+                                    title: "Success",
+                                    description: "Profile photo uploaded successfully!",
+                                  });
+                                } catch (error) {
+                                  console.error('Error uploading profile photo:', error);
+                                  toast({
+                                    title: "Error",
+                                    description: "Failed to upload profile photo. Please try again.",
+                                    variant: "destructive",
+                                  });
+                                  setPhotoPreview(null);
+                                } finally {
+                                  setUploadingProfilePhoto(false);
+                                }
+                              }
+                            }}
+                            disabled={uploadingProfilePhoto}
                           />
+                          {uploadingProfilePhoto && <p className="text-sm text-gray-500 mt-1">Uploading...</p>}
                         </div>
                       </div>
                     </div>
@@ -3014,11 +3076,66 @@ const AdminDashboard: React.FC = () => {
                       </div>
                       <div>
                         <Label>नयाँ प्रोफाइल फोटो</Label>
+                        {photoPreview && (
+                          <div className="mb-2 relative inline-block">
+                            <img src={photoPreview} alt="Preview" className="max-w-[150px] max-h-[150px] rounded-lg" />
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setPhotoPreview(null);
+                                setCandidateForm({...candidateForm, personalInfo: {...candidateForm.personalInfo, profilePhoto: ''}});
+                              }}
+                              className="absolute top-0 right-0 bg-red-500 hover:bg-red-600 text-white rounded-full p-1"
+                            >
+                              ✕
+                            </Button>
+                          </div>
+                        )}
                         <Input
                           type="file"
                           accept="image/*"
-                          onChange={(e) => setCandidateForm({...candidateForm, profilePhotoFile: e.target.files?.[0] || null})}
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              setUploadingProfilePhoto(true);
+                              try {
+                                const reader = new FileReader();
+                                reader.onload = (event) => {
+                                  setPhotoPreview(event.target?.result as string);
+                                };
+                                reader.readAsDataURL(file);
+
+                                const imageUrl = await uploadToCloudinary(file, 'image');
+                                setCandidateForm({
+                                  ...candidateForm,
+                                  personalInfo: {
+                                    ...candidateForm.personalInfo,
+                                    profilePhoto: imageUrl
+                                  },
+                                  profilePhotoFile: null
+                                });
+                                toast({
+                                  title: "Success",
+                                  description: "Profile photo uploaded successfully!",
+                                });
+                              } catch (error) {
+                                console.error('Error uploading profile photo:', error);
+                                toast({
+                                  title: "Error",
+                                  description: "Failed to upload profile photo. Please try again.",
+                                  variant: "destructive",
+                                });
+                                setPhotoPreview(null);
+                              } finally {
+                                setUploadingProfilePhoto(false);
+                              }
+                            }
+                          }}
+                          disabled={uploadingProfilePhoto}
                         />
+                        {uploadingProfilePhoto && <p className="text-sm text-gray-500 mt-1">Uploading...</p>}
                       </div>
                     </div>
                   </div>
