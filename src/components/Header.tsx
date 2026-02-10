@@ -37,7 +37,7 @@ const Header = () => {
     <header className="bg-white/95 backdrop-blur-lg shadow-modern-lg border-b border-primary/10 sticky top-0 z-50">
       {/* Top bar with social links - Hidden on small screens */}
       <div className="hidden sm:block bg-gradient-to-r from-primary via-accent to-secondary text-white py-2">
-        <div className="container mx-auto px-2 sm:px-4 flex justify-between items-center text-xs sm:text-sm">
+        <div className="container  sm:px-4 flex justify-between items-center text-xs sm:text-sm">
           <div className="flex items-center gap-2 sm:gap-4">
             <span className="font-medium hidden xs:inline">{t('contact.followUs')}:</span>
             <div className="flex gap-1.5 sm:gap-2">
@@ -68,12 +68,12 @@ const Header = () => {
       </div>
 
       {/* Main navigation */}
-      <div className="container mx-auto px-2 sm:px-4">
+      <div className="container mx-auto px-2 sm:px-2">
         <div className="flex items-center justify-between h-16 sm:h-20">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 sm:gap-3 group flex-1 min-w-0">
             <img
-              src="https://scontent.fktm17-1.fna.fbcdn.net/v/t39.30808-6/616828104_1195780432670354_4211802509173510793_n.jpg?_nc_cat=109&ccb=1-7&_nc_sid=6ee11a&_nc_ohc=lhW_dBOEzEkQ7kNvwFT29Yi&_nc_oc=AdnFcRc_wBgVSXUJQFWypBp84OowOeswqSP1BVGsM9pymtRAjHD6TX9DnkT4y_jHvV2Yxzp3Z2K7qu98MhtK8A7W&_nc_zt=23&_nc_ht=scontent.fktm17-1.fna&_nc_gid=dOYtjRtjN2Bvf9Nxu0uoCg&oh=00_Afudd_MRzayqd4cwuiW8Xhlq_8gpN6ktdFh_5xxCI4fYEA&oe=69860786"
+ src="/assets/images/ncp-logo.jpg"
               alt="Nepali Communist Party Logo"
               className="h-10 sm:h-14 w-10 sm:w-14 rounded-full object-cover shadow-modern group-hover:scale-105 transition-transform duration-200 flex-shrink-0"
             />

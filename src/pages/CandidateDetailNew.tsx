@@ -325,13 +325,33 @@ const CandidateDetailPage: React.FC = () => {
   };
 
   const calculateAge = (dateOfBirth: string) => {
-    const today = new Date();
-    const birthDate = new Date(dateOfBirth);
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-      age--;
+    if (!dateOfBirth) return '';
+    const parts = String(dateOfBirth).trim().split(/[\/\-\.\s]+/).map(p => p.trim()).filter(Boolean);
+    let y: number, m: number, d: number;
+    if (parts.length === 3) {
+      if (parts[0].length === 4) { // YYYY-MM-DD
+        y = Number(parts[0]); m = Number(parts[1]) - 1; d = Number(parts[2]);
+      } else { // assume DD-MM-YYYY
+        y = Number(parts[2]); m = Number(parts[1]) - 1; d = Number(parts[0]);
+      }
+    } else {
+      const dt = new Date(dateOfBirth);
+      if (isNaN(dt.getTime())) return '';
+      y = dt.getFullYear(); m = dt.getMonth(); d = dt.getDate();
     }
+
+    // If year looks like Nepali Bikram Sambat (BS) (e.g., 2000-2100), compute age using BS current year 2082
+    if (y >= 2000 && y <= 2100) {
+      const ageBs = 2082 - y;
+      if (ageBs < 0 || ageBs > 120) return '';
+      return ageBs;
+    }
+
+    const today = new Date();
+    let age = today.getFullYear() - y;
+    const monthDiff = today.getMonth() - m;
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < d)) age--;
+    if (age < 0 || age > 120) return '';
     return age;
   };
 
@@ -488,7 +508,7 @@ const CandidateDetailPage: React.FC = () => {
                 </div>
                 <div className="flex items-center gap-2">
                   <Phone className="w-4 h-4" />
-                  <span>{candidate.personalInfo.contactNumber}</span>
+                  <span>  {candidate.personalInfo.contactNumber.slice(0, -2)}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Mail className="w-4 h-4" />

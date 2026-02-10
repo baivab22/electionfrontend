@@ -43,14 +43,16 @@ const App = () => (
         <div className="min-h-screen flex flex-col">
           <Routes>
             {/* Admin route without header/footer */}
-            <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/admin" element={<div className="container mx-auto px-1"><AdminDashboard /></div>} />
             
             {/* Regular routes with header/footer */}
             <Route path="/*" element={
               <>
                 <Header />
                 <main className="flex-1">
-                  <Routes>
+               
+                    <div className='container'>
+                    <Routes>
                     <Route path="/" element={<Home />} />
                     <Route path="/news" element={<News />} />
                     <Route path="/post/:id" element={<PostDetails />} />
@@ -65,7 +67,8 @@ const App = () => (
                     <Route path="/feedback" element={<FeedbackPage />} />
                     <Route path="*" element={<NotFound />} />
                          {/* <ScrollToTop />  */}
-                  </Routes>
+                    </Routes>
+                  </div>
                 </main>
                 <Footer />
               </>

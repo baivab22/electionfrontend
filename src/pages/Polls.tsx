@@ -30,7 +30,7 @@ const Polls: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto py-8">
+    <div className="container mx-auto px-0 xs:px-2 sm:px-4 py-8">
       <h1 className="text-2xl font-semibold mb-4">Active Polls</h1>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {loading && <div>Loading...</div>}

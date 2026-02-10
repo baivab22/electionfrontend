@@ -58,7 +58,7 @@ const ContactUs = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-2 xs:px-4 py-8 xs:py-10 sm:py-12">
+      <div className="container mx-auto px-0 xs:px-2 sm:px-4 py-8 xs:py-10 sm:py-12">
         {/* Header */}
         <div className="text-center mb-8 xs:mb-10 sm:mb-12">
           <h1 className="text-2xl xs:text-3xl sm:text-4xl font-bold text-gray-900 mb-2 xs:mb-3 sm:mb-4">

@@ -36,7 +36,7 @@ const ActivePolls: React.FC = () => {
 
   return (
     <section className="py-8 bg-white">
-      <div className="container mx-auto px-2 xs:px-4">
+      <div className="container">
         <div className="text-center mb-6">
           <h2 className="text-2xl font-bold text-gray-900">Participate in Polls</h2>
           <p className="text-sm text-gray-600 mt-1">See current polls and share your voice</p>

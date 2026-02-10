@@ -48,7 +48,7 @@ const API_ASSET_URL = (() => {
   const vite = import.meta.env.VITE_API_URL as string | undefined;
   if (vite) return `${vite.replace(/\/+$/g, '')}/`;
   return import.meta.env.MODE === 'production'
-    ? (import.meta.env.VITE_PROD_URL || 'https://apii.abhushangallery.com/')
+    ? (import.meta.env.VITE_PROD_URL || 'https://api.abhushangallery.com/')
     : (import.meta.env.VITE_DEV_URL || 'http://localhost:3000/');
 })();
 

@@ -578,7 +578,7 @@ const CollegeDataForm = () => {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
       {/* Fixed Header */}
       <div className="sticky top-0 z-50 bg-white shadow-lg border-b">
-        <div className="container mx-auto px-4">
+        <div className="container mx-auto px-0 xs:px-2 sm:px-4">
           <div className="flex items-center justify-between py-4">
             <div className="flex items-center space-x-4">
               <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-3 rounded-lg">
@@ -606,7 +606,7 @@ const CollegeDataForm = () => {
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-8 max-w-6xl">
+      <div className="container mx-auto px-0 xs:px-2 sm:px-4 py-8 max-w-6xl">
         <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
           
           {/* Progress Bar */}

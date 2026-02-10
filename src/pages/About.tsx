@@ -54,8 +54,8 @@ const About = () => {
     <div className="min-h-screen">
       {/* Hero Section */}
       <section className="bg-gradient-to-br from-red-900 via-red-800 to-red-700 text-white py-12 xs:py-16 sm:py-20">
-        <div className="container mx-auto px-2 xs:px-4">
-          <div className="max-w-4xl mx-auto text-center">
+        <div className="container mx-auto px-0 xs:px-2 sm:px-4">
+          <div className=" mx-auto text-center">
             <h1 className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-3 xs:mb-4 sm:mb-6">
               {t('about.title')}
             </h1>
@@ -69,7 +69,7 @@ const About = () => {
 
       {/* Mission & Vision */}
       <section className="py-12 xs:py-16 sm:py-20 bg-white">
-        <div className="container mx-auto px-2 xs:px-4">
+        <div className="container mx-auto px-0 xs:px-2 sm:px-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 xs:gap-6 sm:gap-8 lg:gap-12">
             <Card className="border-0 shadow-xl hover:shadow-2xl transition-shadow duration-300">
               <CardHeader className="text-center pb-3 xs:pb-4 sm:pb-6">
@@ -108,7 +108,7 @@ const About = () => {
 
       {/* Core Values */}
       <section className="py-12 xs:py-16 sm:py-20 bg-gradient-to-br from-gray-50 to-red-50">
-        <div className="container mx-auto px-2 xs:px-4">
+        <div className="container mx-auto px-0 xs:px-2 sm:px-4">
           <div className="text-center mb-8 xs:mb-12 sm:mb-16">
             <h2 className="text-2xl xs:text-3xl sm:text-4xl font-bold text-gray-900 mb-2 xs:mb-4">Our Core Values</h2>
             <div className="w-16 xs:w-20 sm:w-24 h-1 bg-gradient-to-r from-red-600 to-yellow-600 mx-auto rounded-full"></div>
@@ -132,7 +132,7 @@ const About = () => {
 
       {/* Team Section */}
       <section className="py-20 bg-white">
-        <div className="container mx-auto px-4">
+        <div className="container mx-auto px-0 xs:px-2 sm:px-4">
           {/* <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-gray-900 mb-4">Our Leadership Team</h2>
             <div className="w-24 h-1 bg-gradient-to-r from-blue-600 to-green-600 mx-auto rounded-full"></div>
@@ -165,7 +165,7 @@ const About = () => {
 
       {/* Impact Stats */}
       <section className="py-12 xs:py-16 sm:py-20 bg-gradient-to-r from-red-900 via-red-800 to-red-700 text-white">
-        <div className="container mx-auto px-2 xs:px-4">
+        <div className="container mx-auto px-0 xs:px-2 sm:px-4">
           <div className="text-center mb-8 xs:mb-12 sm:mb-16">
             <h2 className="text-2xl xs:text-3xl sm:text-4xl font-bold mb-2 xs:mb-4">Our Impact</h2>
             <p className="text-xs xs:text-sm sm:text-base md:text-lg lg:text-xl text-gray-200">Building a stronger movement for social change</p>
@@ -194,7 +194,7 @@ const About = () => {
 
       {/* Call to Action */}
       <section className="py-12 xs:py-16 sm:py-20 bg-gradient-to-br from-gray-50 to-red-50">
-        <div className="container mx-auto px-2 xs:px-4 text-center">
+        <div className="container mx-auto px-0 xs:px-2 sm:px-4 text-center">
           <h2 className="text-2xl xs:text-3xl sm:text-4xl font-bold text-gray-900 mb-3 xs:mb-4 sm:mb-6">Join Our Movement</h2>
           <p className="text-xs xs:text-sm sm:text-base md:text-lg lg:text-xl text-gray-600 mb-4 xs:mb-6 sm:mb-8 max-w-2xl mx-auto px-2">
             Be part of Nepal's progressive movement. Together, we can create a more inclusive and just society for all.

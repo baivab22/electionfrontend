@@ -519,7 +519,7 @@ const normalizedViteUrl = rawViteUrl ? rawViteUrl.replace(/\/+$/g, '') : undefin
 const API_BASE_URL = normalizedViteUrl
   ? `${normalizedViteUrl}/api`
   : import.meta.env.MODE === 'production'
-    ? 'https://apii.abhushangallery.com/api'
+    ? 'https://api.abhushangallery.com/api'
     : 'http://localhost:3000/api';
 
 const api = axios.create({

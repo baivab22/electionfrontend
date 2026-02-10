@@ -148,7 +148,7 @@ const PostDetails: React.FC = () => {
     const vite = import.meta.env.VITE_API_URL as string | undefined;
     if (vite) return `${vite.replace(/\/+$/g, '')}/api`;
     return import.meta.env.MODE === 'production'
-      ? (import.meta.env.VITE_PROD_URL || 'https://apii.abhushangallery.com/api')
+      ? (import.meta.env.VITE_PROD_URL || 'https://api.abhushangallery.com/api')
       : (import.meta.env.VITE_DEV_URL || 'http://localhost:3000/api');
   })();
   
@@ -195,7 +195,7 @@ const PostDetails: React.FC = () => {
         const vite = import.meta.env.VITE_API_URL as string | undefined;
         if (vite) return `${vite.replace(/\/+$/g, '')}/`;
         return import.meta.env.MODE === 'production'
-          ? (import.meta.env.VITE_PROD_URL || 'https://apii.abhushangallery.com/')
+          ? (import.meta.env.VITE_PROD_URL || 'https://api.abhushangallery.com/')
           : (import.meta.env.VITE_DEV_URL || 'http://localhost:3000/');
       })();
 
@@ -447,7 +447,7 @@ const PostDetails: React.FC = () => {
         {!showSocialPlugin && (
           <button
             onClick={() => setShowSocialPlugin(true)}
-            className="fixed top-1/2 right-0 transform -translate-y-1/2 z-40 bg-gradient-to-l from-blue-600 to-blue-500 text-white rounded-l-lg shadow-lg p-2 xs:p-3 hover:from-blue-700 hover:to-blue-600 transition-all duration-300 hover:pr-3 xs:hover:pr-4 group/share"
+            className="fixed top-1/2 right-0 transform -translate-y-1/2 z-40 bg-gradient-to-l from-blue-600 to-blue-500 text-white rounded-l-lg shadow-lg p-2 xs:p-3 hover:from-blue-700 hover:to-blue-600 transition-all duration-300 hover:pr-3 xs:hover:pr-4 group/share share-floating"
             title="Share this article"
           >
             <Share2 className="w-4 xs:w-[18px] h-4 xs:h-[18px] group-hover/share:scale-110 transition-transform" />
@@ -469,7 +469,7 @@ const PostDetails: React.FC = () => {
         {/* Article Header */}
         <section className="py-6 xs:py-8 sm:py-12 bg-white">
           <div className="container mx-auto px-3 xs:px-4">
-            <div className="max-w-4xl mx-auto">
+            <div className=" mx-auto">
               <div className="mb-4 xs:mb-6">
                 <Badge className={`${getCategoryColor(post.category)} border mb-3 xs:mb-4 text-xs xs:text-sm`}>
                   {t(`categories.${post.category}`)}
@@ -527,7 +527,7 @@ const PostDetails: React.FC = () => {
         {post.image && (
           <section className="pb-6 xs:pb-8 sm:pb-12 bg-white">
             <div className="container mx-auto px-3 xs:px-4">
-              <div className="max-w-4xl mx-auto">
+              <div className=" mx-auto">
                 <img
                   src={getImageUrl()}
                   alt={post.title}
@@ -544,7 +544,7 @@ const PostDetails: React.FC = () => {
         {/* Article Content */}
         <section className="pb-8 xs:pb-12 sm:pb-16 bg-white">
           <div className="container mx-auto px-3 xs:px-4">
-            <div className="max-w-4xl mx-auto">
+            <div className=" mx-auto">
               {post.content ? (
                 <div 
                   className="prose prose-sm xs:prose sm:prose-lg max-w-none text-gray-700 leading-relaxed"
@@ -561,7 +561,7 @@ const PostDetails: React.FC = () => {
         {(getAuthorBio(post.author) || typeof post.author === 'object') && (
           <section className="py-6 xs:py-8 sm:py-12 bg-gray-50">
             <div className="container mx-auto px-3 xs:px-4">
-              <div className="max-w-4xl mx-auto">
+              <div className=" mx-auto">
                 <Card className="border-0 shadow-lg">
                   <CardContent className="p-4 xs:p-6 sm:p-8">
                     <div className="flex flex-col xs:flex-row items-center xs:items-start gap-4 xs:gap-5 sm:gap-6">
@@ -640,7 +640,7 @@ const PostDetailsSkeleton: React.FC = () => {
       {/* Article Header Skeleton */}
       <section className="py-6 xs:py-8 sm:py-12 bg-white">
         <div className="container mx-auto px-3 xs:px-4">
-          <div className="max-w-4xl mx-auto">
+          <div className=" mx-auto">
             <Skeleton className="h-6 xs:h-7 sm:h-8 w-24 xs:w-28 sm:w-32 mb-3 xs:mb-4" />
             <Skeleton className="h-8 xs:h-10 sm:h-12 w-full mb-2 xs:mb-3 sm:mb-4" />
             <Skeleton className="h-8 xs:h-10 sm:h-12 w-3/4 mb-4 xs:mb-5 sm:mb-6" />
@@ -669,7 +669,7 @@ const PostDetailsSkeleton: React.FC = () => {
       {/* Featured Image Skeleton */}
       <section className="pb-6 xs:pb-8 sm:pb-12 bg-white">
         <div className="container mx-auto px-3 xs:px-4">
-          <div className="max-w-4xl mx-auto">
+          <div className=" mx-auto">
             <Skeleton className="w-full h-48 xs:h-56 sm:h-72 md:h-80 lg:h-96 rounded-lg" />
           </div>
         </div>
@@ -678,7 +678,7 @@ const PostDetailsSkeleton: React.FC = () => {
       {/* Content Skeleton */}
       <section className="pb-8 xs:pb-12 sm:pb-16 bg-white">
         <div className="container mx-auto px-3 xs:px-4">
-          <div className="max-w-4xl mx-auto space-y-2 xs:space-y-3 sm:space-y-4">
+          <div className=" mx-auto space-y-2 xs:space-y-3 sm:space-y-4">
             <Skeleton className="h-3 xs:h-4 w-full" />
             <Skeleton className="h-3 xs:h-4 w-full" />
             <Skeleton className="h-3 xs:h-4 w-5/6" />
@@ -699,7 +699,7 @@ const PostDetailsSkeleton: React.FC = () => {
       {/* Author Bio Skeleton */}
       <section className="py-6 xs:py-8 sm:py-12 bg-gray-50">
         <div className="container mx-auto px-3 xs:px-4">
-          <div className="max-w-4xl mx-auto">
+          <div className=" mx-auto">
             <Card className="border-0 shadow-lg">
               <CardContent className="p-4 xs:p-6 sm:p-8">
                 <div className="flex flex-col xs:flex-row items-center xs:items-start gap-4 xs:gap-5 sm:gap-6">

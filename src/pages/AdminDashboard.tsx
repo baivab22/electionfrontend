@@ -1231,7 +1231,7 @@ const AdminDashboard: React.FC = () => {
     const vite = import.meta.env.VITE_API_URL as string | undefined;
     if (vite) return `${vite.replace(/\/+$/g, '')}/`;
     return import.meta.env.MODE === 'production'
-      ? (import.meta.env.VITE_PROD_URL || 'https://apii.abhushangallery.com/')
+      ? (import.meta.env.VITE_PROD_URL || 'https://api.abhushangallery.com/')
       : (import.meta.env.VITE_DEV_URL || 'http://localhost:3000/');
   })();
 
@@ -1274,7 +1274,7 @@ const AdminDashboard: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       <div className="bg-gradient-to-r from-primary via-accent to-secondary shadow-2xl">
-        <div className="container mx-auto px-4 py-6">
+        <div className="container mx-auto px-0 xs:px-2 sm:px-4 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <div className="w-12 h-12 bg-gradient-to-br from-secondary via-accent to-primary rounded-xl flex items-center justify-center shadow-lg">
@@ -1312,7 +1312,7 @@ const AdminDashboard: React.FC = () => {
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-0 xs:px-2 sm:px-4 py-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <Card className="border-0 shadow-xl bg-gradient-to-br from-blue-500 to-blue-600 text-white hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
             <CardContent className="p-6">

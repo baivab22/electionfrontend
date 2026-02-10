@@ -463,7 +463,7 @@ export default function SubmitPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
-      <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">
+      <div className=" mx-auto px-4 py-8 space-y-8">
         <div className="text-center space-y-4">
           <h1 className="text-4xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
             Submit Suggestion
@@ -543,7 +543,9 @@ export default function SubmitPage() {
                     } />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">No preference</SelectItem>
+                    <SelectItem value="संयोजक">संयोजक</SelectItem>
+                    <SelectItem value="सह-संयोजक">सह-संयोजक</SelectItem>
+                    <SelectItem value="प्रदेश संयोजक">प्रदेश संयोजक</SelectItem>
                     {departments.map((d) => (
                       <SelectItem key={d._id || d.id} value={d.name} className="hover:bg-indigo-50">
                         <div className="flex flex-col">

@@ -78,31 +78,12 @@ export default function FeedbackPage() {
     }
   };
 
-  const sortedDepartments = useMemo(() => {
-    const priorityOrder = [
-      'Planning Directorate',
-      'VC office',
-      'Rector Office',
-      'Registrar office',
-      'TU controller office'
-    ];
-
-    const sorted = [...departments].sort((a, b) => {
-      const aIndex = priorityOrder.indexOf(a.name);
-      const bIndex = priorityOrder.indexOf(b.name);
-
-      if (aIndex !== -1 && bIndex !== -1) {
-        return aIndex - bIndex;
-      }
-
-      if (aIndex !== -1) return -1;
-      if (bIndex !== -1) return 1;
-
-      return a.name.localeCompare(b.name);
-    });
-
-    return sorted;
-  }, [departments]);
+  const departmentOptions = [
+    // 🔥 नेपाली पदहरू
+    'संयोजक',
+    'सह–संयोजक',
+    'प्रदेश सचिव'
+  ];
 
   useEffect(() => {
     const list = files.map((f) => {
@@ -234,7 +215,7 @@ export default function FeedbackPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50">
-      <div className="max-w-4xl mx-auto px-3 xs:px-4 py-4 xs:py-6 sm:py-8 space-y-4 xs:space-y-6 sm:space-y-8">
+      <div className=" mx-auto px-3 xs:px-4 py-4 xs:py-6 sm:py-8 space-y-4 xs:space-y-6 sm:space-y-8">
         <div className="text-center space-y-2 xs:space-y-3 sm:space-y-4">
           <h1 className="text-2xl xs:text-3xl sm:text-4xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
             Share Your Feedback
@@ -406,7 +387,7 @@ export default function FeedbackPage() {
                     placeholder={
                       departmentsLoading
                         ? 'Loading departments...'
-                        : sortedDepartments.length === 0
+                        : departmentOptions.length === 0
                           ? 'No departments available'
                           : 'Select department (optional)'
                     }
@@ -414,15 +395,10 @@ export default function FeedbackPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none" className="text-sm xs:text-base">No preference</SelectItem>
-                  {sortedDepartments.map((d) => (
-                    <SelectItem key={d._id || d.id} value={d.name} className="hover:bg-blue-50 text-sm xs:text-base">
+                  {departmentOptions.map((name) => (
+                    <SelectItem key={name} value={name} className="hover:bg-blue-50 text-sm xs:text-base">
                       <div className="flex flex-col">
-                        <span className="font-medium">{d.name}</span>
-                        {d.description && (
-                          <span className="text-[10px] xs:text-xs text-gray-500 line-clamp-1">
-                            {d.description}
-                          </span>
-                        )}
+                        <span className="font-medium">{name}</span>
                       </div>
                     </SelectItem>
                   ))}

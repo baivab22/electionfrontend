@@ -44,39 +44,36 @@ const CandidatesPage: React.FC = () => {
   // Robust age parser: returns integer years or null if invalid/unrealistic
   const parseAge = (dobRaw: any): number | null => {
     if (!dobRaw) return null;
-    // If already a Date
-    let d: Date | null = null;
-    if (dobRaw instanceof Date) d = dobRaw;
-    else if (typeof dobRaw === 'number') {
-      // timestamp
-      d = new Date(dobRaw);
-    } else if (typeof dobRaw === 'string') {
-      // Try ISO first
-      let tryDate = new Date(dobRaw);
-      if (!isNaN(tryDate.getTime())) d = tryDate;
-      else {
-        // Try common DD/MM/YYYY or DD-MM-YYYY
-        const parts = dobRaw.split(/[\/\-\.\s]+/).map(p => p.trim()).filter(Boolean);
-        if (parts.length === 3) {
-          // detect ordering by length: if first is year
-          let year = Number(parts[0]);
-          let month = Number(parts[1]);
-          let day = Number(parts[2]);
-          if (year > 31) {
-            // YYYY MM DD or YYYY DD MM - assume YYYY MM DD
-            tryDate = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
-          } else {
-            // assume DD MM YYYY
-            tryDate = new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
-          }
-          if (!isNaN(tryDate.getTime())) d = tryDate;
-        }
+    const s = String(dobRaw).trim();
+    let y: number|undefined, m: number|undefined, d: number|undefined;
+    const parts = s.split(/[\/\-\.\s]+/).map(p => p.trim()).filter(Boolean);
+    if (parts.length === 3) {
+      if (parts[0].length === 4) { // YYYY-MM-DD
+        y = Number(parts[0]); m = Number(parts[1]) - 1; d = Number(parts[2]);
+      } else { // assume DD-MM-YYYY
+        y = Number(parts[2]); m = Number(parts[1]) - 1; d = Number(parts[0]);
       }
+    } else if (typeof dobRaw === 'number') {
+      const dt = new Date(dobRaw);
+      if (!isNaN(dt.getTime())) { y = dt.getFullYear(); m = dt.getMonth(); d = dt.getDate(); }
+    } else {
+      const dt = new Date(s);
+      if (!isNaN(dt.getTime())) { y = dt.getFullYear(); m = dt.getMonth(); d = dt.getDate(); }
     }
 
-    if (!d || isNaN(d.getTime())) return null;
-    const age = Math.floor((Date.now() - d.getTime()) / (1000 * 60 * 60 * 24 * 365.25));
-    if (age < 0 || age > 120) return null; // unrealistic
+    if (y === undefined || m === undefined || d === undefined) return null;
+    const today = new Date();
+    let age = today.getFullYear() - y;
+    const monthDiff = today.getMonth() - m;
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < d)) age--;
+    // If year looks like Nepali Bikram Sambat (BS) (e.g., 2000-2100), compute age using BS current year 2082
+    if (y >= 2000 && y <= 2100) {
+      const ageBs = 2082 - y;
+      if (ageBs < 0 || ageBs > 120) return null;
+      return ageBs;
+    }
+
+    if (age < 0 || age > 120) return null;
     return age;
   };
   const [candidates, setCandidates] = useState<Candidate[]>([]);

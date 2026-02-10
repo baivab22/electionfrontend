@@ -207,7 +207,7 @@ const News = () => {
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
       <section className="bg-gradient-to-r from-blue-900 via-blue-800 to-teal-800 text-white py-8 xs:py-12 sm:py-16">
-        <div className="container mx-auto px-3 xs:px-4">
+        <div className="container mx-auto px-0 xs:px-2 sm:px-4">
           <div className="text-center">
             <h1 className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl font-bold mb-2 xs:mb-3 sm:mb-4">
               {t('nav.news', 'News & Updates')}
@@ -221,7 +221,7 @@ const News = () => {
 
       {/* Filters and Search */}
       <section className="py-4 xs:py-6 sm:py-8 bg-white shadow-sm">
-        <div className="container mx-auto px-3 xs:px-4">
+        <div className="container mx-auto px-0 xs:px-2 sm:px-4">
           <div className="flex flex-col gap-3 xs:gap-4">
             <div className="flex flex-col sm:flex-row gap-3 xs:gap-4 flex-1">
               <div className="relative flex-1">
@@ -280,7 +280,7 @@ const News = () => {
 
       {/* Posts Grid/List */}
       <section className="py-6 xs:py-8 sm:py-12">
-        <div className="container mx-auto px-3 xs:px-4">
+        <div className="container mx-auto px-0 xs:px-2 sm:px-4">
           {/* Error State */}
           {error && !loading && (
             <Alert className="mb-4 xs:mb-6 sm:mb-8 border-red-200 bg-red-50">

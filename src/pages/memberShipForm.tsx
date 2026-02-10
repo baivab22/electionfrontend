@@ -795,7 +795,7 @@ export function MembershipForm({ onSuccess, onError }: MembershipFormProps) {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-4 xs:py-6 sm:py-8 px-2 xs:px-3 sm:px-4">
-      <div className="max-w-4xl mx-auto">
+      <div className=" mx-auto">
         <Card className="shadow-xl border-0">
           <CardHeader className="text-center pb-3 xs:pb-4 px-3 xs:px-4 sm:px-6">
             <CardTitle className="text-xl xs:text-2xl sm:text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">

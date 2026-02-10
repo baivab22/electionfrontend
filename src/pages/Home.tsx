@@ -86,13 +86,13 @@ const FeaturedCandidatesSection: React.FC = () => {
 
   return (
     <section className="py-12 xs:py-16 sm:py-20 bg-white">
-      <div className="container mx-auto px-2 xs:px-4">
+      <div className="container mx-auto px-0 xs:px-1 sm:px-2">
         <div className="text-center mb-8 xs:mb-12 sm:mb-16">
           <h2 className="text-2xl xs:text-3xl sm:text-4xl font-bold text-primary mb-2 xs:mb-4">
             Featured Candidates
           </h2>
           <div className="w-16 xs:w-24 h-1 bg-gradient-to-r from-primary to-secondary mx-auto rounded-full"></div>
-          <p className="text-muted-foreground mt-2 xs:mt-4 max-w-2xl mx-auto text-xs xs:text-sm sm:text-base">
+          <p className="text-muted-foreground mt-2 xs:mt-4 mx-auto text-xs xs:text-sm sm:text-base">
             Meet some of our outstanding candidates leading the way to a brighter future
           </p>
         </div>
@@ -291,19 +291,24 @@ const Home = () => {
   return (
     <div className="min-h-screen">
       {/* Hero Section with Background Image */}
-      <section className="relative text-white overflow-hidden min-h-[60vh] xs:min-h-[70vh] sm:min-h-[80vh] flex items-center">
-        {/* Banner image using <img> with object-fit to avoid clipping */}
-        <img
-          src="/assets/images/banner.png"
-          alt="banner"
-          className="absolute inset-0 w-full h-full object-contain object-center"
-          style={{ zIndex: 0 }}
-        />
+      <section className="relative text-white overflow-hidden min-h-[60vh] xs:min-h-[70vh] sm:min-h-[80vh] flex items-center w-['100vw] px-0">
+        {/* Banner image: use mobile image on small screens */}
+        <picture>
+          <source media="(max-width: 639px)" srcSet={`${import.meta.env.BASE_URL || '/'}assets/images/mobilebanner.png`} />
+          <img
+            src={`${import.meta.env.BASE_URL || '/'}assets/images/banner.png`}
+            alt="banner"
+            className="absolute inset-0 w-full h-full object-cover object-top block"
+            style={{ zIndex: 0, objectFit: 'cover' as const }}
+          />
+        </picture>
+
+
         {/* Dark overlay for contrast */}
-        <div className="absolute inset-0 bg-black/40" style={{ zIndex: 1 }} />
+        {/* <div className="absolute inset-0 bg-black/40" style={{ zIndex: 1 }} /> */}
 
         {/* Hero content intentionally left minimal */}
-        <div className="relative z-10 container mx-auto px-4 py-24 text-center" />
+        <div className="relative z-10 container mx-auto px-0 sm:px-2 py-24 text-center" />
       </section>
 
       {/* Featured Candidates Section */}
@@ -314,7 +319,7 @@ const Home = () => {
 
       {/* Stats Section */}
       <section className="py-12 xs:py-16 sm:py-20 bg-gradient-to-r from-primary/5 to-secondary/10">
-        <div className="container mx-auto px-2 xs:px-4">
+        <div className="container mx-auto px-0 xs:px-1 sm:px-2">
           <div className="text-center mb-8 xs:mb-12">
             <h2 className="text-2xl xs:text-3xl sm:text-4xl font-bold text-gray-900 mb-2 xs:mb-4">
               {t('home.impact.title', 'Our Impact')}
@@ -364,8 +369,8 @@ const Home = () => {
         <div className="absolute inset-0 opacity-10">
           <div className="absolute inset-0 bg-[linear-gradient(45deg,rgba(255,255,255,.05)_1px,transparent_1px)] bg-[length:20px_20px]"></div>
         </div>
-        <div className="container mx-auto px-2 xs:px-4 relative z-10">
-          <div className="max-w-4xl mx-auto text-center">
+        <div className="container mx-auto px-0 sm:px-2 relative z-10">
+          <div className="text-center">
             <h2 className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-2 xs:mb-4 sm:mb-6 leading-tight">
               CPN - Building a Better Nepal
             </h2>
@@ -384,13 +389,13 @@ const Home = () => {
 
       {/* Featured Posts */}
       <section className="py-12 xs:py-16 sm:py-20 bg-white">
-        <div className="container mx-auto px-2 xs:px-4">
+        <div className="container mx-auto px-0 xs:px-1 sm:px-2">
           <div className="text-center mb-8 xs:mb-12 sm:mb-16">
             <h2 className="text-2xl xs:text-3xl sm:text-4xl font-bold text-gray-900 mb-2 xs:mb-4">
               {t('home.featuredPosts', 'Featured Posts')}
             </h2>
             <div className="w-16 xs:w-24 h-1 bg-gradient-to-r from-blue-600 to-green-600 mx-auto rounded-full"></div>
-            <p className="text-gray-600 mt-2 xs:mt-4 max-w-2xl mx-auto text-xs xs:text-sm sm:text-base">
+            <p className="text-gray-600 mt-2 xs:mt-4 mx-auto text-xs xs:text-sm sm:text-base">
               {t('home.featuredPosts.subtitle', 'Stay updated with the latest political developments, party news, and social initiatives.')}
             </p>
           </div>
@@ -462,13 +467,13 @@ const Home = () => {
 
       {/* Categories Section */}
       <section className="py-12 xs:py-16 sm:py-20 bg-gradient-to-br from-gray-50 to-blue-50">
-        <div className="container mx-auto px-2 xs:px-4">
+        <div className="container mx-auto px-0 xs:px-1 sm:px-2">
           <div className="text-center mb-8 xs:mb-12 sm:mb-16">
             <h2 className="text-2xl xs:text-3xl sm:text-4xl font-bold text-gray-900 mb-2 xs:mb-4">
               {t('home.categories', 'Explore Categories')}
             </h2>
             <div className="w-16 xs:w-24 h-1 bg-gradient-to-r from-blue-600 to-green-600 mx-auto rounded-full"></div>
-            <p className="text-gray-600 mt-2 xs:mt-4 max-w-2xl mx-auto text-xs xs:text-sm sm:text-base">
+            <p className="text-gray-600 mt-2 xs:mt-4 mx-auto text-xs xs:text-sm sm:text-base">
               {t('home.categories.subtitle', 'Explore different areas of party work and political engagement across Nepal.')}
             </p>
           </div>

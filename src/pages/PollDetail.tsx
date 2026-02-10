@@ -81,11 +81,19 @@ const PollDetail: React.FC = () => {
   const handleVote = async (choiceId: string) => {
     setLoading(true);
     try {
-      const voterId = localStorage.getItem('voterId') || undefined;
+      let voterId = localStorage.getItem('voterId') || undefined;
+      if (!voterId) {
+        try {
+          voterId = (typeof crypto !== 'undefined' && (crypto as any).randomUUID) ? (crypto as any).randomUUID() : `${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
+        } catch (e) {
+          voterId = `${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
+        }
+        localStorage.setItem('voterId', voterId);
+      }
+
       const res = await API.polls.vote(id as string, { choiceId, voterId });
       if (res?.message || res?.success) {
         toast({ title: 'Vote recorded' });
-        if (voterId) localStorage.setItem('voterId', voterId);
         setHasVoted(true);
         await fetchResults();
       }
@@ -96,7 +104,7 @@ const PollDetail: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto py-8">
+    <div className="container mx-auto px-0 xs:px-2 sm:px-4 py-8">
       {!poll && <div>Loading poll...</div>}
       {poll && (
         <div className="max-w-2xl mx-auto">

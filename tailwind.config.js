@@ -18,14 +18,7 @@ export default {
         xl: "2rem",
         "2xl": "2rem",
       },
-      screens: {
-        xs: "320px",
-        sm: "640px",
-        md: "768px",
-        lg: "1024px",
-        xl: "1280px",
-        "2xl": "1400px",
-      },
+      screens: {}, // Empty screens to disable max-width constraints
     },
     screens: {
       xs: "320px",
