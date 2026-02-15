@@ -12,6 +12,40 @@ import {
 } from '@/components/ui/select';
 import CandidateCard from '@/components/CandidateCard';
 import { Search, Users, Target, Award, ChevronLeft, ChevronRight } from 'lucide-react';
+
+// Add range slider styling
+const rangeSliderStyles = `
+  input[type="range"]::-webkit-slider-thumb {
+    appearance: none;
+    width: 1.25rem;
+    height: 1.25rem;
+    border-radius: 50%;
+    background: white;
+    border: 2px solid #e5e7eb;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  input[type="range"]::-moz-range-thumb {
+    width: 1.25rem;
+    height: 1.25rem;
+    border-radius: 50%;
+    background: white;
+    border: 2px solid #e5e7eb;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  input[type="range"]::-webkit-slider-runnable-track {
+    background: transparent;
+    height: 0.5rem;
+  }
+
+  input[type="range"]::-moz-range-track {
+    background: transparent;
+    border: none;
+  }
+`;
 import {
   BarChart,
   Bar,
@@ -29,19 +63,48 @@ interface Candidate {
   _id: string;
   personalInfo: {
     fullName: string;
-    position: string;
-    constituency: string;
+    fullName_np?: string;
+    position?: string;
+    constituency?: string;
+    profilePhoto?: string;
+    dateOfBirth?: string;
+    dateOfBirth_raw?: string;
+    gender?: string;
+    contactNumber?: string;
   };
-  biography: {
-    bio_en: string;
+  biography?: {
+    bio_en?: string;
+    bio_np?: string;
     profilePhoto?: string;
   };
-  achievements: Array<any>;
-  issues: Array<any>;
+  politicalInfo?: {
+    partyName?: string;
+    constituency?: string;
+    candidacyLevel?: string;
+  };
+  achievements?: Array<any>;
+  issues?: Array<any>;
 }
 
 const CandidatesPage: React.FC = () => {
-  // Robust age parser: returns integer years or null if invalid/unrealistic
+  // Get actual age from candidate with proper priority
+  const getCandidateAge = (candidate: any): number | null => {
+    // Priority 1: Use rawSource.AGE_YR if available
+    if (candidate?.rawSource?.AGE_YR && candidate.rawSource.AGE_YR > 0) {
+      return candidate.rawSource.AGE_YR;
+    }
+    
+    // Priority 2: Use personalInfo.age if available
+    if (candidate?.personalInfo?.age && candidate.personalInfo.age > 0) {
+      return candidate.personalInfo.age;
+    }
+    
+    // Priority 3: Use parseAge to calculate
+    return parseAge(candidate?.personalInfo?.dateOfBirth || candidate?.personalInfo?.dateOfBirth_raw);
+  };
+
+  // Age parser: handles BS (Bikram Sambat) dates. Current BS year is 2082.
+  // Returns integer years or null if invalid/unrealistic
   const parseAge = (dobRaw: any): number | null => {
     if (!dobRaw) return null;
     const s = String(dobRaw).trim();
@@ -62,30 +125,40 @@ const CandidatesPage: React.FC = () => {
     }
 
     if (y === undefined || m === undefined || d === undefined) return null;
+    
+    // Check for default date (1970-01-01) - invalid data from database
+    if (y === 1970 && m === 0 && d === 1) return null;
+    
+    // Data is in BS (Bikram Sambat) format
+    // Current BS year is 2082
+    // Age = Current BS year - Birth BS year
+    if (y >= 1940 && y <= 2082) {
+      const currentBsYear = 2082;
+      const age = currentBsYear - y;
+      if (age >= 0 && age <= 120) return age;
+    }
+
+    // Fallback to AD calculation if BS calculation fails
     const today = new Date();
     let age = today.getFullYear() - y;
     const monthDiff = today.getMonth() - m;
     if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < d)) age--;
-    // If year looks like Nepali Bikram Sambat (BS) (e.g., 2000-2100), compute age using BS current year 2082
-    if (y >= 2000 && y <= 2100) {
-      const ageBs = 2082 - y;
-      if (ageBs < 0 || ageBs > 120) return null;
-      return ageBs;
-    }
 
     if (age < 0 || age > 120) return null;
     return age;
   };
   const [candidates, setCandidates] = useState<Candidate[]>([]);
-  const [filteredCandidates, setFilteredCandidates] = useState<Candidate[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPosition, setSelectedPosition] = useState('');
   const [selectedConstituency, setSelectedConstituency] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 12;
+
   const [minAgeFilter, setMinAgeFilter] = useState<number | null>(null);
   const [maxAgeFilter, setMaxAgeFilter] = useState<number | null>(null);
+
+
 
   const positions = ['Presidential', 'Vice Presidential', 'Parliamentary', 'Local Body', 'Other'];
 
@@ -98,68 +171,60 @@ const CandidatesPage: React.FC = () => {
         if (!response.ok) throw new Error('Failed to fetch candidates');
         const data = await response.json();
         setCandidates(data.data);
-        setFilteredCandidates(data.data);
       } catch (error) {
         console.error('Error fetching candidates:', error);
       } finally {
         setLoading(false);
       }
     };
-
     fetchCandidates();
   }, []);
 
-  useEffect(() => {
-    let result = candidates;
+  console.log('Fetched candidates:', candidates);
 
-    if (searchTerm) {
-      result = result.filter(c =>
-        c.personalInfo.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        c.personalInfo.constituency.toLowerCase().includes(searchTerm.toLowerCase())
-      );
+
+
+  // Derived age stats
+  const ages = useMemo(() => {
+    return candidates
+      .map(c => getCandidateAge(c))
+      .filter(a => a !== null) as number[];
+  }, [candidates]);
+  const ageMin = ages.length ? Math.min(...ages) : 18;
+  const ageMax = ages.length ? Math.max(...ages) : 80;
+
+  // Filter candidates by search term (Nepali or romanized name)
+  const filteredCandidates = useMemo(() => {
+    let filtered = candidates;
+    // Search filter
+    if (searchTerm.trim()) {
+      const term = searchTerm.trim().toLowerCase();
+      filtered = filtered.filter(c => {
+        const name = c.personalInfo?.fullName?.toLowerCase() || '';
+        const nameNp = c.personalInfo?.fullName_np?.toLowerCase() || '';
+        return name.includes(term) || nameNp.includes(term);
+      });
     }
-
-    if (selectedPosition && selectedPosition !== 'all') {
-      result = result.filter(c => c.personalInfo.position === selectedPosition);
-    }
-
-    if (selectedConstituency) {
-      result = result.filter(c => c.personalInfo.constituency === selectedConstituency);
-    }
-
-    // Age range filter
-    if ((minAgeFilter !== null && !isNaN(minAgeFilter)) || (maxAgeFilter !== null && !isNaN(maxAgeFilter))) {
-      result = result.filter(c => {
-        const age = parseAge(c.personalInfo?.dateOfBirth);
-        if (age === null) return false; // skip candidates with invalid DOB
+    // Age filter
+    if (minAgeFilter !== null || maxAgeFilter !== null) {
+      filtered = filtered.filter(c => {
+        const age = getCandidateAge(c);
+        if (age === null) return false;
         if (minAgeFilter !== null && age < minAgeFilter) return false;
         if (maxAgeFilter !== null && age > maxAgeFilter) return false;
         return true;
       });
     }
-
-    setFilteredCandidates(result);
-    setCurrentPage(1);
-  }, [searchTerm, selectedPosition, selectedConstituency, candidates, minAgeFilter, maxAgeFilter]);
-
+    return filtered;
+  }, [candidates, searchTerm, minAgeFilter, maxAgeFilter]);
   const totalPages = Math.ceil(filteredCandidates.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedCandidates = filteredCandidates.slice(startIndex, startIndex + itemsPerPage);
 
-  const constituencies = [...new Set(candidates.map(c => c.personalInfo.constituency))];
-
-  // Derived age stats
-  const ages = useMemo(() => {
-    return candidates
-      .map(c => {
-        const age = parseAge(c.personalInfo?.dateOfBirth);
-        return age;
-      })
-      .filter(a => a !== null) as number[];
-  }, [candidates]);
-
-  const ageMin = ages.length ? Math.min(...ages) : 18;
-  const ageMax = ages.length ? Math.max(...ages) : 80;
+  const constituencies = [...new Set(
+    candidates.map(c => c.personalInfo?.constituency || c.politicalInfo?.constituency || 'Unknown')
+      .filter(Boolean)
+  )];
 
   // Chart data: age distribution buckets
   const ageBuckets = useMemo(() => {
@@ -186,10 +251,17 @@ const CandidatesPage: React.FC = () => {
   const provinceData = useMemo(() => {
     const map: Record<string, number> = {};
     candidates.forEach(c => {
-      const p = (c.personalInfo?.province || c.personalInfo?.position || 'Unknown').toString();
+      const p = (c.personalInfo?.position || 'Unknown').toString();
       map[p] = (map[p] || 0) + 1;
     });
     return Object.keys(map).map(k => ({ province: k, count: map[k] })).slice(0, 12);
+  }, [candidates]);
+
+  // Get count of candidates from नेपाली कम्युनिष्ट पार्टी (the party being displayed)
+  const partyFilteredCandidates = useMemo(() => {
+    return candidates.filter(
+      c => (c.politicalInfo?.partyName || '').trim() === 'नेपाली कम्युनिष्ट पार्टी'
+    );
   }, [candidates]);
 
   const stats = [
@@ -201,13 +273,13 @@ const CandidatesPage: React.FC = () => {
     },
     {
       label: 'Parliamentary Candidates',
-      value: candidates.filter(c => c.personalInfo.position === 'Parliamentary').length,
+      value: partyFilteredCandidates.filter(c => c.personalInfo.position === 'Parliamentary').length,
       icon: Target,
       color: 'bg-cyan-100 text-cyan-600'
     },
     {
-      label: 'Total Achievements',
-      value: candidates.reduce((sum, c) => sum + (c.achievements?.length || 0), 0),
+      label: 'Provincial Candidates',
+      value: partyFilteredCandidates.filter(c => c.personalInfo.position === 'Provincial').length,
       icon: Award,
       color: 'bg-emerald-100 text-emerald-600'
     }
@@ -216,7 +288,9 @@ const CandidatesPage: React.FC = () => {
   const hasActiveFilters = searchTerm || (selectedPosition && selectedPosition !== 'all') || selectedConstituency;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+    <>
+      <style>{rangeSliderStyles}</style>
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       {/* Header Section */}
       <div className="bg-gradient-to-r from-primary via-primary/80 to-secondary text-white py-8 xs:py-12 sm:py-16 px-2 xs:px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto text-center">
@@ -321,133 +395,6 @@ const CandidatesPage: React.FC = () => {
         </Card>
       </div>
 
-      {/* Age Filter + Charts */}
-      <div className="max-w-7xl mx-auto px-2 xs:px-4 sm:px-6 lg:px-8 mb-6 xs:mb-8">
-        <Card className="border-0 shadow-lg">
-          <CardHeader className="pb-3 xs:pb-4">
-            <CardTitle className="text-sm xs:text-base sm:text-lg text-foreground">Age Filter & Visualizations</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-              <div className="col-span-1">
-                <p className="text-xs text-muted-foreground mb-2">Filter by age (years)</p>
-
-                <div className="px-2 py-3">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="text-sm">{minAgeFilter ?? ageMin}</div>
-                    <div className="text-sm text-muted-foreground">to</div>
-                    <div className="text-sm">{maxAgeFilter ?? ageMax}</div>
-                  </div>
-
-                  <div className="relative h-8">
-                    <input
-                      type="range"
-                      min={ageMin}
-                      max={ageMax}
-                      value={minAgeFilter ?? ageMin}
-                      onChange={(e) => {
-                        const v = Number(e.target.value);
-                        // Prevent crossing over
-                        if (maxAgeFilter !== null && v > maxAgeFilter) {
-                          setMinAgeFilter(maxAgeFilter);
-                        } else {
-                          setMinAgeFilter(v);
-                        }
-                      }}
-                      className="absolute inset-0 w-full h-2 appearance-none bg-transparent pointer-events-auto"
-                    />
-
-                    <input
-                      type="range"
-                      min={ageMin}
-                      max={ageMax}
-                      value={maxAgeFilter ?? ageMax}
-                      onChange={(e) => {
-                        const v = Number(e.target.value);
-                        if (minAgeFilter !== null && v < minAgeFilter) {
-                          setMaxAgeFilter(minAgeFilter);
-                        } else {
-                          setMaxAgeFilter(v);
-                        }
-                      }}
-                      className="absolute inset-0 w-full h-2 appearance-none bg-transparent pointer-events-auto"
-                    />
-
-                    {/* Visual track */}
-                    <div className="absolute left-0 right-0 top-3 h-1 bg-gray-200 rounded" />
-                    <div
-                      className="absolute top-3 h-1 bg-primary rounded"
-                      style={{
-                        left: `${((minAgeFilter ?? ageMin) - ageMin) / (ageMax - ageMin) * 100}%`,
-                        right: `${100 - ((maxAgeFilter ?? ageMax) - ageMin) / (ageMax - ageMin) * 100}%`
-                      }}
-                    />
-
-                    {/* Thumbs */}
-                    <div
-                      style={{ left: `${((minAgeFilter ?? ageMin) - ageMin) / (ageMax - ageMin) * 100}%` }}
-                      className="absolute top-0 transform -translate-y-1/2 w-4 h-4 bg-white border border-gray-300 rounded-full shadow"
-                    />
-                    <div
-                      style={{ left: `${((maxAgeFilter ?? ageMax) - ageMin) / (ageMax - ageMin) * 100}%` }}
-                      className="absolute top-0 transform -translate-y-1/2 w-4 h-4 bg-white border border-gray-300 rounded-full shadow"
-                    />
-                  </div>
-
-                  <div className="mt-2 flex items-center gap-2">
-                    <Button
-                      onClick={() => { setMinAgeFilter(null); setMaxAgeFilter(null); }}
-                      className="text-xs"
-                    >Clear</Button>
-                    <div className="text-xs text-muted-foreground">Detected age range: {ageMin}–{ageMax}</div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="h-48">
-                  <p className="text-xs text-muted-foreground mb-2">Age Distribution</p>
-                  <ResponsiveContainer width="100%" height={160}>
-                    <BarChart data={ageBuckets} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                      <XAxis dataKey="range" tick={{ fontSize: 11 }} />
-                      <YAxis />
-                      <Tooltip />
-                      <Bar dataKey="count" fill="#0ea5e9" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-
-                <div className="h-48">
-                  <p className="text-xs text-muted-foreground mb-2">Gender Breakdown</p>
-                  <ResponsiveContainer width="100%" height={160}>
-                    <PieChart>
-                      <Pie data={genderData} dataKey="value" nameKey="name" outerRadius={60} fill="#8884d8">
-                        {genderData.map((entry, idx) => (
-                          <Cell key={`cell-${idx}`} fill={['#60a5fa', '#34d399', '#f97316', '#f43f5e'][idx % 4]} />
-                        ))}
-                      </Pie>
-                      <Legend verticalAlign="bottom" height={20} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-            </div>
-            <div className="mt-4">
-              <p className="text-xs text-muted-foreground mb-2">Top provinces (sample)</p>
-              <div className="h-40">
-                <ResponsiveContainer width="100%" height={160}>
-                  <BarChart data={provinceData} layout="vertical" margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                    <XAxis type="number" />
-                    <YAxis dataKey="province" type="category" width={120} />
-                    <Tooltip />
-                    <Bar dataKey="count" fill="#06b6d4" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
 
       {/* Results Section */}
       <div className="max-w-7xl mx-auto px-2 xs:px-4 sm:px-6 lg:px-8 pb-12 xs:pb-16">
@@ -545,6 +492,7 @@ const CandidatesPage: React.FC = () => {
         )}
       </div>
     </div>
+    </>
   );
 };
 

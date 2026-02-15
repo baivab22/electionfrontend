@@ -199,25 +199,25 @@ export default function FeedbackPage() {
   const getCategoryColor = (cat: string) => {
     switch (cat) {
       case 'service_quality':
-        return 'bg-blue-100 text-blue-700';
+        return 'bg-primary/10 text-primary';
       case 'staff_conduct':
         return 'bg-green-100 text-green-700';
       case 'response_time':
-        return 'bg-yellow-100 text-yellow-700';
+        return 'bg-secondary/20 text-secondary';
       case 'transparency':
-        return 'bg-purple-100 text-purple-700';
+        return 'bg-primary/10 text-primary';
       case 'accessibility':
-        return 'bg-pink-100 text-pink-700';
+        return 'bg-secondary/20 text-secondary';
       default:
         return 'bg-gray-100 text-gray-700';
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50">
+    <div className="min-h-screen bg-white">
       <div className=" mx-auto px-3 xs:px-4 py-4 xs:py-6 sm:py-8 space-y-4 xs:space-y-6 sm:space-y-8">
         <div className="text-center space-y-2 xs:space-y-3 sm:space-y-4">
-          <h1 className="text-2xl xs:text-3xl sm:text-4xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
+          <h1 className="text-2xl xs:text-3xl sm:text-4xl font-bold text-primary">
             Share Your Feedback
           </h1>
           <p className="text-gray-600 text-sm xs:text-base sm:text-lg px-2">
@@ -226,12 +226,12 @@ export default function FeedbackPage() {
         </div>
 
         <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm">
-          <CardHeader className="bg-gradient-to-r from-blue-500 to-cyan-600 text-white rounded-t-lg p-2">
+          <CardHeader className="bg-primary text-white rounded-t-lg p-2">
             <CardTitle className="text-base xs:text-lg sm:text-xl flex items-center gap-2 px-2 py-2 xs:py-3">
               <FileText className="w-4 xs:w-5 h-4 xs:h-5" />
               Feedback Details
             </CardTitle>
-            <CardDescription className="text-blue-100 px-2 text-xs xs:text-sm">
+            <CardDescription className="text-primary/20 px-2 text-xs xs:text-sm">
               Tell us about your experience and help us serve you better.
             </CardDescription>
           </CardHeader>
@@ -241,12 +241,12 @@ export default function FeedbackPage() {
               <div className="space-y-2 xs:space-y-3">
                 <Label className="text-gray-700 font-medium text-xs xs:text-sm">Feedback Type</Label>
                 <Select value={type} onValueChange={(val: any) => setType(val)}>
-                  <SelectTrigger className="border-2 border-gray-200 hover:border-blue-300 focus:border-blue-500 transition-colors h-9 xs:h-10 text-sm xs:text-base">
+                  <SelectTrigger className="border-2 border-gray-200 hover:border-primary/30 focus:border-primary transition-colors h-9 xs:h-10 text-sm xs:text-base">
                     <SelectValue placeholder="Select type" />
                   </SelectTrigger>
                   <SelectContent>
                     {feedbackTypes.map((t) => (
-                      <SelectItem key={t} value={t} className="hover:bg-blue-50 text-sm xs:text-base">
+                      <SelectItem key={t} value={t} className="hover:bg-primary/5 text-sm xs:text-base">
                         <span className="flex items-center gap-2">
                           {getFeedbackIcon(t)} {t.charAt(0).toUpperCase() + t.slice(1)}
                         </span>
@@ -259,12 +259,12 @@ export default function FeedbackPage() {
               <div className="space-y-2 xs:space-y-3">
                 <Label className="text-gray-700 font-medium text-xs xs:text-sm">Category</Label>
                 <Select value={category} onValueChange={(val: any) => setCategory(val)}>
-                  <SelectTrigger className="border-2 border-gray-200 hover:border-blue-300 focus:border-blue-500 transition-colors h-9 xs:h-10 text-sm xs:text-base">
+                  <SelectTrigger className="border-2 border-gray-200 hover:border-primary/30 focus:border-primary transition-colors h-9 xs:h-10 text-sm xs:text-base">
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
                   <SelectContent>
                     {feedbackCategories.map((c) => (
-                      <SelectItem key={c} value={c} className="hover:bg-blue-50 text-sm xs:text-base">
+                      <SelectItem key={c} value={c} className="hover:bg-primary/5 text-sm xs:text-base">
                         <span className="capitalize">{c.replace(/_/g, ' ')}</span>
                       </SelectItem>
                     ))}
@@ -283,7 +283,7 @@ export default function FeedbackPage() {
                   id="anon"
                   checked={anonymous}
                   onCheckedChange={setAnonymous}
-                  className="data-[state=checked]:bg-blue-600"
+                  className="data-[state=checked]:bg-primary"
                 />
                 <span className="text-xs xs:text-sm font-medium text-gray-700">
                   {anonymous ? '🕶️ Anonymous' : '👤 Identified'}
@@ -298,7 +298,7 @@ export default function FeedbackPage() {
                 placeholder="Brief title for your feedback"
                 value={subject}
                 onChange={(e) => setSubject(e.target.value)}
-                className="border-2 border-gray-200 focus:border-blue-500 transition-colors h-9 xs:h-10 text-sm xs:text-base"
+                className="border-2 border-gray-200 focus:border-primary transition-colors h-9 xs:h-10 text-sm xs:text-base"
                 maxLength={200}
               />
               <p className="text-[10px] xs:text-xs text-gray-500">
@@ -314,7 +314,7 @@ export default function FeedbackPage() {
                 placeholder="Describe your feedback in detail. What happened? What could be improved? How can we help?"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="border-2 border-gray-200 focus:border-blue-500 transition-colors resize-none text-sm xs:text-base"
+                className="border-2 border-gray-200 focus:border-primary transition-colors resize-none text-sm xs:text-base"
                 maxLength={5000}
               />
               <p className="text-[10px] xs:text-xs text-gray-500">
@@ -324,7 +324,7 @@ export default function FeedbackPage() {
 
             {/* Contact Info for Non-Anonymous */}
             {!anonymous && (
-              <div className="border-2 border-blue-100 rounded-xl p-3 xs:p-4 sm:p-6 bg-gradient-to-r from-blue-50 to-cyan-50">
+              <div className="border-2 border-primary/20 rounded-xl p-3 xs:p-4 sm:p-6 bg-primary/5">
                 <h3 className="font-semibold text-gray-700 mb-3 xs:mb-4 text-sm xs:text-base">Your Contact Information</h3>
                 <div className="space-y-3 xs:space-y-4">
                   <div className="space-y-1.5 xs:space-y-2">
@@ -335,7 +335,7 @@ export default function FeedbackPage() {
                       value={contactName}
                       onChange={(e) => setContactName(e.target.value)}
                       placeholder="Your full name"
-                      className="border-2 border-gray-200 focus:border-blue-500 transition-colors h-9 xs:h-10 text-sm xs:text-base"
+                      className="border-2 border-gray-200 focus:border-primary transition-colors h-9 xs:h-10 text-sm xs:text-base"
                     />
                   </div>
 
@@ -349,7 +349,7 @@ export default function FeedbackPage() {
                         value={contactEmail}
                         onChange={(e) => setContactEmail(e.target.value)}
                         placeholder="your@email.com"
-                        className="border-2 border-gray-200 focus:border-blue-500 transition-colors h-9 xs:h-10 text-sm xs:text-base"
+                        className="border-2 border-gray-200 focus:border-primary transition-colors h-9 xs:h-10 text-sm xs:text-base"
                       />
                     </div>
 
@@ -362,7 +362,7 @@ export default function FeedbackPage() {
                         value={contactPhone}
                         onChange={(e) => setContactPhone(e.target.value)}
                         placeholder="+977-XXXXXXXXXX"
-                        className="border-2 border-gray-200 focus:border-blue-500 transition-colors h-9 xs:h-10 text-sm xs:text-base"
+                        className="border-2 border-gray-200 focus:border-primary transition-colors h-9 xs:h-10 text-sm xs:text-base"
                       />
                     </div>
                   </div>
@@ -374,7 +374,7 @@ export default function FeedbackPage() {
             <div className="space-y-2 xs:space-y-3">
               <div className="flex flex-wrap items-center gap-2 xs:gap-3">
                 <Label className="text-gray-700 font-medium text-xs xs:text-sm">Assign to Department</Label>
-                <Badge variant="secondary" className="bg-blue-100 text-blue-700 text-[10px] xs:text-xs">
+                <Badge variant="secondary" className="bg-primary/10 text-primary text-[10px] xs:text-xs">
                   Optional
                 </Badge>
               </div>
@@ -396,7 +396,7 @@ export default function FeedbackPage() {
                 <SelectContent>
                   <SelectItem value="none" className="text-sm xs:text-base">No preference</SelectItem>
                   {departmentOptions.map((name) => (
-                    <SelectItem key={name} value={name} className="hover:bg-blue-50 text-sm xs:text-base">
+                    <SelectItem key={name} value={name} className="hover:bg-primary/5 text-sm xs:text-base">
                       <div className="flex flex-col">
                         <span className="font-medium">{name}</span>
                       </div>
@@ -420,7 +420,7 @@ export default function FeedbackPage() {
             <div className="space-y-3 xs:space-y-4">
               <div className="flex flex-wrap items-center gap-2 xs:gap-3">
                 <Label className="text-gray-700 font-medium text-xs xs:text-sm">Media Attachments</Label>
-                <Badge variant="secondary" className="bg-cyan-100 text-cyan-700 text-[10px] xs:text-xs">
+                <Badge variant="secondary" className="bg-secondary/20 text-secondary text-[10px] xs:text-xs">
                   Optional
                 </Badge>
               </div>
@@ -430,7 +430,7 @@ export default function FeedbackPage() {
                 type="button"
                 variant="outline"
                 onClick={() => fileInputRef.current?.click()}
-                className="border-2 border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300 h-8 xs:h-9 text-xs xs:text-sm"
+                className="border-2 border-primary/20 text-primary hover:bg-primary/5 hover:border-primary/30 h-8 xs:h-9 text-xs xs:text-sm"
               >
                 <Upload className="w-3 xs:w-4 h-3 xs:h-4 mr-1.5 xs:mr-2" />
                 Upload Files
@@ -522,7 +522,7 @@ export default function FeedbackPage() {
               <Button
                 onClick={onSubmit}
                 disabled={!canSubmit}
-                className="bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white px-4 xs:px-6 sm:px-8 py-2 disabled:opacity-50 disabled:cursor-not-allowed h-9 xs:h-10 text-xs xs:text-sm"
+                className="bg-primary hover:bg-primary/90 text-white px-4 xs:px-6 sm:px-8 py-2 disabled:opacity-50 disabled:cursor-not-allowed h-9 xs:h-10 text-xs xs:text-sm"
               >
                 {submitting ? (
                   <span className="flex items-center gap-1.5 xs:gap-2">
@@ -544,7 +544,7 @@ export default function FeedbackPage() {
             </div>
 
             {/* Guidelines */}
-            <div className="mt-4 xs:mt-5 sm:mt-6 p-3 xs:p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <div className="mt-4 xs:mt-5 sm:mt-6 p-3 xs:p-4 bg-primary/5 rounded-lg border border-primary/20">
               <h4 className="font-medium text-gray-700 mb-1.5 xs:mb-2 text-xs xs:text-sm">📋 Feedback Guidelines</h4>
               <ul className="text-[10px] xs:text-xs sm:text-sm text-gray-600 space-y-0.5 xs:space-y-1">
                 <li>• Be specific and constructive in your feedback</li>

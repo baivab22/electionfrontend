@@ -3714,7 +3714,7 @@ const AdminDashboard: React.FC = () => {
                       const c = candidate as any; // Type assertion for flexible access
                       const fullName = c.personalInfo?.fullName || c.fullName || 'N/A';
                       const fullName_np = c.personalInfo?.fullName_np || '';
-                      const profilePhoto = c.profilePhoto || c.biography?.profilePhoto || '';
+                      const profilePhoto = c.personalInfo?.profilePhoto || c.biography?.profilePhoto || c.profilePhoto || '';
                       const constituency = c.politicalInfo?.constituency || c.personalInfo?.constituency || 'N/A';
                       const candidacyLevel = c.politicalInfo?.candidacyLevel || c.personalInfo?.position || 'N/A';
                       const partyName = c.politicalInfo?.partyName_np || 'नेकपा';
@@ -3726,7 +3726,7 @@ const AdminDashboard: React.FC = () => {
                         <CardContent className="p-6">
                           <div className="flex items-start space-x-4">
                             <div className="relative">
-                              <Avatar className="h-16 w-16 border-2 border-red-200">
+                              <Avatar className="h-24 w-24 border-2 border-red-200">
                                 <AvatarImage src={profilePhoto} alt={fullName} />
                                 <AvatarFallback className="bg-red-100 text-red-700">
                                   {fullName.split(' ').map((n: string) => n[0]).join('')}
@@ -3902,10 +3902,10 @@ const AdminDashboard: React.FC = () => {
                     <img
                       src={selectedMember.documents.photo.path}
                       alt={selectedMember.generalInfo.fullName}
-                      className="w-32 h-32 rounded-full object-cover border-4 border-green-500 shadow-lg"
+                      className="w-48 h-48 rounded-full object-cover border-4 border-green-500 shadow-lg"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
-                        target.src = '/api/placeholder/128/128';
+                        target.src = '/api/placeholder/192/192';
                       }}
                     />
                   </div>

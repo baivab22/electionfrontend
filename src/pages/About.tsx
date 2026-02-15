@@ -53,7 +53,7 @@ const About = () => {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-red-900 via-red-800 to-red-700 text-white py-12 xs:py-16 sm:py-20">
+      <section className="bg-primary text-white py-12 xs:py-16 sm:py-20">
         <div className="container mx-auto px-0 xs:px-2 sm:px-4">
           <div className=" mx-auto text-center">
             <h1 className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-3 xs:mb-4 sm:mb-6">
@@ -164,7 +164,7 @@ const About = () => {
       </section>
 
       {/* Impact Stats */}
-      <section className="py-12 xs:py-16 sm:py-20 bg-gradient-to-r from-red-900 via-red-800 to-red-700 text-white">
+      <section className="py-12 xs:py-16 sm:py-20 bg-primary text-white">
         <div className="container mx-auto px-0 xs:px-2 sm:px-4">
           <div className="text-center mb-8 xs:mb-12 sm:mb-16">
             <h2 className="text-2xl xs:text-3xl sm:text-4xl font-bold mb-2 xs:mb-4">Our Impact</h2>
@@ -202,7 +202,7 @@ const About = () => {
           <div className="flex flex-col xs:flex-row gap-2 xs:gap-3 sm:gap-4 justify-center">
             <a
               href="/contact"
-              className="bg-gradient-to-r from-red-600 to-yellow-600 text-white px-4 xs:px-6 sm:px-8 py-2 xs:py-3 sm:py-4 rounded-lg font-medium hover:from-red-700 hover:to-yellow-700 transition-all duration-200 shadow-lg hover:shadow-xl text-xs xs:text-sm sm:text-base"
+              className="bg-primary text-white px-4 xs:px-6 sm:px-8 py-2 xs:py-3 sm:py-4 rounded-lg font-medium hover:opacity-90 transition-all duration-200 shadow-lg hover:shadow-xl text-xs xs:text-sm sm:text-base"
             >
               Get Involved
             </a>

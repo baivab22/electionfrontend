@@ -3,24 +3,46 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { 
   User, MapPin, Mail, Phone, Calendar, Globe,
   GraduationCap, Briefcase, Building2, Flag,
   Heart, Wallet, Scale, Target, Award,
-  Share2, ArrowLeft, Facebook, Twitter, Instagram, Youtube,
+  Share2, ArrowLeft, Facebook, Twitter, Instagram, Youtube, Linkedin,
   FileText, Download, MessageCircle, Send, CheckCircle,
-  AlertCircle, Clock, Users, BookOpen, Home
+  AlertCircle, Clock, Users, BookOpen, Home, Maximize2, X, Link, Copy, Check
 } from 'lucide-react';
 import API from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import CandidateFeedbackSection from '@/components/CandidateFeedbackSection';
 
+// Normalize party names - replace all variations with standard NCP name
+const normalizePartyName = (partyName?: string): string => {
+  if (!partyName) return '';
+  const normalized = partyName.trim();
+  // Replace any variation of NCP with the standard name
+  if (
+    normalized.includes('कम्युनिस्ट') ||
+    normalized.includes('कम्युनिसट') ||
+    normalized.includes('कम्युनिष्ट')
+  ) {
+    return 'नेपाली कम्युनिष्ट पार्टी';
+  }
+  return normalized;
+};
+
 interface Candidate {
   _id: string;
+  candidateId?: string;
+  rawSource?: {
+    AGE_YR?: number;
+    CandidateID?: number;
+    CandidateName?: string;
+    [key: string]: any;
+  };
   personalInfo: {
     fullName: string;
     fullName_np?: string;
@@ -51,6 +73,8 @@ interface Candidate {
     currentPosition_np?: string;
     candidacyLevel?: string;
     candidacyLevel_np?: string;
+    district?: string;
+    district_np?: string;
     constituencyNumber?: string;
     constituency?: string;
     constituency_np?: string;
@@ -147,6 +171,14 @@ interface Candidate {
   isActive?: boolean;
 }
 
+// Normalize education qualification text - replace old values with new ones
+const normalizeEducationQualification = (text?: string): string => {
+  if (!text) return '';
+  return text
+    .replace(/विदया वारिणी/g, 'विद्यावारिधि')
+    .trim();
+};
+
 const CandidateDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -155,10 +187,14 @@ const CandidateDetailPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('personal');
+  const [searchTerm, setSearchTerm] = useState('');
   const [isLiked, setIsLiked] = useState(false);
+  const [copySuccess, setCopySuccess] = useState(false);
   const [likesCount, setLikesCount] = useState(0);
   const [sharesCount, setSharesCount] = useState(0);
   const [showShareMenu, setShowShareMenu] = useState(false);
+  const [imageLoadError, setImageLoadError] = useState(false);
+  const [photoModalOpen, setPhotoModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchCandidate = async () => {
@@ -166,7 +202,10 @@ const CandidateDetailPage: React.FC = () => {
         const response = await fetch(`${import.meta.env.VITE_API_URL || 'https://api.abhushangallery.com'}/api/candidates/${id}`);
         if (!response.ok) throw new Error('Failed to fetch candidate');
         const data = await response.json();
+
+        
         setCandidate(data.data);
+        setImageLoadError(false);
         setLikesCount(data.data.likes || 0);
         setSharesCount(data.data.shares || 0);
         
@@ -181,6 +220,8 @@ const CandidateDetailPage: React.FC = () => {
 
     if (id) fetchCandidate();
   }, [id]);
+
+  
 
   const handleLike = async () => {
     if (!id) return;
@@ -324,10 +365,34 @@ const CandidateDetailPage: React.FC = () => {
     );
   };
 
+  const getCandidateImageUrl = (candidate: any): string | null => {
+    // Prefer CandidateID (number or string), fallback to candidateId
+    const id = candidate.CandidateID || candidate.candidateId;
+    if (id) return `https://result.election.gov.np/Images/Candidate/${id}.jpg`;
+    return null;
+  };
+
+  const getAge = (): number | string => {
+    // Priority 1: Use AGE_YR from rawSource if available
+    if (candidate?.rawSource?.AGE_YR && candidate.rawSource.AGE_YR > 0) {
+      return candidate.rawSource.AGE_YR;
+    }
+    
+    // Priority 2: Use personalInfo.age if available
+    if (candidate?.personalInfo.age && candidate.personalInfo.age > 0) {
+      return candidate.personalInfo.age;
+    }
+    
+    // Priority 3: Calculate from dateOfBirth
+    return calculateAge(candidate?.personalInfo.dateOfBirth || '');
+  };
+
   const calculateAge = (dateOfBirth: string) => {
     if (!dateOfBirth) return '';
+    
     const parts = String(dateOfBirth).trim().split(/[\/\-\.\s]+/).map(p => p.trim()).filter(Boolean);
     let y: number, m: number, d: number;
+    
     if (parts.length === 3) {
       if (parts[0].length === 4) { // YYYY-MM-DD
         y = Number(parts[0]); m = Number(parts[1]) - 1; d = Number(parts[2]);
@@ -340,47 +405,96 @@ const CandidateDetailPage: React.FC = () => {
       y = dt.getFullYear(); m = dt.getMonth(); d = dt.getDate();
     }
 
-    // If year looks like Nepali Bikram Sambat (BS) (e.g., 2000-2100), compute age using BS current year 2082
-    if (y >= 2000 && y <= 2100) {
-      const ageBs = 2082 - y;
-      if (ageBs < 0 || ageBs > 120) return '';
-      return ageBs;
-    }
-
+    // If date is the default 1970-01-01, data is missing - return "Not provided"
+    if (y === 1970 && m === 0 && d === 1) return 'Not provided';
+    
     const today = new Date();
+    
+    // Since data is in BS (Bikram Sambat), calculate age using BS:
+    // Current BS year is 2082
+    // Age = Current BS year - Birth BS year
+    if (y >= 1940 && y <= 2082) {
+      const currentBsYear = 2082;
+      const age = currentBsYear - y;
+      
+      // Validate age is reasonable (18-120 years)
+      if (age >= 18 && age <= 120) {
+        return age;
+      }
+    }
+    
+    // Fallback to AD calculation if BS calculation fails
     let age = today.getFullYear() - y;
     const monthDiff = today.getMonth() - m;
     if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < d)) age--;
-    if (age < 0 || age > 120) return '';
-    return age;
+    
+    if (age >= 18 && age <= 120) {
+      return age;
+    }
+    
+    return '';
+  };
+
+  const formatDateOfBirth = (dateOfBirth: string) => {
+    if (!dateOfBirth) return 'Not provided';
+    const raw = String(dateOfBirth).trim();
+
+    const parts = raw.split(/[\/\-\.\s]+/).map(p => p.trim()).filter(Boolean);
+    let y: number | undefined;
+    let m: number | undefined;
+    let d: number | undefined;
+
+    if (parts.length === 3) {
+      if (parts[0].length === 4) {
+        y = Number(parts[0]); m = Number(parts[1]); d = Number(parts[2]);
+      } else {
+        y = Number(parts[2]); m = Number(parts[1]); d = Number(parts[0]);
+      }
+    } else {
+      const dt = new Date(raw);
+      if (!isNaN(dt.getTime())) {
+        y = dt.getFullYear(); m = dt.getMonth() + 1; d = dt.getDate();
+      }
+    }
+
+    if (!y || !m || !d) return raw;
+
+    if (y === 1970 && m === 1 && d === 1) return 'Not provided';
+
+    // BS dates should be shown as-is (avoid AD conversion)
+    if (y >= 1940 && y <= 2082) return raw;
+
+    const dt = new Date(y, m - 1, d);
+    if (isNaN(dt.getTime())) return raw;
+    return dt.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
   };
 
   const InfoItem = ({ icon: Icon, label, value, valueNp }: { icon: any; label: string; value?: string; valueNp?: string }) => {
     if (!value && !valueNp) return null;
     return (
-      <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
-        <div className="p-2 bg-red-100 rounded-lg">
-          <Icon className="w-4 h-4 text-red-600" />
+      <div className="flex items-start gap-3 p-4 bg-gradient-to-br from-gray-50 to-white rounded-xl border border-gray-100 hover:shadow-md transition-all">
+        <div className="p-2.5 bg-gradient-to-br from-red-500 to-red-600 rounded-lg shadow-sm">
+          <Icon className="w-5 h-5 text-white" />
         </div>
         <div className="flex-1">
-          <p className="text-xs text-gray-500 font-medium">{label}</p>
-          <p className="text-sm text-gray-800 font-semibold">{value}</p>
-          {valueNp && <p className="text-sm text-gray-600">{valueNp}</p>}
+          <p className="text-sm text-gray-600 font-bold mb-1">{label}</p>
+          <p className="text-base text-gray-900 font-bold">{value}</p>
+          {valueNp && <p className="text-sm text-gray-700 font-semibold mt-1">{valueNp}</p>}
         </div>
       </div>
     );
   };
 
   const SectionCard = ({ title, titleNp, icon: Icon, children }: { title: string; titleNp: string; icon: any; children: React.ReactNode }) => (
-    <Card className="border-0 shadow-lg mb-6 overflow-hidden">
-      <CardHeader className="bg-gradient-to-r from-red-600 to-red-700 text-white py-4">
+    <Card className="border border-gray-200 shadow-sm hover:shadow-md transition-all mb-4 overflow-hidden rounded-xl bg-white">
+      <CardHeader className="bg-gradient-to-r from-red-50 to-white border-b border-red-100 py-4">
         <CardTitle className="flex items-center gap-3 text-lg">
-          <div className="p-2 bg-white/20 rounded-lg">
-            <Icon className="w-5 h-5" />
+          <div className="p-2.5 bg-gradient-to-br from-red-500 to-red-600 rounded-lg shadow-sm">
+            <Icon className="w-6 h-6 text-white" />
           </div>
           <div>
-            <span className="block">{titleNp}</span>
-            <span className="text-sm font-normal opacity-80">{title}</span>
+            <span className="block text-gray-900 font-bold text-lg">{titleNp}</span>
+            <span className="text-sm font-semibold text-gray-600">{title}</span>
           </div>
         </CardTitle>
       </CardHeader>
@@ -391,19 +505,187 @@ const CandidateDetailPage: React.FC = () => {
   const TextBlock = ({ label, value, valueNp }: { label: string; value?: string; valueNp?: string }) => {
     if (!value && !valueNp) return null;
     return (
-      <div className="mb-4">
-        <h4 className="text-sm font-semibold text-gray-700 mb-2">{label}</h4>
-        {value && <p className="text-gray-600 whitespace-pre-wrap">{value}</p>}
-        {valueNp && <p className="text-gray-500 mt-1 whitespace-pre-wrap">{valueNp}</p>}
+      <div className="mb-5">
+        <h4 className="text-base font-bold text-gray-800 mb-2.5">{label}</h4>
+        {value && <p className="text-base text-gray-700 font-medium whitespace-pre-wrap leading-relaxed">{value}</p>}
+        {valueNp && <p className="text-base text-gray-600 font-medium mt-2 whitespace-pre-wrap leading-relaxed">{valueNp}</p>}
       </div>
     );
   };
 
+  const ElectionSymbolCard = ({ symbolImage, symbolText, symbolTextNp }: { symbolImage?: string; symbolText?: string; symbolTextNp?: string }) => {
+    if (!symbolImage && !symbolText && !symbolTextNp) return null;
+    return (
+      <Card className="border-2 border-yellow-300 shadow-lg hover:shadow-xl transition-all mb-6 overflow-hidden rounded-2xl bg-gradient-to-br from-yellow-50 via-white to-yellow-50">
+        <CardHeader className="bg-gradient-to-r from-yellow-400 to-amber-400 border-b-4 border-yellow-500 py-5 px-6">
+          <CardTitle className="flex items-center gap-3 text-xl md:text-2xl">
+            <div className="p-3 bg-yellow-600 rounded-lg shadow-md animate-pulse">
+              <Award className="w-7 h-7 md:w-8 md:h-8 text-white" />
+            </div>
+            <div>
+              <span className="block text-yellow-900 font-black text-2xl md:text-3xl">निर्वाचन चिन्ह</span>
+              <span className="text-sm font-bold text-yellow-800">Election Symbol</span>
+            </div>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-6 md:p-8">
+          <div className="flex flex-col md:flex-row items-center gap-6 md:gap-8">
+            {symbolImage && (
+              <div className="flex-shrink-0">
+                <div className="w-40 h-40 md:w-56 md:h-56 p-4 bg-white border-4 border-yellow-300 rounded-xl shadow-lg hover:scale-105 transition-transform duration-300 flex items-center justify-center">
+                  <img 
+                    src={symbolImage} 
+                    alt="Election Symbol"
+                    className="max-w-full max-h-full object-contain"
+                    onError={(e) => {
+                      e.currentTarget.src = 'https://via.placeholder.com/200?text=Symbol';
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+            <div className="flex-1">
+              <div className="space-y-4">
+                <h3 className="text-lg md:text-2xl font-black text-yellow-900">चिन्ह (Symbol)</h3>
+                {symbolTextNp && (
+                  <p className="text-lg md:text-xl font-bold text-gray-800 leading-relaxed">
+                    {symbolTextNp}
+                  </p>
+                )}
+                {symbolText && (
+                  <p className="text-base md:text-lg font-semibold text-gray-700 leading-relaxed">
+                    {symbolText}
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
+
+  const formatRawValue = (value: any): string => {
+    if (value === null || value === undefined) return '';
+    if (typeof value === 'string') return value;
+    if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+    try {
+      return JSON.stringify(value);
+    } catch (e) {
+      return String(value);
+    }
+  };
+
+  // Format field names to be human-readable
+  const formatFieldName = (key: string): string => {
+    const fieldNameMap: Record<string, string> = {
+      'CandidateID': 'Candidate ID',
+      'CandidateName': 'Candidate Name',
+      'AGE_YR': 'Age (Years)',
+      'Gender': 'Gender',
+      'FATHER_NAME': 'Father\'s Name',
+      'MOTHER_NAME': 'Mother\'s Name',
+      'ADDRESS': 'Address',
+      'ContactNumber': 'Contact Number',
+      'Email': 'Email Address',
+      'PoliticalPartyName': 'Political Party',
+      'PartySymbol': 'Party Symbol',
+      'DistrictName': 'District Name',
+      'ConstName': 'Constituency Name',
+      'ConstituencyNumber': 'Constituency Number',
+      'QUALIFICATION': 'Educational Qualification',
+      'EXPERIENCE': 'Professional Experience',
+      'Occupation': 'Occupation',
+      'ImageURL': 'Image URL',
+      'Assets': 'Total Assets',
+      'Liabilities': 'Total Liabilities',
+      'CriminalCases': 'Criminal Cases',
+      'ElectionSymbol': 'Election Symbol'
+    };
+    return fieldNameMap[key] || key.replace(/_/g, ' ').replace(/([A-Z])/g, ' $1').trim().replace(/\b\w/g, l => l.toUpperCase());
+  };
+
+  // Categorize raw data fields
+  const categorizeRawData = (rawSource: Record<string, any>) => {
+    const personalFields = [
+      'CandidateName', 'AGE_YR', 'Age', 'Gender',
+      'FATHER_NAME', 'FatherName', 'MOTHER_NAME', 'MotherName',
+      'ADDRESS', 'Address', 'ContactNumber', 'Contact', 'Email',
+      'Nationality', 'Religion', 'Caste', 'MaritalStatus'
+    ];
+    
+    const politicalFields = [
+      'PoliticalPartyName', 'PartyName', 'Party', 'PartySymbol',
+      'DistrictName', 'District', 'ConstName', 'Constituency',
+      'ConstituencyNumber', 'ElectionSymbol', 'CandidacyLevel'
+    ];
+    
+    const educationFields = [
+      'QUALIFICATION', 'Qualification', 'Education', 'HighestQualification',
+      'Degree', 'University', 'Institution', 'EducationalBackground'
+    ];
+    
+    const professionalFields = [
+      'EXPERIENCE', 'Experience', 'Occupation', 'Profession',
+      'ProfessionalBackground', 'CurrentJob', 'Employment'
+    ];
+    
+    const financialFields = [
+      'Assets', 'TotalAssets', 'Movable', 'Immovable',
+      'Liabilities', 'TotalLiabilities', 'Income', 'NetWorth'
+    ];
+    
+    const legalFields = [
+      'CriminalCases', 'PendingCases', 'ConvictedCases',
+      'CourtCases', 'LegalIssues'
+    ];
+
+    const categorized: Record<string, Record<string, any>> = {
+      personal: {},
+      political: {},
+      education: {},
+      professional: {},
+      financial: {},
+      legal: {},
+      other: {}
+    };
+
+    Object.entries(rawSource).forEach(([key, value]) => {
+      if (personalFields.includes(key)) {
+        categorized.personal[key] = value;
+      } else if (politicalFields.includes(key)) {
+        categorized.political[key] = value;
+      } else if (educationFields.includes(key)) {
+        categorized.education[key] = value;
+      } else if (professionalFields.includes(key)) {
+        categorized.professional[key] = value;
+      } else if (financialFields.includes(key)) {
+        categorized.financial[key] = value;
+      } else if (legalFields.includes(key)) {
+        categorized.legal[key] = value;
+      } else if (key !== 'CandidateID' && key !== 'ImageURL') {
+        // Skip technical fields but include everything else in other
+        categorized.other[key] = value;
+      }
+    });
+
+    // Remove empty categories
+    Object.keys(categorized).forEach(category => {
+      if (Object.keys(categorized[category]).length === 0) {
+        delete categorized[category];
+      }
+    });
+
+    return categorized;
+  };
+
+  console.log(candidate,"candidate hai")
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-red-50 flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
           <p className="text-gray-600">Loading candidate information...</p>
         </div>
       </div>
@@ -412,12 +694,12 @@ const CandidateDetailPage: React.FC = () => {
 
   if (error || !candidate) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-red-50 flex items-center justify-center px-4">
-        <Card className="border-red-200 bg-red-50 max-w-md w-full">
+      <div className="min-h-screen bg-white flex items-center justify-center px-4">
+        <Card className="border-gray-200 max-w-md w-full">
           <CardContent className="pt-6 text-center">
-            <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-            <p className="text-red-600 mb-4">{error || 'Candidate not found'}</p>
-            <Button onClick={() => navigate(-1)} className="bg-red-600 hover:bg-red-700">
+            <AlertCircle className="w-12 h-12 text-gray-600 mx-auto mb-4" />
+            <p className="text-gray-700 mb-4">{error || 'Candidate not found'}</p>
+            <Button onClick={() => navigate(-1)} className="bg-primary hover:bg-primary/90">
               Go Back
             </Button>
           </CardContent>
@@ -427,110 +709,165 @@ const CandidateDetailPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-red-50">
+    <div className="min-h-screen bg-white">
+      {/* Mobile/desktop responsive search bar at the top */}
+      {/* <div className="w-full flex flex-col items-center py-4 bg-white border-b border-gray-200 shadow-sm sticky top-0 z-30">
+        <div className="w-full max-w-2xl px-2 sm:px-4">
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+            placeholder="🔍 Search candidate details..."
+            className="w-full px-4 py-3 sm:py-4 text-base sm:text-lg rounded-full border-4 border-primary/80 focus:border-accent focus:ring-4 focus:ring-accent/30 shadow-lg font-semibold text-gray-900 bg-white placeholder-gray-400 outline-none transition-all duration-200"
+            style={{ boxShadow: '0 0 0 3px #f87171, 0 2px 8px rgba(0,0,0,0.08)' }}
+          />
+        </div>
+      </div> */}
       {/* Hero Section */}
-      <div className="bg-gradient-to-br from-red-700 via-red-600 to-red-800 text-white">
-        <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="bg-white border-b border-gray-200 shadow-sm">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6">
           {/* Breadcrumb */}
-          <div className="flex items-center gap-2 text-sm mb-6 text-red-100">
-            <button onClick={() => navigate('/')} className="hover:text-white flex items-center gap-1">
-              <Home className="w-4 h-4" /> Home
+          <div className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm mb-3 sm:mb-4 text-gray-600 overflow-x-auto">
+            <button onClick={() => navigate('/')} className="hover:text-primary flex items-center gap-1 transition-colors font-semibold flex-shrink-0">
+              <Home className="w-3 sm:w-4 h-3 sm:h-4" /> <span className="hidden xs:inline">Home</span><span className="xs:hidden">H</span>
             </button>
-            <span>/</span>
-            <button onClick={() => navigate('/candidates')} className="hover:text-white">Candidates</button>
-            <span>/</span>
-            <span className="text-white font-semibold">{candidate.personalInfo.fullName}</span>
+            <span className="opacity-70 flex-shrink-0">/</span>
+            <button onClick={() => navigate('/candidates')} className="hover:text-primary transition-colors font-semibold flex-shrink-0">Candidates</button>
+            <span className="opacity-70 flex-shrink-0">/</span>
+            <span className="text-gray-900 font-bold truncate min-w-0">{candidate.personalInfo.fullName}</span>
           </div>
 
-          <div className="flex flex-col lg:flex-row gap-8 items-center lg:items-start">
+          <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 items-center lg:items-start">
             {/* Profile Photo */}
-            <div className="relative">
-              <div className="w-40 h-40 lg:w-48 lg:h-48 rounded-full border-4 border-white shadow-2xl overflow-hidden bg-white">
-                {candidate.personalInfo.profilePhoto ? (
+            <div className="relative group">
+              <button
+                onClick={() => setPhotoModalOpen(true)}
+                className="relative block w-24 h-24 sm:w-32 sm:h-32 lg:w-36 lg:h-36 rounded-full border-2 sm:border-4 border-primary/20 shadow-lg overflow-hidden bg-white backdrop-blur-sm hover:shadow-2xl transition-all cursor-pointer"
+                aria-label="View profile photo in full screen"
+              >
+                {!imageLoadError && getCandidateImageUrl(candidate) ? (
+                  <img
+                    src={getCandidateImageUrl(candidate) || ''}
+                    alt={candidate.personalInfo.fullName}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                    onLoad={() => setImageLoadError(false)}
+                    onError={() => setImageLoadError(true)}
+                  />
+                ) : candidate.personalInfo.profilePhoto ? (
                   <img
                     src={candidate.personalInfo.profilePhoto}
                     alt={candidate.personalInfo.fullName}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                    onLoad={() => setImageLoadError(false)}
+                    onError={() => setImageLoadError(true)}
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center bg-red-100">
                     <User className="w-20 h-20 text-red-300" />
                   </div>
                 )}
-              </div>
+                {/* Maximize icon overlay */}
+                <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/30 transition-colors rounded-full">
+                  <Maximize2 className="w-6 h-6 sm:w-8 sm:h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                </div>
+              </button>
               {candidate.isVerified && (
-                <div className="absolute -bottom-2 -right-2 bg-green-500 text-white p-2 rounded-full shadow-lg">
-                  <CheckCircle className="w-6 h-6" />
+                <div className="absolute -bottom-1 -right-1 sm:-bottom-2 sm:-right-2 bg-green-500 text-white p-1.5 sm:p-2 rounded-full shadow-lg">
+                  <CheckCircle className="w-4 h-4 sm:w-6 sm:h-6" />
                 </div>
               )}
             </div>
 
             {/* Basic Info */}
             <div className="flex-1 text-center lg:text-left">
-              <h1 className="text-3xl lg:text-4xl font-bold mb-2">
-                {candidate.personalInfo.fullName}
-              </h1>
+             <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-extrabold mb-2 text-gray-900 leading-tight">
+  {candidate.personalInfo.fullName
+    ? candidate.personalInfo.fullName.charAt(0).toUpperCase() +
+      candidate.personalInfo.fullName.slice(1)
+    : ""}
+</h1>
+
               {candidate.personalInfo.fullName_np && (
-                <p className="text-xl text-red-100 mb-4">{candidate.personalInfo.fullName_np}</p>
+                <p className="text-base sm:text-lg md:text-xl text-primary/80 mb-3 sm:mb-4 font-bold">{candidate.personalInfo.fullName_np}</p>
               )}
               
-              <div className="flex flex-wrap gap-2 justify-center lg:justify-start mb-4">
-                {candidate.politicalInfo?.partyName && (
-                  <Badge className="bg-yellow-500 text-black px-3 py-1">
-                    <Flag className="w-3 h-3 mr-1" />
-                    {candidate.politicalInfo.partyName}
-                  </Badge>
-                )}
-                {candidate.politicalInfo?.constituency && (
-                  <Badge className="bg-white/20 text-white px-3 py-1">
-                    <MapPin className="w-3 h-3 mr-1" />
-                    {candidate.politicalInfo.constituency}
-                  </Badge>
-                )}
+              <div className="flex flex-wrap gap-1.5 sm:gap-2 justify-center lg:justify-start mb-3 sm:mb-4">
+                {(() => {
+                  // Get district and constituency info
+                  const district = candidate.rawSource?.DistrictName || '';
+                  const constituency = candidate.politicalInfo?.constituency || '';
+                  const constituencyNp = candidate.politicalInfo?.constituency_np || '';
+                  const constituencyNumber = candidate.politicalInfo?.constituencyNumber || '';
+                  
+                  // Build the location display
+                  let locationText = '';
+                  if (district && constituencyNumber) {
+                    locationText = `${district} - ${constituencyNumber}`;
+                  } else if (district && constituency) {
+                    locationText = `${district} - ${constituency}`;
+                  } else if (constituency && constituency !== constituencyNumber) {
+                    locationText = constituency;
+                  } else if (constituencyNumber) {
+                    locationText = `Constituency ${constituencyNumber}`;
+                  }
+                  
+                  return locationText && (
+                    <Badge className="bg-blue-100 text-blue-700 border border-blue-200 px-2 sm:px-4 py-1 sm:py-1.5 text-xs sm:text-sm font-bold">
+                      <MapPin className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-1.5" />
+                      {locationText}
+                    </Badge>
+                  );
+                })()}
                 {candidate.politicalInfo?.candidacyLevel && (
-                  <Badge className="bg-white/20 text-white px-3 py-1">
+                  <Badge className="bg-gray-100 text-gray-700 border border-gray-200 px-2 sm:px-4 py-1 sm:py-1.5 text-xs sm:text-sm font-bold">
                     {candidate.politicalInfo.candidacyLevel}
                   </Badge>
                 )}
               </div>
 
               {candidate.campaign?.campaignSlogan && (
-                <p className="text-lg italic text-red-100 mb-4">
+                <p className="text-sm sm:text-base md:text-lg lg:text-xl italic text-gray-700 font-semibold mb-3 sm:mb-5 px-2 sm:px-0">
                   "{candidate.campaign.campaignSlogan}"
                 </p>
               )}
 
-              {/* Quick Stats */}
-              <div className="flex flex-wrap gap-4 justify-center lg:justify-start">
-                <div className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4" />
-                  <span>Age: {candidate.personalInfo.age || calculateAge(candidate.personalInfo.dateOfBirth)} years</span>
+              <div className="flex flex-wrap gap-2 sm:gap-3 justify-center lg:justify-start text-sm sm:text-base">
+                <div className="flex items-center gap-1.5 sm:gap-2 bg-gray-50 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-full border border-gray-200">
+                  <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-600" />
+                  <span className="text-gray-800 font-semibold">{getAge()} years</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Phone className="w-4 h-4" />
-                  <span>  {candidate.personalInfo.contactNumber.slice(0, -2)}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Mail className="w-4 h-4" />
+                <a 
+                  href={`tel:${candidate.personalInfo.contactNumber}`}
+                  className="flex items-center gap-1.5 sm:gap-2 bg-gray-50 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-full border border-gray-200 hover:bg-gray-100 transition-all cursor-pointer text-gray-800 font-semibold"
+                >
+                  <Phone className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-600" />
+                  <span>{candidate.personalInfo.contactNumber}</span>
+                </a>
+                <a 
+                  href={`mailto:${candidate.personalInfo.email}`}
+                  className="flex items-center gap-1.5 sm:gap-2 bg-gray-50 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-full border border-gray-200 hover:bg-gray-100 transition-all cursor-pointer text-gray-800 font-semibold"
+                >
+                  <Mail className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-600" />
                   <span>{candidate.personalInfo.email}</span>
-                </div>
+                </a>
               </div>
 
               {/* Action Buttons */}
-              <div className="flex flex-wrap gap-3 justify-center lg:justify-start mt-6">
+              <div className="flex flex-wrap gap-2 sm:gap-3 justify-center lg:justify-start mt-4 sm:mt-6">
                 <Button
                   onClick={handleLike}
                   variant={isLiked ? "default" : "outline"}
                   aria-pressed={isLiked}
-                  className={`flex items-center gap-2 ${isLiked ? 'bg-pink-500 hover:bg-pink-600 text-white' : 'border-white text-black hover:bg-white/20'}`}
+                  size="sm"
+                  className={`flex items-center gap-1 sm:gap-2 text-xs sm:text-sm ${isLiked ? 'bg-pink-500 hover:bg-pink-600 text-white' : 'border-gray-300 text-gray-700 hover:bg-gray-100 hover:text-gray-900'}`}
                 >
-                  <Heart className={`w-4 h-4 mr-2 ${isLiked ? 'fill-current text-white' : ''}`} />
-                  {likesCount} Likes
+                  <Heart className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${isLiked ? 'fill-current text-white' : ''}`} />
+                  <span className="hidden xs:inline">{likesCount} Likes</span><span className="xs:hidden">{likesCount}</span>
                 </Button>
                 <div className="relative">
-                  <Button onClick={handleShare} variant="outline" className="border-white text-black hover:bg-white/20">
-                    <Share2 className="w-4 h-4 mr-2" />
-                    Share ({sharesCount})
+                  <Button onClick={handleShare} variant="outline" size="sm" className="border-gray-300 text-gray-700 hover:bg-gray-100 hover:text-gray-900 text-xs sm:text-sm">
+                    <Share2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                    <span className="hidden xs:inline">Share ({sharesCount})</span><span className="xs:hidden">({sharesCount})</span>
                   </Button>
                   {/* Share menu for non-native share-capable browsers */}
                   {showShareMenu && (
@@ -559,226 +896,888 @@ const CandidateDetailPage: React.FC = () => {
                   </div>
                 )}
               </div>
-              {/* Social links */}
-              <SocialLinks socialMedia={candidate.socialMedia} />
+            {/* Social links */}
+              {candidate.socialMedia && Object.values(candidate.socialMedia).some(v => v) && (
+                <div className="flex flex-wrap gap-2 sm:gap-3 mt-3 sm:mt-4">
+                  {candidate.socialMedia.facebook && (
+                    <a href={candidate.socialMedia.facebook} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800">
+                      <Facebook className="w-5 h-5" />
+                    </a>
+                  )}
+                  {candidate.socialMedia.twitter && (
+                    <a href={candidate.socialMedia.twitter} target="_blank" rel="noopener noreferrer" className="text-sky-500 hover:text-sky-700">
+                      <Twitter className="w-5 h-5" />
+                    </a>
+                  )}
+                  {candidate.socialMedia.instagram && (
+                    <a href={candidate.socialMedia.instagram} target="_blank" rel="noopener noreferrer" className="text-pink-600 hover:text-pink-800">
+                      <Instagram className="w-5 h-5" />
+                    </a>
+                  )}
+                  {candidate.socialMedia.youtube && (
+                    <a href={candidate.socialMedia.youtube} target="_blank" rel="noopener noreferrer" className="text-red-600 hover:text-red-800">
+                      <Youtube className="w-5 h-5" />
+                    </a>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="w-full flex flex-wrap justify-start gap-2 bg-white p-2 rounded-lg shadow mb-6">
-            <TabsTrigger value="personal" className="data-[state=active]:bg-red-600 data-[state=active]:text-white">
-              <User className="w-4 h-4 mr-2" />व्यक्तिगत
-            </TabsTrigger>
-            <TabsTrigger value="political" className="data-[state=active]:bg-red-600 data-[state=active]:text-white">
-              <Flag className="w-4 h-4 mr-2" />राजनीतिक
-            </TabsTrigger>
-            <TabsTrigger value="education" className="data-[state=active]:bg-red-600 data-[state=active]:text-white">
-              <GraduationCap className="w-4 h-4 mr-2" />शिक्षा
-            </TabsTrigger>
-            <TabsTrigger value="professional" className="data-[state=active]:bg-red-600 data-[state=active]:text-white">
-              <Briefcase className="w-4 h-4 mr-2" />पेशागत
-            </TabsTrigger>
-            <TabsTrigger value="social" className="data-[state=active]:bg-red-600 data-[state=active]:text-white">
-              <Heart className="w-4 h-4 mr-2" />सामाजिक
-            </TabsTrigger>
-            <TabsTrigger value="financial" className="data-[state=active]:bg-red-600 data-[state=active]:text-white">
-              <Wallet className="w-4 h-4 mr-2" />आर्थिक
-            </TabsTrigger>
-            <TabsTrigger value="legal" className="data-[state=active]:bg-red-600 data-[state=active]:text-white">
-              <Scale className="w-4 h-4 mr-2" />कानुनी
-            </TabsTrigger>
-            <TabsTrigger value="vision" className="data-[state=active]:bg-red-600 data-[state=active]:text-white">
-              <Target className="w-4 h-4 mr-2" />दृष्टि
-            </TabsTrigger>
-          </TabsList>
-
-          {/* Personal Info Tab */}
-          <TabsContent value="personal">
-            <SectionCard title="Basic Personal Information" titleNp="१. आधारभूत व्यक्तिगत विवरण" icon={User}>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <InfoItem icon={User} label="पूरा नाम / Full Name" value={candidate.personalInfo.fullName} valueNp={candidate.personalInfo.fullName_np} />
-                <InfoItem icon={User} label="उपनाम / Nickname" value={candidate.personalInfo.nickname} valueNp={candidate.personalInfo.nickname_np} />
-                <InfoItem icon={Calendar} label="जन्म मिति / Date of Birth" value={new Date(candidate.personalInfo.dateOfBirth).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })} />
-                <InfoItem icon={User} label="उमेर / Age" value={`${candidate.personalInfo.age || calculateAge(candidate.personalInfo.dateOfBirth)} वर्ष`} />
-                <InfoItem icon={User} label="लिङ्ग / Gender" value={candidate.personalInfo.gender} valueNp={candidate.personalInfo.gender_np} />
-                <InfoItem icon={Heart} label="वैवाहिक स्थिति / Marital Status" value={candidate.personalInfo.maritalStatus} valueNp={candidate.personalInfo.maritalStatus_np} />
-                <InfoItem icon={Home} label="स्थायी ठेगाना / Permanent Address" value={candidate.personalInfo.permanentAddress} valueNp={candidate.personalInfo.permanentAddress_np} />
-                <InfoItem icon={MapPin} label="हालको ठेगाना / Current Address" value={candidate.personalInfo.currentAddress} valueNp={candidate.personalInfo.currentAddress_np} />
-                <InfoItem icon={FileText} label="नागरिकता नम्बर / Citizenship No." value={candidate.personalInfo.citizenshipNumber} />
-                <InfoItem icon={MapPin} label="नागरिकता जारी जिल्ला / Citizenship District" value={candidate.personalInfo.citizenshipIssuedDistrict} valueNp={candidate.personalInfo.citizenshipIssuedDistrict_np} />
-                <InfoItem icon={Phone} label="सम्पर्क नम्बर / Contact" value={candidate.personalInfo.contactNumber} />
-                <InfoItem icon={Mail} label="इमेल / Email" value={candidate.personalInfo.email} />
-                <InfoItem icon={Globe} label="वेबसाइट / Website" value={candidate.personalInfo.website} />
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8">
+        <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 lg:gap-8">
+          {/* Vertical Tabs Sidebar */}
+          <div className="lg:w-56 flex-shrink-0">
+            <div className="bg-white rounded-lg sm:rounded-xl shadow-md border border-gray-100 overflow-hidden lg:sticky lg:top-4">
+              <div className="bg-gradient-to-br from-red-500 to-red-600 text-white p-2 sm:p-3">
+                <h3 className="font-bold text-xs sm:text-sm flex items-center gap-2">
+                  <User className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  मैनु / Menu
+                </h3>
               </div>
-            </SectionCard>
-          </TabsContent>
-
-          {/* Political Info Tab */}
-          <TabsContent value="political">
-            <SectionCard title="Political Introduction" titleNp="२. राजनीतिक परिचय" icon={Flag}>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-                <InfoItem icon={Flag} label="पार्टीको नाम / Party Name" value={candidate.politicalInfo?.partyName} valueNp={candidate.politicalInfo?.partyName_np} />
-                <InfoItem icon={Briefcase} label="वर्तमान पद / Current Position" value={candidate.politicalInfo?.currentPosition} valueNp={candidate.politicalInfo?.currentPosition_np} />
-                <InfoItem icon={Building2} label="उम्मेदवारी तह / Candidacy Level" value={candidate.politicalInfo?.candidacyLevel} valueNp={candidate.politicalInfo?.candidacyLevel_np} />
-                <InfoItem icon={MapPin} label="निर्वाचन क्षेत्र नम्बर / Constituency No." value={candidate.politicalInfo?.constituencyNumber} />
-                <InfoItem icon={MapPin} label="निर्वाचन क्षेत्र / Constituency" value={candidate.politicalInfo?.constituency} valueNp={candidate.politicalInfo?.constituency_np} />
-                <InfoItem icon={Award} label="निर्वाचन चिन्ह / Election Symbol" value={candidate.politicalInfo?.electionSymbol} valueNp={candidate.politicalInfo?.electionSymbol_np} />
-                <InfoItem icon={User} label="पहिलो पटक उम्मेदवार / First Time Candidate" value={candidate.politicalInfo?.isFirstTimeCandidate ? 'हो (Yes)' : 'होइन (No)'} />
+              <div className="p-2 space-y-1">
+                <button
+                  onClick={() => setActiveTab('personal')}
+                  className={`w-full px-3 py-2.5 text-left font-medium transition-all flex items-center gap-2.5 rounded-lg ${
+                    activeTab === 'personal'
+                      ? 'bg-red-500 text-white shadow-sm'
+                      : 'text-gray-700 hover:bg-red-50 hover:text-red-600'
+                  }`}
+                >
+                  <User className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-xs sm:text-sm font-semibold truncate">व्यक्तिगत</div>
+                    <div className="text-[10px] sm:text-xs opacity-70 truncate">Personal</div>
+                  </div>
+                </button>
+                <button
+                  onClick={() => setActiveTab('political')}
+                  className={`w-full px-3 py-2.5 text-left font-medium transition-all flex items-center gap-2.5 rounded-lg ${
+                    activeTab === 'political'
+                      ? 'bg-red-500 text-white shadow-sm'
+                      : 'text-gray-700 hover:bg-red-50 hover:text-red-600'
+                  }`}
+                >
+                  <Flag className="w-4 h-4 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-semibold truncate">राजनीतिक</div>
+                    <div className="text-xs opacity-70 truncate">Political</div>
+                  </div>
+                </button>
+                <button
+                  onClick={() => setActiveTab('education')}
+                  className={`w-full px-3 py-2.5 text-left font-medium transition-all flex items-center gap-2.5 rounded-lg ${
+                    activeTab === 'education'
+                      ? 'bg-red-500 text-white shadow-sm'
+                      : 'text-gray-700 hover:bg-red-50 hover:text-red-600'
+                  }`}
+                >
+                  <GraduationCap className="w-4 h-4 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-semibold truncate">शिक्षा</div>
+                    <div className="text-xs opacity-70 truncate">Education</div>
+                  </div>
+                </button>
+                <button
+                  onClick={() => setActiveTab('professional')}
+                  className={`w-full px-3 py-2.5 text-left font-medium transition-all flex items-center gap-2.5 rounded-lg ${
+                    activeTab === 'professional'
+                      ? 'bg-red-500 text-white shadow-sm'
+                      : 'text-gray-700 hover:bg-red-50 hover:text-red-600'
+                  }`}
+                >
+                  <Briefcase className="w-4 h-4 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-semibold truncate">पेशागत</div>
+                    <div className="text-xs opacity-70 truncate">Professional</div>
+                  </div>
+                </button>
+                <button
+                  onClick={() => setActiveTab('social')}
+                  className={`w-full px-3 py-2.5 text-left font-medium transition-all flex items-center gap-2.5 rounded-lg ${
+                    activeTab === 'social'
+                      ? 'bg-red-500 text-white shadow-sm'
+                      : 'text-gray-700 hover:bg-red-50 hover:text-red-600'
+                  }`}
+                >
+                  <Heart className="w-4 h-4 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-semibold truncate">सामाजिक</div>
+                    <div className="text-xs opacity-70 truncate">Social</div>
+                  </div>
+                </button>
+                <button
+                  onClick={() => setActiveTab('financial')}
+                  className={`w-full px-3 py-2.5 text-left font-medium transition-all flex items-center gap-2.5 rounded-lg ${
+                    activeTab === 'financial'
+                      ? 'bg-red-500 text-white shadow-sm'
+                      : 'text-gray-700 hover:bg-red-50 hover:text-red-600'
+                  }`}
+                >
+                  <Wallet className="w-4 h-4 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-semibold truncate">आर्थिक</div>
+                    <div className="text-xs opacity-70 truncate">Financial</div>
+                  </div>
+                </button>
+                <button
+                  onClick={() => setActiveTab('legal')}
+                  className={`w-full px-3 py-2.5 text-left font-medium transition-all flex items-center gap-2.5 rounded-lg ${
+                    activeTab === 'legal'
+                      ? 'bg-red-500 text-white shadow-sm'
+                      : 'text-gray-700 hover:bg-red-50 hover:text-red-600'
+                  }`}
+                >
+                  <Scale className="w-4 h-4 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-semibold truncate">कानुनी</div>
+                    <div className="text-xs opacity-70 truncate">Legal</div>
+                  </div>
+                </button>
+                <button
+                  onClick={() => setActiveTab('vision')}
+                  className={`w-full px-3 py-2.5 text-left font-medium transition-all flex items-center gap-2.5 rounded-lg ${
+                    activeTab === 'vision'
+                      ? 'bg-red-500 text-white shadow-sm'
+                      : 'text-gray-700 hover:bg-red-50 hover:text-red-600'
+                  }`}
+                >
+                  <Target className="w-4 h-4 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-semibold truncate">दृष्टि</div>
+                    <div className="text-xs opacity-70 truncate">Vision</div>
+                  </div>
+                </button>
+                <button
+                  onClick={() => setActiveTab('additional')}
+                  className={`w-full px-3 py-2.5 text-left font-medium transition-all flex items-center gap-2.5 rounded-lg ${
+                    activeTab === 'additional'
+                      ? 'bg-red-500 text-white shadow-sm'
+                      : 'text-gray-700 hover:bg-red-50 hover:text-red-600'
+                  }`}
+                >
+                  <FileText className="w-4 h-4 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-semibold truncate">अतिरिक्त</div>
+                    <div className="text-xs opacity-70 truncate">Additional</div>
+                  </div>
+                </button>
               </div>
-              <TextBlock label="विगतको निर्वाचन इतिहास / Previous Election History" value={candidate.politicalInfo?.previousElectionHistory} valueNp={candidate.politicalInfo?.previousElectionHistory_np} />
-            </SectionCard>
+            </div>
+          </div>
 
-            <SectionCard title="Political Experience & Contribution" titleNp="५. राजनीतिक अनुभव र योगदान" icon={Building2}>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                <InfoItem icon={Calendar} label="पार्टीमा आबद्ध भएको वर्ष / Party Join Year" value={candidate.politicalExperience?.partyJoinYear} />
-              </div>
-              <TextBlock label="आन्दोलन / अभियानमा भूमिका / Movement Role" value={candidate.politicalExperience?.movementRole} valueNp={candidate.politicalExperience?.movementRole_np} />
-              <TextBlock label="जनप्रतिनिधि पद र कार्यकाल / Representative Position" value={candidate.politicalExperience?.previousRepresentativePosition} valueNp={candidate.politicalExperience?.previousRepresentativePosition_np} />
-              <TextBlock label="मुख्य उपलब्धिहरू / Major Achievements" value={candidate.politicalExperience?.majorAchievements} valueNp={candidate.politicalExperience?.majorAchievements_np} />
-            </SectionCard>
-          </TabsContent>
-
-          {/* Education Tab */}
-          <TabsContent value="education">
-            <SectionCard title="Educational Qualification" titleNp="३. शैक्षिक योग्यता" icon={GraduationCap}>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-                <InfoItem icon={GraduationCap} label="उच्चतम शैक्षिक योग्यता / Highest Qualification" value={candidate.education?.highestQualification} valueNp={candidate.education?.highestQualification_np} />
-                <InfoItem icon={BookOpen} label="विषय / संकाय / Subject" value={candidate.education?.subject} valueNp={candidate.education?.subject_np} />
-                <InfoItem icon={Building2} label="अध्ययन गरेको संस्था / Institution" value={candidate.education?.institution} valueNp={candidate.education?.institution_np} />
-                <InfoItem icon={Globe} label="देश / Country" value={candidate.education?.country} valueNp={candidate.education?.country_np} />
-              </div>
-              <TextBlock label="अतिरिक्त तालिम / प्रमाणपत्र / अनुसन्धान" value={candidate.education?.additionalTraining} valueNp={candidate.education?.additionalTraining_np} />
-            </SectionCard>
-          </TabsContent>
-
-          {/* Professional Tab */}
-          <TabsContent value="professional">
-            <SectionCard title="Professional Experience" titleNp="४. पेशागत अनुभव" icon={Briefcase}>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                <InfoItem icon={Briefcase} label="हालको पेशा / Current Profession" value={candidate.professionalExperience?.currentProfession} valueNp={candidate.professionalExperience?.currentProfession_np} />
-              </div>
-              <TextBlock label="विगतको पेशागत अनुभव / Previous Experience" value={candidate.professionalExperience?.previousExperience} valueNp={candidate.professionalExperience?.previousExperience_np} />
-              <TextBlock label="संस्थामा जिम्मेवारी / Organization Responsibility" value={candidate.professionalExperience?.organizationResponsibility} valueNp={candidate.professionalExperience?.organizationResponsibility_np} />
-              <TextBlock label="नेतृत्व वा व्यवस्थापन अनुभव / Leadership Experience" value={candidate.professionalExperience?.leadershipExperience} valueNp={candidate.professionalExperience?.leadershipExperience_np} />
-            </SectionCard>
-          </TabsContent>
-
-          {/* Social Tab */}
-          <TabsContent value="social">
-            <SectionCard title="Social & Community Engagement" titleNp="६. सामाजिक तथा सामुदायिक संलग्नता" icon={Heart}>
-              <TextBlock label="सामाजिक सेवा / NGO संलग्नता" value={candidate.socialEngagement?.ngoInvolvement} valueNp={candidate.socialEngagement?.ngoInvolvement_np} />
-              <TextBlock label="शिक्षा, स्वास्थ्य, युवा, महिला, कृषि क्षेत्रमा काम" value={candidate.socialEngagement?.sectorWork} valueNp={candidate.socialEngagement?.sectorWork_np} />
-              <TextBlock label="प्राप्त सम्मान वा पुरस्कार / Awards & Honors" value={candidate.socialEngagement?.awardsHonors} valueNp={candidate.socialEngagement?.awardsHonors_np} />
-            </SectionCard>
-
-            {/* Social Media Links */}
-            {candidate.socialMedia && (
-              <Card className="border-0 shadow-lg">
-                <CardHeader className="bg-gradient-to-r from-gray-700 to-gray-800 text-white py-4">
-                  <CardTitle className="flex items-center gap-3 text-lg">
-                    <Globe className="w-5 h-5" />
-                    सामाजिक सञ्जाल / Social Media
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-6">
-                  <div className="flex flex-wrap gap-4">
-                    {candidate.socialMedia.facebook && (
-                      <a href={candidate.socialMedia.facebook} target="_blank" rel="noopener noreferrer" 
-                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                        <Facebook className="w-5 h-5" /> Facebook
-                      </a>
+          {/* Content Area */}
+          <div className="flex-1 min-w-0">
+            {/* Personal Info Tab */}
+            {activeTab === 'personal' && (
+              <>
+                <SectionCard title="Basic Personal Information" titleNp="१. आधारभूत व्यक्तिगत विवरण" icon={User}>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {/* Robustly render both flat and nested fields using index access for flat fields */}
+                    {(!searchTerm || (candidate.personalInfo?.fullName || '').toLowerCase().includes(searchTerm.toLowerCase())) && (
+                      <InfoItem icon={User} label="पूरा नाम / Full Name" value={candidate.personalInfo?.fullName || (candidate as any)['CandidateName']} />
                     )}
-                    {candidate.socialMedia.twitter && (
-                      <a href={candidate.socialMedia.twitter} target="_blank" rel="noopener noreferrer"
-                        className="flex items-center gap-2 px-4 py-2 bg-sky-500 text-white rounded-lg hover:bg-sky-600 transition-colors">
-                        <Twitter className="w-5 h-5" /> Twitter
-                      </a>
+                    {(!searchTerm || (candidate.personalInfo?.nickname || '').toLowerCase().includes(searchTerm.toLowerCase())) && (
+                      <InfoItem icon={User} label="उपनाम / Nickname" value={candidate.personalInfo?.nickname} />
                     )}
-                    {candidate.socialMedia.instagram && (
-                      <a href={candidate.socialMedia.instagram} target="_blank" rel="noopener noreferrer"
-                        className="flex items-center gap-2 px-4 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition-colors">
-                        <Instagram className="w-5 h-5" /> Instagram
-                      </a>
+                    {(!searchTerm || (candidate.personalInfo?.dateOfBirth || '').toLowerCase().includes(searchTerm.toLowerCase())) && (
+                      <InfoItem icon={Calendar} label="जन्म मिति / Date of Birth" value={formatDateOfBirth(candidate.personalInfo?.dateOfBirth || (candidate as any)['DOB'])} />
                     )}
-                    {candidate.socialMedia.youtube && (
-                      <a href={candidate.socialMedia.youtube} target="_blank" rel="noopener noreferrer"
-                        className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
-                        <Youtube className="w-5 h-5" /> YouTube
-                      </a>
+                    {(!searchTerm || (candidate.personalInfo?.age ? `${candidate.personalInfo.age}` : ((candidate as any)['AGE_YR'] ? `${(candidate as any)['AGE_YR']}` : `${getAge()}`)).toLowerCase().includes(searchTerm.toLowerCase())) && (
+                      <InfoItem icon={User} label="उमेर / Age" value={candidate.personalInfo?.age ? `${candidate.personalInfo.age} वर्ष` : ((candidate as any)['AGE_YR'] ? `${(candidate as any)['AGE_YR']} वर्ष` : `${getAge()} वर्ष`)} />
+                    )}
+                    {(!searchTerm || (candidate.personalInfo?.gender || (candidate as any)['Gender'] || '').toLowerCase().includes(searchTerm.toLowerCase())) && (
+                      <InfoItem icon={User} label="लिङ्ग / Gender" value={candidate.personalInfo?.gender || (candidate as any)['Gender']} />
+                    )}
+                    {(!searchTerm || (candidate.personalInfo?.maritalStatus || '').toLowerCase().includes(searchTerm.toLowerCase())) && (
+                      <InfoItem icon={Heart} label="वैवाहिक स्थिति / Marital Status" value={candidate.personalInfo?.maritalStatus} />
+                    )}
+                    {(!searchTerm || (candidate.personalInfo?.permanentAddress || (candidate as any)['ADDRESS'] || (candidate as any)['Address'] || '').toLowerCase().includes(searchTerm.toLowerCase())) && (
+                      <InfoItem icon={Home} label="स्थायी ठेगाना / Permanent Address" value={candidate.personalInfo?.permanentAddress || (candidate as any)['ADDRESS'] || (candidate as any)['Address']} />
+                    )}
+                    {(!searchTerm || (candidate.personalInfo?.currentAddress || '').toLowerCase().includes(searchTerm.toLowerCase())) && (
+                      <InfoItem icon={MapPin} label="हालको ठेगाना / Current Address" value={candidate.personalInfo?.currentAddress} />
+                    )}
+                    {(!searchTerm || (candidate.personalInfo?.citizenshipNumber || '').toLowerCase().includes(searchTerm.toLowerCase())) && (
+                      <InfoItem icon={FileText} label="नागरिकता नम्बर / Citizenship No." value={candidate.personalInfo?.citizenshipNumber} />
+                    )}
+                    {(!searchTerm || (candidate.personalInfo?.citizenshipIssuedDistrict || (candidate as any)['CTZDIST'] || '').toLowerCase().includes(searchTerm.toLowerCase())) && (
+                      <InfoItem icon={MapPin} label="नागरिकता जारी जिल्ला / Citizenship District" value={candidate.personalInfo?.citizenshipIssuedDistrict || (candidate as any)['CTZDIST']} />
+                    )}
+                    {(!searchTerm || ((candidate as any)['FATHER_NAME'] || '').toLowerCase().includes(searchTerm.toLowerCase())) && (
+                      <InfoItem icon={User} label="पिता / Father's Name" value={(candidate as any)['FATHER_NAME']} />
+                    )}
+                    {(!searchTerm || ((candidate as any)['SPOUCE_NAME'] || '').toLowerCase().includes(searchTerm.toLowerCase())) && (
+                      <InfoItem icon={User} label="पति/पत्नी / Spouse Name" value={(candidate as any)['SPOUCE_NAME']} />
+                    )}
+                    {(!searchTerm || (candidate.personalInfo?.email || (candidate as any)['Email'] || '').toLowerCase().includes(searchTerm.toLowerCase())) && (
+                      <InfoItem icon={Mail} label="इमेल / Email" value={candidate.personalInfo?.email || (candidate as any)['Email']} />
+                    )}
+                    {(!searchTerm || (candidate.personalInfo?.website || ((candidate.socialMedia as any)?.website) || '').toLowerCase().includes(searchTerm.toLowerCase())) && (
+                      <InfoItem icon={Globe} label="वेबसाइट / Website" value={candidate.personalInfo?.website || ((candidate.socialMedia as any)?.website)} />
+                    )}
+                    {(!searchTerm || (candidate.personalInfo?.contactNumber || (candidate as any)['ContactNumber'] || '').toLowerCase().includes(searchTerm.toLowerCase())) && (
+                      <InfoItem icon={Phone} label="सम्पर्क नम्बर / Contact Number" value={candidate.personalInfo?.contactNumber || (candidate as any)['ContactNumber']} />
                     )}
                   </div>
-                </CardContent>
-              </Card>
+                </SectionCard>
+
+                {/* Raw Personal Data */}
+                {candidate.rawSource && (() => {
+                  const categorized = categorizeRawData(candidate.rawSource);
+                  return categorized.personal && Object.keys(categorized.personal).length > 0 && (
+                    <div className="mt-6">
+                      <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                        <FileText className="w-5 h-5 text-blue-600" />
+                        Additional Personal Details / अतिरिक्त व्यक्तिगत विवरण
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {Object.entries(categorized.personal).filter(([key, value]) => !searchTerm || (formatFieldName(key).toLowerCase().includes(searchTerm.toLowerCase()) || formatRawValue(value).toLowerCase().includes(searchTerm.toLowerCase()))).map(([key, value]) => (
+                          <div key={key} className="p-4 rounded-lg border border-blue-200 bg-gradient-to-br from-white to-blue-50 hover:shadow-md transition-all duration-200">
+                            <p className="text-xs font-bold text-blue-700 mb-2 break-words uppercase tracking-wide">
+                              {formatFieldName(key)}
+                            </p>
+                            <p className="text-sm text-gray-900 break-words whitespace-pre-wrap font-medium leading-relaxed">
+                              {formatRawValue(value) || '-'}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
+              </>
             )}
-          </TabsContent>
 
-          {/* Financial Tab */}
-          <TabsContent value="financial">
-            <SectionCard title="Financial Information" titleNp="७. आर्थिक विवरण" icon={Wallet}>
-              <TextBlock label="चल सम्पत्ति विवरण / Movable Assets" value={candidate.financialInfo?.movableAssets} valueNp={candidate.financialInfo?.movableAssets_np} />
-              <TextBlock label="अचल सम्पत्ति विवरण / Immovable Assets" value={candidate.financialInfo?.immovableAssets} valueNp={candidate.financialInfo?.immovableAssets_np} />
-              <TextBlock label="वार्षिक आय स्रोत / Annual Income Source" value={candidate.financialInfo?.annualIncomeSource} valueNp={candidate.financialInfo?.annualIncomeSource_np} />
-              <TextBlock label="बैंक ऋण वा अन्य दायित्व / Bank Loans" value={candidate.financialInfo?.bankLoans} valueNp={candidate.financialInfo?.bankLoans_np} />
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <InfoItem icon={FileText} label="कर तिरेको स्थिति / Tax Status" value={candidate.financialInfo?.taxStatus} valueNp={candidate.financialInfo?.taxStatus_np} />
-              </div>
-            </SectionCard>
-          </TabsContent>
+            {/* Political Info Tab */}
+            {activeTab === 'political' && (
+              <>
+                {/* Prominent Election Symbol Display */}
+                <ElectionSymbolCard 
+                  symbolImage={candidate.politicalInfo?.electionSymbolImage}
+                  symbolText={candidate.politicalInfo?.electionSymbol}
+                  symbolTextNp={candidate.politicalInfo?.electionSymbol_np}
+                />
 
-          {/* Legal Tab */}
-          <TabsContent value="legal">
-            <SectionCard title="Legal Status" titleNp="८. कानुनी अवस्था" icon={Scale}>
-              <div className="mb-6">
-                <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg ${candidate.legalStatus?.hasCriminalCase ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
-                  {candidate.legalStatus?.hasCriminalCase ? (
-                    <><AlertCircle className="w-5 h-5" /> आपराधिक मुद्दा छ (Has Criminal Case)</>
-                  ) : (
-                    <><CheckCircle className="w-5 h-5" /> कुनै आपराधिक मुद्दा छैन (No Criminal Case)</>
+                <SectionCard title="Political Introduction" titleNp="२. राजनीतिक परिचय" icon={Flag}>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                    <InfoItem icon={Flag} label="पार्टीको नाम / Party Name" value={candidate.politicalInfo?.partyName} valueNp={candidate.politicalInfo?.partyName_np} />
+                    <InfoItem icon={Briefcase} label="वर्तमान पद / Current Position" value={candidate.politicalInfo?.currentPosition} valueNp={candidate.politicalInfo?.currentPosition_np} />
+                    <InfoItem icon={Building2} label="उम्मेदवारी तह / Candidacy Level" value={candidate.politicalInfo?.candidacyLevel} valueNp={candidate.politicalInfo?.candidacyLevel_np} />
+                    <InfoItem icon={MapPin} label="निर्वाचन क्षेत्र नम्बर / Constituency No." value={candidate.politicalInfo?.constituencyNumber} />
+                    <InfoItem icon={MapPin} label="निर्वाचन क्षेत्र / Constituency" value={candidate.politicalInfo?.constituency} valueNp={candidate.politicalInfo?.constituency_np} />
+                    <InfoItem icon={Award} label="निर्वाचन चिन्ह / Election Symbol" value={candidate.politicalInfo?.electionSymbol} valueNp={candidate.politicalInfo?.electionSymbol_np} />
+                    <InfoItem icon={User} label="पहिलो पटक उम्मेदवार / First Time Candidate" value={candidate.politicalInfo?.isFirstTimeCandidate ? 'हो (Yes)' : 'होइन (No)'} />
+                  </div>
+                  <TextBlock label="विगतको निर्वाचन इतिहास / Previous Election History" value={candidate.politicalInfo?.previousElectionHistory} valueNp={candidate.politicalInfo?.previousElectionHistory_np} />
+                </SectionCard>
+
+                <SectionCard title="Political Experience & Contribution" titleNp="५. राजनीतिक अनुभव र योगदान" icon={Building2}>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <InfoItem icon={Calendar} label="पार्टीमा आबद्ध भएको वर्ष / Party Join Year" value={candidate.politicalExperience?.partyJoinYear} />
+                  </div>
+                  <TextBlock label="आन्दोलन / अभियानमा भूमिका / Movement Role" value={candidate.politicalExperience?.movementRole} valueNp={candidate.politicalExperience?.movementRole_np} />
+                  <TextBlock label="जनप्रतिनिधि पद र कार्यकाल / Representative Position" value={candidate.politicalExperience?.previousRepresentativePosition} valueNp={candidate.politicalExperience?.previousRepresentativePosition_np} />
+                  <TextBlock label="मुख्य उपलब्धिहरू / Major Achievements" value={candidate.politicalExperience?.majorAchievements} valueNp={candidate.politicalExperience?.majorAchievements_np} />
+                </SectionCard>
+
+                {/* Raw Political Data */}
+                {candidate.rawSource && (() => {
+                  const categorized = categorizeRawData(candidate.rawSource);
+                  return categorized.political && Object.keys(categorized.political).length > 0 && (
+                    <div className="mt-6">
+                      <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                        <FileText className="w-5 h-5 text-purple-600" />
+                        Additional Political Details / अतिरिक्त राजनीतिक विवरण
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {Object.entries(categorized.political).map(([key, value]) => (
+                          <div key={key} className="p-4 rounded-lg border border-purple-200 bg-gradient-to-br from-white to-purple-50 hover:shadow-md transition-all duration-200">
+                            <p className="text-xs font-bold text-purple-700 mb-2 break-words uppercase tracking-wide">
+                              {formatFieldName(key)}
+                            </p>
+                            <p className="text-sm text-gray-900 break-words whitespace-pre-wrap font-medium leading-relaxed">
+                              {formatRawValue(value) || '-'}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
+              </>
+            )}
+
+            {/* Education Tab */}
+            {activeTab === 'education' && (
+              <>
+                <SectionCard title="Educational Qualification" titleNp="३. शैक्षिक योग्यता" icon={GraduationCap}>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                    <InfoItem icon={GraduationCap} label="उच्चतम शैक्षिक योग्यता / Highest Qualification" value={normalizeEducationQualification(candidate.education?.highestQualification)} valueNp={normalizeEducationQualification(candidate.education?.highestQualification_np)} />
+                    <InfoItem icon={BookOpen} label="विषय / संकाय / Subject" value={candidate.education?.subject} valueNp={candidate.education?.subject_np} />
+                    <InfoItem icon={Building2} label="अध्ययन गरेको संस्था / Institution" value={candidate.education?.institution} valueNp={candidate.education?.institution_np} />
+                    <InfoItem icon={Globe} label="देश / Country" value={candidate.education?.country} valueNp={candidate.education?.country_np} />
+                  </div>
+                  <TextBlock label="अतिरिक्त तालिम / प्रमाणपत्र / अनुसन्धान" value={candidate.education?.additionalTraining} valueNp={candidate.education?.additionalTraining_np} />
+                </SectionCard>
+
+                {/* Raw Education Data */}
+                {candidate.rawSource && (() => {
+                  const categorized = categorizeRawData(candidate.rawSource);
+                  return categorized.education && Object.keys(categorized.education).length > 0 && (
+                    <div className="mt-6">
+                      <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                        <FileText className="w-5 h-5 text-indigo-600" />
+                        Additional Education Details / अतिरिक्त शैक्षिक विवरण
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {Object.entries(categorized.education).map(([key, value]) => (
+                          <div key={key} className="p-4 rounded-lg border border-indigo-200 bg-gradient-to-br from-white to-indigo-50 hover:shadow-md transition-all duration-200">
+                            <p className="text-xs font-bold text-indigo-700 mb-2 break-words uppercase tracking-wide">
+                              {formatFieldName(key)}
+                            </p>
+                            <p className="text-sm text-gray-900 break-words whitespace-pre-wrap font-medium leading-relaxed">
+                              {formatRawValue(value) || '-'}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
+              </>
+            )}
+
+            {/* Professional Tab */}
+            {activeTab === 'professional' && (
+              <>
+                <SectionCard title="Professional Experience" titleNp="४. पेशागत अनुभव" icon={Briefcase}>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <InfoItem icon={Briefcase} label="हालको पेशा / Current Profession" value={candidate.professionalExperience?.currentProfession} valueNp={candidate.professionalExperience?.currentProfession_np} />
+                  </div>
+                  <TextBlock label="विगतको पेशागत अनुभव / Previous Experience" value={candidate.professionalExperience?.previousExperience} valueNp={candidate.professionalExperience?.previousExperience_np} />
+                  <TextBlock label="संस्थामा जिम्मेवारी / Organization Responsibility" value={candidate.professionalExperience?.organizationResponsibility} valueNp={candidate.professionalExperience?.organizationResponsibility_np} />
+                  <TextBlock label="नेतृत्व वा व्यवस्थापन अनुभव / Leadership Experience" value={candidate.professionalExperience?.leadershipExperience} valueNp={candidate.professionalExperience?.leadershipExperience_np} />
+                </SectionCard>
+
+                {/* Raw Professional Data */}
+                {candidate.rawSource && (() => {
+                  const categorized = categorizeRawData(candidate.rawSource);
+                  return categorized.professional && Object.keys(categorized.professional).length > 0 && (
+                    <div className="mt-6">
+                      <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                        <FileText className="w-5 h-5 text-green-600" />
+                        Additional Professional Details / अतिरिक्त पेशागत विवरण
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {Object.entries(categorized.professional).map(([key, value]) => (
+                          <div key={key} className="p-4 rounded-lg border border-green-200 bg-gradient-to-br from-white to-green-50 hover:shadow-md transition-all duration-200">
+                            <p className="text-xs font-bold text-green-700 mb-2 break-words uppercase tracking-wide">
+                              {formatFieldName(key)}
+                            </p>
+                            <p className="text-sm text-gray-900 break-words whitespace-pre-wrap font-medium leading-relaxed">
+                              {formatRawValue(value) || '-'}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
+              </>
+            )}
+
+            {/* Social Tab */}
+            {activeTab === 'social' && (
+              <>
+                <SectionCard title="Social & Community Engagement" titleNp="६. सामाजिक तथा सामुदायिक संलग्नता" icon={Heart}>
+                  <TextBlock label="सामाजिक सेवा / NGO संलग्नता" value={candidate.socialEngagement?.ngoInvolvement} valueNp={candidate.socialEngagement?.ngoInvolvement_np} />
+                  <TextBlock label="शिक्षा, स्वास्थ्य, युवा, महिला, कृषि क्षेत्रमा काम" value={candidate.socialEngagement?.sectorWork} valueNp={candidate.socialEngagement?.sectorWork_np} />
+                  <TextBlock label="प्राप्त सम्मान वा पुरस्कार / Awards & Honors" value={candidate.socialEngagement?.awardsHonors} valueNp={candidate.socialEngagement?.awardsHonors_np} />
+                </SectionCard>
+
+                {/* Social Media Links */}
+                <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow mt-6">
+                  <CardHeader className="bg-gradient-to-r from-primary/5 to-primary/10 border-b border-primary/20 py-4">
+                    <CardTitle className="flex items-center gap-3 text-primary">
+                      <div className="p-2 bg-primary/10 rounded-lg">
+                        <Globe className="w-5 h-5 text-primary" />
+                      </div>
+                      <div>
+                        <span className="block text-base sm:text-lg font-bold">सामाजिक सञ्जाल</span>
+                        <span className="text-sm sm:text-base font-semibold text-gray-600">Social Media Profiles</span>
+                      </div>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-3 sm:p-4 md:p-6">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-3 md:gap-4">
+                      {/* Facebook */}
+                      {candidate.socialMedia?.facebook ? (
+                        <a
+                          href={candidate.socialMedia.facebook}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="group relative flex flex-col items-center justify-center gap-2 sm:gap-3 p-3 sm:p-4 md:p-5 bg-[#1877F2] text-white rounded-lg sm:rounded-xl hover:bg-[#166FE5] transition-all shadow-lg hover:shadow-xl hover:scale-105"
+                        >
+                          <div className="bg-white/10 p-2 sm:p-2.5 md:p-3 rounded-full group-hover:bg-white/20 transition-all">
+                            <Facebook className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7" strokeWidth={2.5} fill="white" />
+                          </div>
+                          <span className="text-[10px] sm:text-xs font-semibold">Facebook</span>
+                        </a>
+                      ) : (
+                        <div className="relative flex flex-col items-center justify-center gap-2 sm:gap-3 p-3 sm:p-4 md:p-5 bg-[#1877F2] text-white rounded-lg sm:rounded-xl opacity-70">
+                          <div className="bg-white/10 p-2 sm:p-2.5 md:p-3 rounded-full">
+                            <Facebook className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7" strokeWidth={2.5} fill="white" />
+                          </div>
+                          <span className="text-[10px] sm:text-xs font-semibold">Facebook</span>
+                        </div>
+                      )}
+
+                      {/* Twitter */}
+                      {candidate.socialMedia?.twitter ? (
+                        <a
+                          href={candidate.socialMedia.twitter}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="group relative flex flex-col items-center justify-center gap-2 sm:gap-3 p-3 sm:p-4 md:p-5 bg-[#1DA1F2] text-white rounded-lg sm:rounded-xl hover:bg-[#1A94DA] transition-all shadow-lg hover:shadow-xl hover:scale-105"
+                        >
+                          <div className="bg-white/10 p-2 sm:p-2.5 md:p-3 rounded-full group-hover:bg-white/20 transition-all">
+                            <Twitter className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7" strokeWidth={2.5} fill="white" />
+                          </div>
+                          <span className="text-[10px] sm:text-xs font-semibold">Twitter</span>
+                        </a>
+                      ) : (
+                        <div className="relative flex flex-col items-center justify-center gap-2 sm:gap-3 p-3 sm:p-4 md:p-5 bg-[#1DA1F2] text-white rounded-lg sm:rounded-xl opacity-70">
+                          <div className="bg-white/10 p-2 sm:p-2.5 md:p-3 rounded-full">
+                            <Twitter className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7" strokeWidth={2.5} fill="white" />
+                          </div>
+                          <span className="text-[10px] sm:text-xs font-semibold">Twitter</span>
+                        </div>
+                      )}
+
+                      {/* Instagram */}
+                      {candidate.socialMedia?.instagram ? (
+                        <a
+                          href={candidate.socialMedia.instagram}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="group relative flex flex-col items-center justify-center gap-2 sm:gap-3 p-3 sm:p-4 md:p-5 bg-gradient-to-br from-[#833AB4] via-[#FD1D1D] to-[#FCAF45] text-white rounded-lg sm:rounded-xl hover:from-[#7432A6] hover:via-[#E51A1A] hover:to-[#F5A742] transition-all shadow-lg hover:shadow-xl hover:scale-105"
+                        >
+                          <div className="bg-white/10 p-2 sm:p-2.5 md:p-3 rounded-full group-hover:bg-white/20 transition-all">
+                            <Instagram className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7" strokeWidth={2.5} />
+                          </div>
+                          <span className="text-[10px] sm:text-xs font-semibold">Instagram</span>
+                        </a>
+                      ) : (
+                        <div className="relative flex flex-col items-center justify-center gap-2 sm:gap-3 p-3 sm:p-4 md:p-5 bg-gradient-to-br from-[#833AB4] via-[#FD1D1D] to-[#FCAF45] text-white rounded-lg sm:rounded-xl opacity-70">
+                          <div className="bg-white/10 p-2 sm:p-2.5 md:p-3 rounded-full">
+                            <Instagram className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7" strokeWidth={2.5} />
+                          </div>
+                          <span className="text-[10px] sm:text-xs font-semibold">Instagram</span>
+                        </div>
+                      )}
+
+                      {/* YouTube */}
+                      {candidate.socialMedia?.youtube ? (
+                        <a
+                          href={candidate.socialMedia.youtube}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="group relative flex flex-col items-center justify-center gap-2 sm:gap-3 p-3 sm:p-4 md:p-5 bg-[#FF0000] text-white rounded-lg sm:rounded-xl hover:bg-[#E60000] transition-all shadow-lg hover:shadow-xl hover:scale-105"
+                        >
+                          <div className="bg-white/10 p-2 sm:p-2.5 md:p-3 rounded-full group-hover:bg-white/20 transition-all">
+                            <Youtube className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7" strokeWidth={2.5} fill="white" />
+                          </div>
+                          <span className="text-[10px] sm:text-xs font-semibold">YouTube</span>
+                        </a>
+                      ) : (
+                        <div className="relative flex flex-col items-center justify-center gap-2 sm:gap-3 p-3 sm:p-4 md:p-5 bg-[#FF0000] text-white rounded-lg sm:rounded-xl opacity-70">
+                          <div className="bg-white/10 p-2 sm:p-2.5 md:p-3 rounded-full">
+                            <Youtube className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7" strokeWidth={2.5} fill="white" />
+                          </div>
+                          <span className="text-[10px] sm:text-xs font-semibold">YouTube</span>
+                        </div>
+                      )}
+
+                      {/* LinkedIn */}
+                      {candidate.socialMedia?.linkedin ? (
+                        <a
+                          href={candidate.socialMedia.linkedin}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="group relative flex flex-col items-center justify-center gap-2 sm:gap-3 p-3 sm:p-4 md:p-5 bg-[#0A66C2] text-white rounded-lg sm:rounded-xl hover:bg-[#095196] transition-all shadow-lg hover:shadow-xl hover:scale-105"
+                        >
+                          <div className="bg-white/10 p-2 sm:p-2.5 md:p-3 rounded-full group-hover:bg-white/20 transition-all">
+                            <Linkedin className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7" strokeWidth={2.5} fill="white" />
+                          </div>
+                          <span className="text-[10px] sm:text-xs font-semibold">LinkedIn</span>
+                        </a>
+                      ) : (
+                        <div className="relative flex flex-col items-center justify-center gap-2 sm:gap-3 p-3 sm:p-4 md:p-5 bg-[#0A66C2] text-white rounded-lg sm:rounded-xl opacity-70">
+                          <div className="bg-white/10 p-2 sm:p-2.5 md:p-3 rounded-full">
+                            <Linkedin className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7" strokeWidth={2.5} fill="white" />
+                          </div>
+                          <span className="text-[10px] sm:text-xs font-semibold">LinkedIn</span>
+                        </div>
+                      )}
+
+                      {/* TikTok */}
+                      {candidate.socialMedia?.tiktok ? (
+                        <a
+                          href={candidate.socialMedia.tiktok}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="group relative flex flex-col items-center justify-center gap-2 sm:gap-3 p-3 sm:p-4 md:p-5 bg-black text-white rounded-lg sm:rounded-xl hover:bg-gray-900 transition-all shadow-lg hover:shadow-xl hover:scale-105"
+                        >
+                          <div className="bg-gradient-to-br from-[#00F2EA] to-[#FF0050] p-[2px] rounded-full group-hover:from-[#00E5DD] group-hover:to-[#E6004A] transition-all">
+                            <div className="bg-black p-2 sm:p-2.5 rounded-full">
+                              <MessageCircle className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7" strokeWidth={2.5} />
+                            </div>
+                          </div>
+                          <span className="text-[10px] sm:text-xs font-semibold">TikTok</span>
+                        </a>
+                      ) : (
+                        <div className="relative flex flex-col items-center justify-center gap-2 sm:gap-3 p-3 sm:p-4 md:p-5 bg-black text-white rounded-lg sm:rounded-xl opacity-70">
+                          <div className="bg-gradient-to-br from-[#00F2EA] to-[#FF0050] p-[2px] rounded-full">
+                            <div className="bg-black p-2 sm:p-2.5 rounded-full">
+                              <MessageCircle className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7" strokeWidth={2.5} />
+                            </div>
+                          </div>
+                          <span className="text-[10px] sm:text-xs font-semibold">TikTok</span>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Share Candidate Profile */}
+                <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow mt-6">
+                  <CardHeader className="bg-gradient-to-r from-green-50 to-blue-50 border-b border-gray-200 py-4">
+                    <CardTitle className="flex items-center gap-3 text-gray-800">
+                      <div className="p-2 bg-green-100 rounded-lg">
+                        <Share2 className="w-5 h-5 text-green-600" />
+                      </div>
+                      <div>
+                        <span className="block">यो उम्मेदवार साझा गर्नुहोस्</span>
+                        <span className="text-sm font-normal text-gray-600">Share This Candidate</span>
+                      </div>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-6">
+                    <div className="space-y-4">
+                      {/* Copy Link */}
+                      <div className="flex items-center gap-2">
+                        <Input
+                          readOnly
+                          value={window.location.href}
+                          className="flex-1 bg-gray-50"
+                        />
+                        <Button
+                          onClick={() => {
+                            navigator.clipboard.writeText(window.location.href);
+                            setCopySuccess(true);
+                            toast({
+                              title: "Link Copied!",
+                              description: "Candidate profile link copied to clipboard"
+                            });
+                            setTimeout(() => setCopySuccess(false), 2000);
+                          }}
+                          variant="outline"
+                          className="flex items-center gap-2"
+                        >
+                          {copySuccess ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                          {copySuccess ? 'Copied' : 'Copy'}
+                        </Button>
+                      </div>
+
+                      {/* Social Share Buttons */}
+                      <div className="border-t pt-4">
+                        <p className="text-sm text-gray-600 mb-3">Share on social media:</p>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                          {/* Share on Facebook */}
+                          <a
+                            href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-md hover:shadow-lg"
+                          >
+                            <Facebook className="w-5 h-5" />
+                            <span className="text-sm font-medium">Facebook</span>
+                          </a>
+
+                          {/* Share on Twitter */}
+                          <a
+                            href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(`Check out ${candidate.personalInfo.fullName} - Election Candidate Profile`)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center justify-center gap-2 px-4 py-3 bg-sky-500 text-white rounded-lg hover:bg-sky-600 transition-colors shadow-md hover:shadow-lg"
+                          >
+                            <Twitter className="w-5 h-5" />
+                            <span className="text-sm font-medium">Twitter</span>
+                          </a>
+
+                          {/* Share on LinkedIn */}
+                          <a
+                            href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.href)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center justify-center gap-2 px-4 py-3 bg-blue-700 text-white rounded-lg hover:bg-blue-800 transition-colors shadow-md hover:shadow-lg"
+                          >
+                            <Linkedin className="w-5 h-5" />
+                            <span className="text-sm font-medium">LinkedIn</span>
+                          </a>
+
+                          {/* Share via WhatsApp */}
+                          <a
+                            href={`https://wa.me/?text=${encodeURIComponent(`Check out ${candidate.personalInfo.fullName} - Election Candidate Profile: ${window.location.href}`)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center justify-center gap-2 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors shadow-md hover:shadow-lg"
+                          >
+                            <MessageCircle className="w-5 h-5" />
+                            <span className="text-sm font-medium">WhatsApp</span>
+                          </a>
+
+                          {/* Share via Email */}
+                          <a
+                            href={`mailto:?subject=${encodeURIComponent(`Election Candidate: ${candidate.personalInfo.fullName}`)}&body=${encodeURIComponent(`Check out this candidate profile: ${window.location.href}`)}`}
+                            className="flex items-center justify-center gap-2 px-4 py-3 bg-gray-700 text-white rounded-lg hover:bg-gray-800 transition-colors shadow-md hover:shadow-lg"
+                          >
+                            <Mail className="w-5 h-5" />
+                            <span className="text-sm font-medium">Email</span>
+                          </a>
+
+                          {/* Share via Telegram */}
+                          <a
+                            href={`https://t.me/share/url?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(`Check out ${candidate.personalInfo.fullName} - Election Candidate`)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center justify-center gap-2 px-4 py-3 bg-sky-600 text-white rounded-lg hover:bg-sky-700 transition-colors shadow-md hover:shadow-lg"
+                          >
+                            <Send className="w-5 h-5" />
+                            <span className="text-sm font-medium">Telegram</span>
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </>
+            )}
+
+            {/* Financial Tab */}
+            {activeTab === 'financial' && (
+              <>
+                <SectionCard title="Financial Information" titleNp="७. आर्थिक विवरण" icon={Wallet}>
+                  <TextBlock label="चल सम्पत्ति विवरण / Movable Assets" value={candidate.financialInfo?.movableAssets} valueNp={candidate.financialInfo?.movableAssets_np} />
+                  <TextBlock label="अचल सम्पत्ति विवरण / Immovable Assets" value={candidate.financialInfo?.immovableAssets} valueNp={candidate.financialInfo?.immovableAssets_np} />
+                  <TextBlock label="वार्षिक आय स्रोत / Annual Income Source" value={candidate.financialInfo?.annualIncomeSource} valueNp={candidate.financialInfo?.annualIncomeSource_np} />
+                  <TextBlock label="बैंक ऋण वा अन्य दायित्व / Bank Loans" value={candidate.financialInfo?.bankLoans} valueNp={candidate.financialInfo?.bankLoans_np} />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <InfoItem icon={FileText} label="कर तिरेको स्थिति / Tax Status" value={candidate.financialInfo?.taxStatus} valueNp={candidate.financialInfo?.taxStatus_np} />
+                  </div>
+                </SectionCard>
+
+                {/* Raw Financial Data */}
+                {candidate.rawSource && (() => {
+                  const categorized = categorizeRawData(candidate.rawSource);
+                  return categorized.financial && Object.keys(categorized.financial).length > 0 && (
+                    <div className="mt-6">
+                      <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                        <FileText className="w-5 h-5 text-yellow-600" />
+                        Additional Financial Details / अतिरिक्त आर्थिक विवरण
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {Object.entries(categorized.financial).map(([key, value]) => (
+                          <div key={key} className="p-4 rounded-lg border border-yellow-200 bg-gradient-to-br from-white to-yellow-50 hover:shadow-md transition-all duration-200">
+                            <p className="text-xs font-bold text-yellow-700 mb-2 break-words uppercase tracking-wide">
+                              {formatFieldName(key)}
+                            </p>
+                            <p className="text-sm text-gray-900 break-words whitespace-pre-wrap font-medium leading-relaxed">
+                              {formatRawValue(value) || '-'}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
+              </>
+            )}
+
+            {/* Legal Tab */}
+            {activeTab === 'legal' && (
+              <>
+                <SectionCard title="Legal Status" titleNp="८. कानुनी अवस्था" icon={Scale}>
+                  <div className="mb-6">
+                    <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg shadow-md ${candidate.legalStatus?.hasCriminalCase ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+                      {candidate.legalStatus?.hasCriminalCase ? (
+                        <><AlertCircle className="w-5 h-5" /> आपराधिक मुद्दा छ (Has Criminal Case)</>
+                      ) : (
+                        <><CheckCircle className="w-5 h-5" /> कुनै आपराधिक मुद्दा छैन (No Criminal Case)</>
+                      )}
+                    </div>
+                  </div>
+                  {candidate.legalStatus?.hasCriminalCase && (
+                    <TextBlock label="अदालतको फैसला वा विचाराधीन मुद्दा विवरण" value={candidate.legalStatus?.caseDetails} valueNp={candidate.legalStatus?.caseDetails_np} />
                   )}
-                </div>
-              </div>
-              {candidate.legalStatus?.hasCriminalCase && (
-                <TextBlock label="अदालतको फैसला वा विचाराधीन मुद्दा विवरण" value={candidate.legalStatus?.caseDetails} valueNp={candidate.legalStatus?.caseDetails_np} />
-              )}
-              <TextBlock label="निर्वाचन लड्न योग्यताको घोषणा / Eligibility Declaration" value={candidate.legalStatus?.eligibilityDeclaration} valueNp={candidate.legalStatus?.eligibilityDeclaration_np} />
-            </SectionCard>
-          </TabsContent>
+                  <TextBlock label="निर्वाचन लड्न योग्यताको घोषणा / Eligibility Declaration" value={candidate.legalStatus?.eligibilityDeclaration} valueNp={candidate.legalStatus?.eligibilityDeclaration_np} />
+                </SectionCard>
 
-          {/* Vision Tab */}
-          <TabsContent value="vision">
-            <SectionCard title="Vision, Goals & Declaration" titleNp="९. दृष्टि, लक्ष्य र घोषण" icon={Target}>
-              <TextBlock label="दृष्टि / Vision" value={candidate.visionGoals?.vision} valueNp={candidate.visionGoals?.vision_np} />
-              <Separator className="my-4" />
-              <TextBlock label="लक्ष्य / Goals" value={candidate.visionGoals?.goals} valueNp={candidate.visionGoals?.goals_np} />
-              <Separator className="my-4" />
-              <TextBlock label="घोषणा / Declaration" value={candidate.visionGoals?.declaration} valueNp={candidate.visionGoals?.declaration_np} />
-              {candidate.visionGoals?.manifesto && (
-                <>
-                  <Separator className="my-4" />
-                  <TextBlock label="घोषणापत्र / Manifesto" value={candidate.visionGoals?.manifesto} valueNp={candidate.visionGoals?.manifesto_np} />
-                </>
-              )}
-            </SectionCard>
-          </TabsContent>
-        </Tabs>
+                {/* Raw Legal Data */}
+                {candidate.rawSource && (() => {
+                  const categorized = categorizeRawData(candidate.rawSource);
+                  return categorized.legal && Object.keys(categorized.legal).length > 0 && (
+                    <div className="mt-6">
+                      <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                        <FileText className="w-5 h-5 text-red-600" />
+                        Additional Legal Details / अतिरिक्त कानुनी विवरण
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {Object.entries(categorized.legal).map(([key, value]) => (
+                          <div key={key} className="p-4 rounded-lg border border-red-200 bg-gradient-to-br from-white to-red-50 hover:shadow-md transition-all duration-200">
+                            <p className="text-xs font-bold text-red-700 mb-2 break-words uppercase tracking-wide">
+                              {formatFieldName(key)}
+                            </p>
+                            <p className="text-sm text-gray-900 break-words whitespace-pre-wrap font-medium leading-relaxed">
+                              {formatRawValue(value) || '-'}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
+              </>
+            )}
 
-        {/* Back Button */}
-        <div className="mt-8 text-center">
-          {/* Candidate feedback section */}
-          <div className="max-w-3xl mx-auto mb-6">
+            {/* Vision Tab */}
+            {activeTab === 'vision' && (
+              <SectionCard title="Vision, Goals & Declaration" titleNp="९. दृष्टि, लक्ष्य र घोषण" icon={Target}>
+                <TextBlock label="दृष्टि / Vision" value={candidate.visionGoals?.vision} valueNp={candidate.visionGoals?.vision_np} />
+                <Separator className="my-4" />
+                <TextBlock label="लक्ष्य / Goals" value={candidate.visionGoals?.goals} valueNp={candidate.visionGoals?.goals_np} />
+                <Separator className="my-4" />
+                <TextBlock label="घोषणा / Declaration" value={candidate.visionGoals?.declaration} valueNp={candidate.visionGoals?.declaration_np} />
+                {candidate.visionGoals?.manifesto && (
+                  <>
+                    <Separator className="my-4" />
+                    <TextBlock label="घोषणापत्र / Manifesto" value={candidate.visionGoals?.manifesto} valueNp={candidate.visionGoals?.manifesto_np} />
+                  </>
+                )}
+              </SectionCard>
+            )}
+
+            {/* Additional Information Tab */}
+            {activeTab === 'additional' && (
+              <>
+                {candidate.rawSource && (() => {
+                  const categorized = categorizeRawData(candidate.rawSource);
+                  return categorized.other && Object.keys(categorized.other).length > 0 ? (
+                    <SectionCard title="Additional Information" titleNp="अतिरिक्त जानकारी" icon={FileText}>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {Object.entries(categorized.other).map(([key, value]) => (
+                          <div key={key} className="p-4 rounded-lg border border-gray-200 bg-gradient-to-br from-white to-gray-50 hover:shadow-md transition-all duration-200">
+                            <p className="text-xs font-bold text-gray-700 mb-2 break-words uppercase tracking-wide">
+                              {formatFieldName(key)}
+                            </p>
+                            <p className="text-sm text-gray-900 break-words whitespace-pre-wrap font-medium leading-relaxed">
+                              {formatRawValue(value) || '-'}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </SectionCard>
+                  ) : (
+                    <SectionCard title="Additional Information" titleNp="अतिरिक्त जानकारी" icon={FileText}>
+                      <div className="text-center py-12 text-gray-500">
+                        <FileText className="w-16 h-16 mx-auto mb-4 opacity-30" />
+                        <p className="text-lg font-medium">No additional information available</p>
+                        <p className="text-sm mt-2">कुनै अतिरिक्त जानकारी उपलब्ध छैन</p>
+                      </div>
+                    </SectionCard>
+                  );
+                })()}
+              </>
+            )}
+          </div>
+        </div>
+
+
+
+        {/* Feedback Section */}
+        <div className="mt-8">
+          <div className="bg-gradient-to-r from-gray-50 to-white p-6 rounded-2xl border border-gray-200 shadow-sm">
             <CandidateFeedbackSection candidateId={id as string} candidateName={candidate.personalInfo.fullName} />
           </div>
-          <Button onClick={() => navigate('/candidates')} variant="outline" className="border-red-600 text-red-600 hover:bg-red-50">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            सबै उम्मेदवारहरू हेर्नुहोस् / View All Candidates
-          </Button>
+        </div>
+
+        {/* Back Button */}
+        <div className="mt-8">
+          <div className="text-center">
+            <Button onClick={() => navigate('/candidates')} variant="outline" className="border-primary text-primary shadow-md">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              सबै उम्मेदवारहरू हेर्नुहोस् / View All Candidates
+            </Button>
+          </div>
         </div>
       </div>
-    </div>
+
+      {/* Full Screen Photo Modal */}
+      <Dialog open={photoModalOpen} onOpenChange={setPhotoModalOpen}>
+        <DialogContent className="max-w-full w-full h-screen p-0 border-0 bg-white flex flex-col items-center justify-center rounded-none overflow-hidden">
+          <div className="absolute top-4 right-4 z-50">
+            <button
+              onClick={() => setPhotoModalOpen(false)}
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors bg-white/80 backdrop-blur-sm shadow-md"
+              aria-label="Close photo modal"
+            >
+              <X className="w-6 h-6 text-gray-800" />
+            </button>
+          </div>
+          
+          <div className="w-full h-full flex items-center justify-center p-4 md:p-6">
+            {/* Photo */}
+            {!imageLoadError && getCandidateImageUrl(candidate) ? (
+              <img
+                src={getCandidateImageUrl(candidate) || ''}
+                alt={candidate.personalInfo.fullName}
+                className="min-w-[50vw] max-w-[90vw] max-h-[85vh] object-contain"
+              />
+            ) : candidate.personalInfo.profilePhoto ? (
+              <img
+                src={candidate.personalInfo.profilePhoto}
+                alt={candidate.personalInfo.fullName}
+                className="min-w-[50vw] max-w-[90vw] max-h-[85vh] object-contain"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-gray-100">
+                <User className="w-32 h-32 text-gray-400" />
+              </div>
+            )}
+          </div>
+
+          {/* Candidate Info Overlay */}
+          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent p-6 text-center">
+            <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">
+              {candidate.personalInfo.fullName}
+            </h2>
+            {candidate.personalInfo.fullName_np && (
+              <p className="text-lg text-gray-200 mb-3">{candidate.personalInfo.fullName_np}</p>
+            )}
+            {candidate.politicalInfo?.constituency && (
+              <div className="flex items-center justify-center gap-2 text-gray-200">
+                <MapPin className="w-4 h-4" />
+                <span>{candidate.politicalInfo.constituency}</span>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+      </div>
     </div>
   );
 };

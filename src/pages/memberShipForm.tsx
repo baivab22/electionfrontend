@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { 
   User, 
   Briefcase, 
@@ -68,6 +69,7 @@ interface MembershipFormProps {
 }
 
 export function MembershipForm({ onSuccess, onError }: MembershipFormProps) {
+  const { t } = useTranslation();
   const [activeStep, setActiveStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
@@ -308,41 +310,41 @@ export function MembershipForm({ onSuccess, onError }: MembershipFormProps) {
         return (
           <div className="space-y-4 xs:space-y-5 sm:space-y-6">
             <div>
-              <h3 className="text-lg xs:text-xl sm:text-2xl font-bold text-gray-900">Personal Information</h3>
-              <p className="text-gray-600 text-xs xs:text-sm sm:text-base">Please provide your basic personal details</p>
+              <h3 className="text-lg xs:text-xl sm:text-2xl font-bold text-gray-900">{t('membership.personalInfo')}</h3>
+              <p className="text-gray-600 text-xs xs:text-sm sm:text-base">{t('membership.personalInfoDesc')}</p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 xs:gap-4 sm:gap-6">
               <div className="space-y-1.5 xs:space-y-2">
-                <Label htmlFor="fullName" className="text-xs xs:text-sm">Full Name *</Label>
+                <Label htmlFor="fullName" className="text-xs xs:text-sm">{t('membership.fullName')} *</Label>
                 <Input
                   id="fullName"
                   value={formData.generalInfo.fullName}
                   onChange={(e) => handleInputChange('generalInfo', 'fullName', e.target.value)}
-                  placeholder="Enter your full name"
+                  placeholder={t('membership.fullName')}
                   className="h-9 xs:h-10 text-sm xs:text-base"
                 />
               </div>
 
               <div className="space-y-1.5 xs:space-y-2">
-                <Label htmlFor="gender" className="text-xs xs:text-sm">Gender *</Label>
+                <Label htmlFor="gender" className="text-xs xs:text-sm">{t('membership.gender')} *</Label>
                 <Select
                   value={formData.generalInfo.gender}
                   onValueChange={(value) => handleInputChange('generalInfo', 'gender', value)}
                 >
                   <SelectTrigger className="h-9 xs:h-10 text-sm xs:text-base">
-                    <SelectValue placeholder="Select gender" />
+                    <SelectValue placeholder={t('membership.gender')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Male">Male</SelectItem>
-                    <SelectItem value="Female">Female</SelectItem>
-                    <SelectItem value="Other">Other</SelectItem>
+                    <SelectItem value="Male">{t('membership.male')}</SelectItem>
+                    <SelectItem value="Female">{t('membership.female')}</SelectItem>
+                    <SelectItem value="Other">{t('membership.other')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-1.5 xs:space-y-2">
-                <Label htmlFor="dateOfBirth" className="text-xs xs:text-sm">Date of Birth *</Label>
+                <Label htmlFor="dateOfBirth" className="text-xs xs:text-sm">{t('membership.dateOfBirth')} *</Label>
                 <Input
                   id="dateOfBirth"
                   type="date"
@@ -353,51 +355,51 @@ export function MembershipForm({ onSuccess, onError }: MembershipFormProps) {
               </div>
 
               <div className="space-y-1.5 xs:space-y-2">
-                <Label htmlFor="citizenshipId" className="text-xs xs:text-sm">Citizenship ID *</Label>
+                <Label htmlFor="citizenshipId" className="text-xs xs:text-sm">{t('membership.citizenshipId')} *</Label>
                 <Input
                   id="citizenshipId"
                   value={formData.generalInfo.citizenshipId}
                   onChange={(e) => handleInputChange('generalInfo', 'citizenshipId', e.target.value)}
-                  placeholder="Enter citizenship ID"
+                  placeholder={t('membership.citizenshipId')}
                   className="h-9 xs:h-10 text-sm xs:text-base"
                 />
               </div>
 
               <div className="space-y-1.5 xs:space-y-2">
-                <Label htmlFor="contactNumber" className="text-xs xs:text-sm">Contact Number *</Label>
+                <Label htmlFor="contactNumber" className="text-xs xs:text-sm">{t('membership.contactNumber')} *</Label>
                 <Input
                   id="contactNumber"
                   value={formData.generalInfo.contactNumber}
                   onChange={(e) => handleInputChange('generalInfo', 'contactNumber', e.target.value)}
-                  placeholder="Enter contact number"
+                  placeholder={t('membership.contactNumber')}
                   className="h-9 xs:h-10 text-sm xs:text-base"
                 />
               </div>
 
               <div className="space-y-1.5 xs:space-y-2">
-                <Label htmlFor="email" className="text-xs xs:text-sm">Email *</Label>
+                <Label htmlFor="email" className="text-xs xs:text-sm">{t('membership.email')} *</Label>
                 <Input
                   id="email"
                   type="email"
                   value={formData.generalInfo.email}
                   onChange={(e) => handleInputChange('generalInfo', 'email', e.target.value.toLowerCase())}
-                  placeholder="Enter email address"
+                  placeholder={t('membership.email')}
                   className="h-9 xs:h-10 text-sm xs:text-base"
                 />
               </div>
             </div>
 
             <div className="border-t pt-4 xs:pt-5 sm:pt-6">
-              <h4 className="text-base xs:text-lg font-semibold mb-3 xs:mb-4">Permanent Address</h4>
+              <h4 className="text-base xs:text-lg font-semibold mb-3 xs:mb-4">{t('membership.permanentAddress')}</h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 xs:gap-4 sm:gap-6">
                 <div className="space-y-1.5 xs:space-y-2">
-                  <Label htmlFor="province" className="text-xs xs:text-sm">Province *</Label>
+                  <Label htmlFor="province" className="text-xs xs:text-sm">{t('membership.province')} *</Label>
                   <Select
                     value={formData.generalInfo.permanentAddress.province}
                     onValueChange={(value) => handleNestedChange('generalInfo', 'permanentAddress', 'province', value)}
                   >
                     <SelectTrigger className="h-9 xs:h-10 text-sm xs:text-base">
-                      <SelectValue placeholder="Select province" />
+                      <SelectValue placeholder={t('membership.province')} />
                     </SelectTrigger>
                     <SelectContent>
                       {provinces.map((province) => (
@@ -408,29 +410,29 @@ export function MembershipForm({ onSuccess, onError }: MembershipFormProps) {
                 </div>
 
                 <div className="space-y-1.5 xs:space-y-2">
-                  <Label htmlFor="district" className="text-xs xs:text-sm">District *</Label>
+                  <Label htmlFor="district" className="text-xs xs:text-sm">{t('membership.district')} *</Label>
                   <Input
                     id="district"
                     value={formData.generalInfo.permanentAddress.district}
                     onChange={(e) => handleNestedChange('generalInfo', 'permanentAddress', 'district', e.target.value)}
-                    placeholder="Enter district"
+                    placeholder={t('membership.district')}
                     className="h-9 xs:h-10 text-sm xs:text-base"
                   />
                 </div>
 
                 <div className="space-y-1.5 xs:space-y-2">
-                  <Label htmlFor="palika" className="text-xs xs:text-sm">Palika *</Label>
+                  <Label htmlFor="palika" className="text-xs xs:text-sm">{t('membership.palika')} *</Label>
                   <Input
                     id="palika"
                     value={formData.generalInfo.permanentAddress.palika}
                     onChange={(e) => handleNestedChange('generalInfo', 'permanentAddress', 'palika', e.target.value)}
-                    placeholder="Enter palika"
+                    placeholder={t('membership.palika')}
                     className="h-9 xs:h-10 text-sm xs:text-base"
                   />
                 </div>
 
                 <div className="space-y-1.5 xs:space-y-2">
-                  <Label htmlFor="wardNo" className="text-xs xs:text-sm">Ward No *</Label>
+                  <Label htmlFor="wardNo" className="text-xs xs:text-sm">{t('membership.wardNo')} *</Label>
                   <Input
                     id="wardNo"
                     type="number"
@@ -444,7 +446,7 @@ export function MembershipForm({ onSuccess, onError }: MembershipFormProps) {
             </div>
 
             <div className="space-y-1.5 xs:space-y-2">
-              <Label htmlFor="currentAddress" className="text-xs xs:text-sm">Current Address *</Label>
+              <Label htmlFor="currentAddress" className="text-xs xs:text-sm">{t('membership.currentAddress')} *</Label>
               <Textarea
                 id="currentAddress"
                 value={formData.generalInfo.currentAddress}

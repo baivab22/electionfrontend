@@ -37,44 +37,129 @@ import VotingSystem from '@/components/VotingSystem';
 
 interface Candidate {
   _id: string;
+  candidateId?: string;
   personalInfo: {
-    fullName: string;
+    fullName?: string;
     fullName_np?: string;
-    position: string;
-    constituency: string;
-    dateOfBirth: string;
-    gender: string;
-    email: string;
-    contactNumber: string;
-    address: string;
-  };
-  biography: {
-    bio_en: string;
-    bio_np?: string;
-    backgroundEducation: string;
-    experience: string;
+    nickname?: string;
+    nickname_np?: string;
+    dateOfBirth?: string;
+    dateOfBirth_raw?: string;
+    gender?: string;
+    maritalStatus?: string;
+    permanentAddress?: string;
+    currentAddress?: string;
+    citizenshipNumber?: string;
+    citizenshipIssuedDistrict?: string;
+    contactNumber?: string;
+    email?: string;
+    website?: string;
     profilePhoto?: string;
+    position?: string;
+    constituency?: string;
+    address?: string;
+    // New structure fields
+    CandidateName?: string;
+    CandidateName_np?: string;
+    AGE_YR?: number;
+    DistrictName?: string;
+    PoliticalPartyName?: string;
+    SymbolNumber?: string;
+    SymbolImage?: string;
+    ProvinceName?: string;
+    Gender?: string;
+    WardNo?: string;
+    MunicipalityName?: string;
   };
-  manifesto: {
-    title_en: string;
-    content_en: string;
+  politicalInfo?: {
+    partyName?: string;
+    partyName_np?: string;
+    currentPosition?: string;
+    currentPosition_np?: string;
+    candidacyLevel?: string;
+    candidacyLevel_np?: string;
+    constituencyNumber?: string;
+    constituency?: string;
+    constituency_np?: string;
+    electionSymbol?: string;
+    electionSymbol_np?: string;
+    electionSymbolImage?: string;
+    isFirstTimeCandidate?: boolean;
+    previousElectionHistory?: string;
+  };
+  education?: {
+    highestQualification?: string;
+    highestQualification_np?: string;
+    subject?: string;
+    subject_np?: string;
+    institution?: string;
+    institution_np?: string;
+    country?: string;
+    country_np?: string;
+    additionalTraining?: string;
+  };
+  professionalExperience?: {
+    currentProfession?: string;
+    currentProfession_np?: string;
+    previousExperience?: string;
+    previousExperience_np?: string;
+    organizationResponsibility?: string;
+    organizationResponsibility_np?: string;
+    leadershipExperience?: string;
+  };
+  politicalExperience?: {
+    partyJoinYear?: string;
+    movementRole?: string;
+    movementRole_np?: string;
+    previousRepresentativePosition?: string;
+    previousRepresentativePosition_np?: string;
+    majorAchievements?: string;
+  };
+  socialEngagement?: {
+    ngoInvolvement?: string;
+    ngoInvolvement_np?: string;
+    sectorWork?: string;
+    sectorWork_np?: string;
+    awardsHonors?: string;
+  };
+  financialInfo?: {
+    movableAssets?: string;
+    immovableAssets?: string;
+    annualIncomeSource?: string;
+    bankLoans?: string;
+    taxStatus?: string;
+  };
+  legalStatus?: {
+    hasCriminalCase?: boolean;
+    caseDetails?: string;
+    eligibilityDeclaration?: string;
+  };
+  biography?: {
+    bio_en?: string;
+    bio_np?: string;
+    backgroundEducation?: string;
+    experience?: string;
+  };
+  manifesto?: {
+    title_en?: string;
+    content_en?: string;
     manifestoBrochure?: string;
   };
-  issues: Array<{
-    issueTitle_en: string;
-    issueDescription_en: string;
-    issueCategory: string;
-    priority: number;
+  issues?: Array<{
+    issueTitle_en?: string;
+    issueDescription_en?: string;
+    issueCategory?: string;
+    priority?: number;
   }>;
-  achievements: Array<{
-    achievementTitle_en: string;
-    achievementDescription_en: string;
-    achievementDate: string;
-    achievementCategory: string;
+  achievements?: Array<{
+    achievementTitle_en?: string;
+    achievementDescription_en?: string;
+    achievementDate?: string;
+    achievementCategory?: string;
     achievementImage?: string;
   }>;
-  campaign: {
-    campaignSlogan_en?: string;
+  campaign?: {
+    campaignSlogan?: string;
     votingTarget?: number;
   };
   socialMedia?: {
@@ -82,14 +167,24 @@ interface Candidate {
     twitter?: string;
     instagram?: string;
     youtube?: string;
+    website?: string;
     linkedin?: string;
     tiktok?: string;
+  };
+  documents?: {
+    manifestoBrochure?: string;
+    [key: string]: any;
   };
   likes?: number;
   shares?: number;
   votes?: number;
   votePercentage?: number;
   votingEnabled?: boolean;
+  isActive?: boolean;
+  isVerified?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+  rawSource?: any;
   comments?: Array<{
     _id: string;
     name: string;
@@ -106,6 +201,14 @@ interface CommentFormData {
   comment: string;
 }
 
+// Normalize education qualification text - replace old values with new ones
+const normalizeEducationQualification = (text?: string): string => {
+  if (!text) return '';
+  return text
+    .replace(/विदया वारिणी/g, 'विद्यावारिधि')
+    .trim();
+};
+
 const CandidateDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -114,6 +217,18 @@ const CandidateDetailPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('general');
+  const [imageLoadError, setImageLoadError] = useState(false);
+  
+  // Generate image URL from candidateId or SymbolNumber
+  const getCandidateImageUrl = (candidateId?: string, symbolNumber?: string): string | null => {
+    if (candidateId) {
+      return `https://result.election.gov.np/Images/Candidate/${candidateId}.jpg`;
+    }
+    if (symbolNumber) {
+      return `https://result.election.gov.np/Images/Candidate/${symbolNumber}.jpg`;
+    }
+    return null;
+  };
   
   // Social engagement state
   const [isLiked, setIsLiked] = useState(false);
@@ -136,6 +251,7 @@ const CandidateDetailPage: React.FC = () => {
         setCandidate(data.data);
         setLikesCount(data.data.likes || 0);
         setSharesCount(data.data.shares || 0);
+        setImageLoadError(false); // Reset image load state
         
         // Check if user has liked (stored in localStorage)
         const likedCandidates = JSON.parse(localStorage.getItem('likedCandidates') || '[]');
@@ -303,6 +419,27 @@ const CandidateDetailPage: React.FC = () => {
     return age;
   };
 
+  // Helper to get all fields from backend (flat structure)
+  const allFields = candidate ? {
+    ...candidate,
+    ...candidate.personalInfo,
+    ...candidate.politicalInfo,
+    ...candidate.education,
+    ...candidate.professionalExperience,
+    ...candidate.politicalExperience,
+    ...candidate.socialEngagement,
+    ...candidate.financialInfo,
+    ...candidate.legalStatus,
+    ...candidate.biography,
+    ...candidate.manifesto,
+    ...candidate.socialMedia,
+    ...candidate.campaign,
+    ...candidate.rawSource
+  } : {};
+
+  // Profile photo URL (always use candidateId)
+  const profilePhotoUrl = candidate?.candidateId ? `https://result.election.gov.np/Images/Candidate/${candidate.candidateId}.jpg` : '';
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-4 xs:py-6 sm:py-8">
       {/* Breadcrumb */}
@@ -312,41 +449,65 @@ const CandidateDetailPage: React.FC = () => {
           <span className="text-muted-foreground">/</span>
           <button onClick={() => navigate('/candidates')} className="text-primary hover:underline">Candidates</button>
           <span className="text-muted-foreground">/</span>
-          <span className="text-foreground font-semibold truncate max-w-[150px] xs:max-w-[200px] sm:max-w-none">{candidate.personalInfo.fullName}</span>
+          <span className="text-foreground font-semibold truncate max-w-[150px] xs:max-w-[200px] sm:max-w-none">{displayName}</span>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-3 xs:px-4 sm:px-6 lg:px-8">
+        {/* Large Profile Image Section - Full Width */}
+        <Card className="border-0 shadow-xl overflow-hidden mb-8 xs:mb-10 sm:mb-12">
+          <CardContent className="p-0">
+            <div className="relative bg-gradient-to-br from-primary/10 to-primary/5 p-6 xs:p-8 sm:p-10 min-h-[400px] xs:min-h-[480px] sm:min-h-[550px] flex items-center justify-center">
+              {!imageLoadError && profilePhotoUrl ? (
+                <img
+                  src={profilePhotoUrl}
+                  alt={allFields.CandidateName || allFields.fullName || 'Candidate'}
+                  className="w-full h-full max-w-2xl max-h-[380px] xs:max-h-[460px] sm:max-h-[530px] rounded-2xl object-cover shadow-2xl border-4 border-white/80"
+                  onLoad={() => setImageLoadError(false)}
+                  onError={() => setImageLoadError(true)}
+                />
+              ) : (
+                <div className="w-48 xs:w-56 sm:w-64 h-48 xs:h-56 sm:h-64 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-white text-8xl xs:text-9xl font-bold shadow-2xl">
+                  {(allFields.CandidateName || allFields.fullName || 'C').charAt(0)}
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Sidebar and Main Content Grid */}
         <div className="grid lg:grid-cols-4 gap-4 xs:gap-6 sm:gap-8">
           {/* Sidebar */}
           <div className="lg:col-span-1">
             {/* Profile Card */}
             <Card className="border-0 shadow-lg lg:sticky lg:top-8">
               <CardContent className="p-0">
-                {/* Profile Image */}
+                {/* Small Profile Image in Sidebar */}
                 <div className="relative">
-                  <div className="h-28 xs:h-32 sm:h-40 bg-gradient-to-br from-primary to-secondary"></div>
+                  <div className="h-20 xs:h-24 bg-gradient-to-r from-primary/20 to-primary/10"></div>
                   <div className="px-3 xs:px-4 sm:px-6 pb-4 xs:pb-5 sm:pb-6">
-                    <div className="flex justify-center -mt-14 xs:-mt-16 sm:-mt-20 mb-3 xs:mb-4">
-                      {candidate.biography?.profilePhoto ? (
+                    <div className="flex justify-center -mt-10 xs:-mt-12 mb-2 xs:mb-3">
+                      {!imageLoadError && getCandidateImageUrl(candidate.candidateId) ? (
                         <img
-                          src={candidate.biography.profilePhoto}
+                          src={getCandidateImageUrl(candidate.candidateId) || ''}
                           alt={candidate.personalInfo.fullName}
-                          className="w-24 xs:w-28 sm:w-32 h-24 xs:h-28 sm:h-32 rounded-full object-cover border-3 xs:border-4 border-white shadow-lg"
+                          className="w-20 xs:w-24 sm:w-28 h-20 xs:h-24 sm:h-28 rounded-full object-cover border-3 xs:border-4 border-white shadow-lg"
+                          onLoad={() => setImageLoadError(false)}
+                          onError={() => setImageLoadError(true)}
                         />
                       ) : (
-                        <div className="w-24 xs:w-28 sm:w-32 h-24 xs:h-28 sm:h-32 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center border-3 xs:border-4 border-white text-white text-2xl xs:text-3xl sm:text-4xl font-bold shadow-lg">
+                        <div className="w-20 xs:w-24 sm:w-28 h-20 xs:h-24 sm:h-28 rounded-full bg-primary flex items-center justify-center border-3 xs:border-4 border-white text-white text-xl xs:text-2xl sm:text-3xl font-bold shadow-lg">
                           {candidate.personalInfo.fullName.charAt(0)}
                         </div>
                       )}
                     </div>
 
                     {/* Name and Position */}
-                    <h2 className="text-lg xs:text-xl sm:text-2xl font-bold text-foreground text-center mb-1.5 xs:mb-2">
-                      {candidate.personalInfo.fullName}
+                    <h2 className="text-base xs:text-lg sm:text-xl font-bold text-foreground text-center mb-1 xs:mb-1.5">
+                      {displayName}
                     </h2>
-                    <Badge className="bg-primary text-white block text-center w-full mb-3 xs:mb-4 py-0.5 xs:py-1 text-xs xs:text-sm">
-                      {candidate.personalInfo.position}
+                    <Badge className="bg-primary text-white block text-center w-full mb-3 xs:mb-4 py-0.5 text-xs">
+                      {displayParty}
                     </Badge>
 
                     {/* Contact Buttons */}
@@ -458,16 +619,21 @@ const CandidateDetailPage: React.FC = () => {
               </CardContent>
             </Card>
 
-            {/* Navigation Card */}
+            {/* Navigation Card - All tabs for all sections */}
             <Card className="border-0 shadow-lg mt-4 xs:mt-5 sm:mt-6">
               <CardContent className="p-0">
                 <div className="divide-y">
                   {[
-                    { id: 'general', label: 'General Information', icon: Briefcase },
+                    { id: 'general', label: 'General', icon: Briefcase },
+                    { id: 'political', label: 'Political', icon: Users },
+                    { id: 'education', label: 'Education', icon: Award },
+                    { id: 'professional', label: 'Professional', icon: Briefcase },
+                    { id: 'social', label: 'Social', icon: Facebook },
+                    { id: 'financial', label: 'Financial', icon: FileText },
+                    { id: 'legal', label: 'Legal', icon: FileText },
                     { id: 'biography', label: 'Biography', icon: BookOpen },
                     { id: 'manifesto', label: 'Manifesto', icon: FileText },
                     { id: 'issues', label: 'Key Issues', icon: Target },
-                    { id: 'achievements', label: 'Achievements', icon: Award },
                     { id: 'feedback', label: 'Community Feedback', icon: MessageCircle },
                   ].map((item) => {
                     const Icon = item.icon;
@@ -614,7 +780,7 @@ const CandidateDetailPage: React.FC = () => {
               </CardContent>
             </Card>
 
-            {/* General Information Section */}
+            {/* Tab Content - Show all backend fields in each section */}
             {activeTab === 'general' && (
               <Card className="border-0 shadow-lg">
                 <CardHeader className="bg-gradient-to-r from-primary/10 to-secondary/10 border-b border-primary/20 p-3 xs:p-4 sm:p-6">
@@ -624,47 +790,191 @@ const CandidateDetailPage: React.FC = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="pt-4 xs:pt-6 sm:pt-8 px-3 xs:px-4 sm:px-6">
-                  <div className="space-y-3 xs:space-y-4">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 xs:gap-5 sm:gap-6">
+                  <div className="space-y-2">
+                    {/* Show all main flat fields relevant to general info */}
+                    {candidate.CandidateName && <div><span className="text-xs font-semibold text-muted-foreground">पूरा नाम</span><span className="text-sm text-foreground">{candidate.CandidateName}</span></div>}
+                    {candidate.Gender && <div><span className="text-xs font-semibold text-muted-foreground">लिङ्ग</span><span className="text-sm text-foreground">{candidate.Gender}</span></div>}
+                    {candidate.AGE_YR && <div><span className="text-xs font-semibold text-muted-foreground">उमेर</span><span className="text-sm text-foreground">{candidate.AGE_YR}</span></div>}
+                    {candidate.DistrictName && <div><span className="text-xs font-semibold text-muted-foreground">जिल्ला</span><span className="text-sm text-foreground">{candidate.DistrictName}</span></div>}
+                    {candidate.StateName && <div><span className="text-xs font-semibold text-muted-foreground">प्रदेश</span><span className="text-sm text-foreground">{candidate.StateName}</span></div>}
+                    {candidate.ADDRESS && <div><span className="text-xs font-semibold text-muted-foreground">ठेगाना</span><span className="text-sm text-foreground">{candidate.ADDRESS}</span></div>}
+                    {candidate.FATHER_NAME && <div><span className="text-xs font-semibold text-muted-foreground">बुबाको नाम</span><span className="text-sm text-foreground">{candidate.FATHER_NAME}</span></div>}
+                    {candidate.SPOUCE_NAME && <div><span className="text-xs font-semibold text-muted-foreground">श्रीमती/श्रीमानको नाम</span><span className="text-sm text-foreground">{candidate.SPOUCE_NAME}</span></div>}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+            {/* Political Tab */}
+            {activeTab === 'political' && (
+              <Card className="border-0 shadow-lg">
+                <CardHeader className="bg-gradient-to-r from-primary/10 to-secondary/10 border-b border-primary/20 p-3 xs:p-4 sm:p-6">
+                  <CardTitle className="text-lg xs:text-xl sm:text-2xl text-primary flex items-center gap-2 xs:gap-3">
+                    <Users className="w-5 xs:w-6 h-5 xs:h-6" />
+                    Political Information
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-4 xs:pt-6 sm:pt-8 px-3 xs:px-4 sm:px-6">
+                  <div className="space-y-2">
+                    {candidate.PoliticalPartyName && <div><span className="text-xs font-semibold text-muted-foreground">पार्टी</span><span className="text-sm text-foreground">{candidate.PoliticalPartyName}</span></div>}
+                    {candidate.SymbolName && <div><span className="text-xs font-semibold text-muted-foreground">चुनाव चिन्ह</span><span className="text-sm text-foreground">{candidate.SymbolName}</span></div>}
+                    {candidate.SYMBOLCODE && <div><span className="text-xs font-semibold text-muted-foreground">चिन्ह कोड</span><span className="text-sm text-foreground">{candidate.SYMBOLCODE}</span></div>}
+                    {candidate.ConstName && <div><span className="text-xs font-semibold text-muted-foreground">निर्वाचन क्षेत्र</span><span className="text-sm text-foreground">{candidate.ConstName}</span></div>}
+                    {candidate.TotalVoteReceived !== undefined && <div><span className="text-xs font-semibold text-muted-foreground">प्राप्त मत</span><span className="text-sm text-foreground">{candidate.TotalVoteReceived}</span></div>}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+            {/* Education Tab */}
+            {activeTab === 'education' && (
+              <Card className="border-0 shadow-lg">
+                <CardHeader className="bg-gradient-to-r from-primary/10 to-secondary/10 border-b border-primary/20 p-3 xs:p-4 sm:p-6">
+                  <CardTitle className="text-lg xs:text-xl sm:text-2xl text-primary flex items-center gap-2 xs:gap-3">
+                    <Award className="w-5 xs:w-6 h-5 xs:h-6" />
+                    Education
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-4 xs:pt-6 sm:pt-8 px-3 xs:px-4 sm:px-6">
+                  <div className="space-y-2">
+                    {candidate.QUALIFICATION && <div><span className="text-xs font-semibold text-muted-foreground">शिक्षा</span><span className="text-sm text-foreground">{candidate.QUALIFICATION}</span></div>}
+                    {candidate.NAMEOFINST && <div><span className="text-xs font-semibold text-muted-foreground">संस्था</span><span className="text-sm text-foreground">{candidate.NAMEOFINST}</span></div>}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+            {/* Professional Tab */}
+            {activeTab === 'professional' && (
+              <Card className="border-0 shadow-lg">
+                <CardHeader className="bg-gradient-to-r from-primary/10 to-secondary/10 border-b border-primary/20 p-3 xs:p-4 sm:p-6">
+                  <CardTitle className="text-lg xs:text-xl sm:text-2xl text-primary flex items-center gap-2 xs:gap-3">
+                    <Briefcase className="w-5 xs:w-6 h-5 xs:h-6" />
+                    Professional Experience
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-4 xs:pt-6 sm:pt-8 px-3 xs:px-4 sm:px-6">
+                  <div className="space-y-2">
+                    {candidate.EXPERIENCE && <div><span className="text-xs font-semibold text-muted-foreground">अनुभव</span><span className="text-sm text-foreground">{candidate.EXPERIENCE}</span></div>}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+            {/* Social Tab */}
+            {activeTab === 'social' && (
+              <Card className="border-0 shadow-lg">
+                <CardHeader className="bg-gradient-to-r from-primary/10 to-secondary/10 border-b border-primary/20 p-3 xs:p-4 sm:p-6">
+                  <CardTitle className="text-lg xs:text-xl sm:text-2xl text-primary flex items-center gap-2 xs:gap-3">
+                    <Facebook className="w-5 xs:w-6 h-5 xs:h-6" />
+                    Social Engagement
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-4 xs:pt-6 sm:pt-8 px-3 xs:px-4 sm:px-6">
+                  <div className="space-y-2">
+                    {candidate.OTHERDETAILS && <div><span className="text-xs font-semibold text-muted-foreground">थप विवरण</span><span className="text-sm text-foreground">{candidate.OTHERDETAILS}</span></div>}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+                    {/* Political Information */}
+                    {candidate.politicalInfo && Object.values(candidate.politicalInfo).some(v => v) && (
                       <div>
-                        <p className="text-xs xs:text-sm font-semibold text-muted-foreground mb-0.5 xs:mb-1">Full Name</p>
-                        <p className="text-sm xs:text-base sm:text-lg text-foreground">{candidate.personalInfo.fullName}</p>
+                        <h3 className="text-lg font-bold text-foreground mb-3 pb-2 border-b">Political Information</h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          {candidate.politicalInfo.partyName && <div><p className="text-xs font-semibold text-muted-foreground">Party Name</p><p className="text-sm text-foreground">{candidate.politicalInfo.partyName}</p></div>}
+                          {candidate.politicalInfo.candidacyLevel && <div><p className="text-xs font-semibold text-muted-foreground">Candidacy Level</p><p className="text-sm text-foreground">{candidate.politicalInfo.candidacyLevel}</p></div>}
+                          {candidate.politicalInfo.constituency && <div><p className="text-xs font-semibold text-muted-foreground">Constituency</p><p className="text-sm text-foreground">{candidate.politicalInfo.constituency}</p></div>}
+                          {candidate.politicalInfo.electionSymbol && <div><p className="text-xs font-semibold text-muted-foreground">Election Symbol</p><p className="text-sm text-foreground">{candidate.politicalInfo.electionSymbol}</p></div>}
+                          {candidate.politicalInfo.isFirstTimeCandidate !== undefined && <div><p className="text-xs font-semibold text-muted-foreground">First Time Candidate</p><p className="text-sm text-foreground">{candidate.politicalInfo.isFirstTimeCandidate ? 'Yes' : 'No'}</p></div>}
+                        </div>
                       </div>
+                    )}
+
+                    {/* Education */}
+                    {candidate.education && Object.values(candidate.education).some(v => v) && (
                       <div>
-                        <p className="text-xs xs:text-sm font-semibold text-muted-foreground mb-0.5 xs:mb-1">Position</p>
-                        <p className="text-sm xs:text-base sm:text-lg text-foreground">{candidate.personalInfo.position}</p>
+                        <h3 className="text-lg font-bold text-foreground mb-3 pb-2 border-b">Education</h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          {candidate.education.highestQualification && <div><p className="text-xs font-semibold text-muted-foreground">Highest Qualification</p><p className="text-sm text-foreground">{normalizeEducationQualification(candidate.education.highestQualification)}</p></div>}
+                          {candidate.education.subject && <div><p className="text-xs font-semibold text-muted-foreground">Subject</p><p className="text-sm text-foreground">{candidate.education.subject}</p></div>}
+                          {candidate.education.institution && <div><p className="text-xs font-semibold text-muted-foreground">Institution</p><p className="text-sm text-foreground">{candidate.education.institution}</p></div>}
+                          {candidate.education.country && <div><p className="text-xs font-semibold text-muted-foreground">Country</p><p className="text-sm text-foreground">{candidate.education.country}</p></div>}
+                          {candidate.education.additionalTraining && <div className="sm:col-span-2"><p className="text-xs font-semibold text-muted-foreground">Additional Training</p><p className="text-sm text-foreground">{candidate.education.additionalTraining}</p></div>}
+                        </div>
                       </div>
+                    )}
+
+                    {/* Professional Experience */}
+                    {candidate.professionalExperience && Object.values(candidate.professionalExperience).some(v => v) && (
                       <div>
-                        <p className="text-xs xs:text-sm font-semibold text-muted-foreground mb-0.5 xs:mb-1">Constituency</p>
-                        <p className="text-sm xs:text-base sm:text-lg text-foreground">{candidate.personalInfo.constituency}</p>
+                        <h3 className="text-lg font-bold text-foreground mb-3 pb-2 border-b">Professional Experience</h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          {candidate.professionalExperience.currentProfession && <div><p className="text-xs font-semibold text-muted-foreground">Current Profession</p><p className="text-sm text-foreground">{candidate.professionalExperience.currentProfession}</p></div>}
+                          {candidate.professionalExperience.previousExperience && <div className="sm:col-span-2"><p className="text-xs font-semibold text-muted-foreground">Previous Experience</p><p className="text-sm text-foreground">{candidate.professionalExperience.previousExperience}</p></div>}
+                          {candidate.professionalExperience.organizationResponsibility && <div className="sm:col-span-2"><p className="text-xs font-semibold text-muted-foreground">Organization Responsibility</p><p className="text-sm text-foreground">{candidate.professionalExperience.organizationResponsibility}</p></div>}
+                          {candidate.professionalExperience.leadershipExperience && <div className="sm:col-span-2"><p className="text-xs font-semibold text-muted-foreground">Leadership Experience</p><p className="text-sm text-foreground">{candidate.professionalExperience.leadershipExperience}</p></div>}
+                        </div>
                       </div>
+                    )}
+
+                    {/* Political Experience */}
+                    {candidate.politicalExperience && Object.values(candidate.politicalExperience).some(v => v) && (
                       <div>
-                        <p className="text-xs xs:text-sm font-semibold text-muted-foreground mb-0.5 xs:mb-1">Gender</p>
-                        <p className="text-sm xs:text-base sm:text-lg text-foreground">{candidate.personalInfo.gender}</p>
+                        <h3 className="text-lg font-bold text-foreground mb-3 pb-2 border-b">Political Experience</h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          {candidate.politicalExperience.partyJoinYear && <div><p className="text-xs font-semibold text-muted-foreground">Party Join Year</p><p className="text-sm text-foreground">{candidate.politicalExperience.partyJoinYear}</p></div>}
+                          {candidate.politicalExperience.movementRole && <div><p className="text-xs font-semibold text-muted-foreground">Movement Role</p><p className="text-sm text-foreground">{candidate.politicalExperience.movementRole}</p></div>}
+                          {candidate.politicalExperience.previousRepresentativePosition && <div className="sm:col-span-2"><p className="text-xs font-semibold text-muted-foreground">Previous Representative Position</p><p className="text-sm text-foreground">{candidate.politicalExperience.previousRepresentativePosition}</p></div>}
+                          {candidate.politicalExperience.majorAchievements && <div className="sm:col-span-2"><p className="text-xs font-semibold text-muted-foreground">Major Achievements</p><p className="text-sm text-foreground">{candidate.politicalExperience.majorAchievements}</p></div>}
+                        </div>
                       </div>
+                    )}
+
+                    {/* Social Engagement */}
+                    {candidate.socialEngagement && Object.values(candidate.socialEngagement).some(v => v) && (
                       <div>
-                        <p className="text-xs xs:text-sm font-semibold text-muted-foreground mb-0.5 xs:mb-1">Date of Birth</p>
-                        <p className="text-sm xs:text-base sm:text-lg text-foreground">{new Date(candidate.personalInfo.dateOfBirth).toLocaleDateString()}</p>
+                        <h3 className="text-lg font-bold text-foreground mb-3 pb-2 border-b">Social Engagement</h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          {candidate.socialEngagement.ngoInvolvement && <div className="sm:col-span-2"><p className="text-xs font-semibold text-muted-foreground">NGO Involvement</p><p className="text-sm text-foreground">{candidate.socialEngagement.ngoInvolvement}</p></div>}
+                          {candidate.socialEngagement.sectorWork && <div className="sm:col-span-2"><p className="text-xs font-semibold text-muted-foreground">Sector Work</p><p className="text-sm text-foreground">{candidate.socialEngagement.sectorWork}</p></div>}
+                          {candidate.socialEngagement.awardsHonors && <div className="sm:col-span-2"><p className="text-xs font-semibold text-muted-foreground">Awards & Honors</p><p className="text-sm text-foreground">{candidate.socialEngagement.awardsHonors}</p></div>}
+                        </div>
                       </div>
+                    )}
+
+                    {/* Financial Information */}
+                    {candidate.financialInfo && Object.values(candidate.financialInfo).some(v => v) && (
                       <div>
-                        <p className="text-xs xs:text-sm font-semibold text-muted-foreground mb-0.5 xs:mb-1">Age</p>
-                        <p className="text-sm xs:text-base sm:text-lg text-foreground">{calculateAge(candidate.personalInfo.dateOfBirth)} years</p>
+                        <h3 className="text-lg font-bold text-foreground mb-3 pb-2 border-b">Financial Information</h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          {candidate.financialInfo.movableAssets && <div><p className="text-xs font-semibold text-muted-foreground">Movable Assets</p><p className="text-sm text-foreground">{candidate.financialInfo.movableAssets}</p></div>}
+                          {candidate.financialInfo.immovableAssets && <div><p className="text-xs font-semibold text-muted-foreground">Immovable Assets</p><p className="text-sm text-foreground">{candidate.financialInfo.immovableAssets}</p></div>}
+                          {candidate.financialInfo.annualIncomeSource && <div class="sm:col-span-2"><p className="text-xs font-semibold text-muted-foreground">Annual Income Source</p><p className="text-sm text-foreground">{candidate.financialInfo.annualIncomeSource}</p></div>}
+                          {candidate.financialInfo.bankLoans && <div><p className="text-xs font-semibold text-muted-foreground">Bank Loans</p><p className="text-sm text-foreground">{candidate.financialInfo.bankLoans}</p></div>}
+                          {candidate.financialInfo.taxStatus && <div><p className="text-xs font-semibold text-muted-foreground">Tax Status</p><p className="text-sm text-foreground">{candidate.financialInfo.taxStatus}</p></div>}
+                        </div>
                       </div>
-                      <div className="sm:col-span-2">
-                        <p className="text-xs xs:text-sm font-semibold text-muted-foreground mb-0.5 xs:mb-1">Address</p>
-                        <p className="text-sm xs:text-base sm:text-lg text-foreground">{candidate.personalInfo.address}</p>
-                      </div>
+                    )}
+
+                    {/* Legal Status */}
+                    {candidate.legalStatus && Object.values(candidate.legalStatus).some(v => v) && (
                       <div>
-                        <p className="text-xs xs:text-sm font-semibold text-muted-foreground mb-0.5 xs:mb-1">Email</p>
-                        <a href={`mailto:${candidate.personalInfo.email}`} className="text-sm xs:text-base sm:text-lg text-primary hover:underline break-all">
-                          {candidate.personalInfo.email}
-                        </a>
+                        <h3 className="text-lg font-bold text-foreground mb-3 pb-2 border-b">Legal Status</h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          {candidate.legalStatus.hasCriminalCase !== undefined && <div><p className="text-xs font-semibold text-muted-foreground">Has Criminal Case</p><p className="text-sm text-foreground">{candidate.legalStatus.hasCriminalCase ? 'Yes' : 'No'}</p></div>}
+                          {candidate.legalStatus.caseDetails && <div className="sm:col-span-2"><p className="text-xs font-semibold text-muted-foreground">Case Details</p><p className="text-sm text-foreground">{candidate.legalStatus.caseDetails}</p></div>}
+                          {candidate.legalStatus.eligibilityDeclaration && <div className="sm:col-span-2"><p className="text-xs font-semibold text-muted-foreground">Eligibility Declaration</p><p className="text-sm text-foreground">{candidate.legalStatus.eligibilityDeclaration}</p></div>}
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-xs xs:text-sm font-semibold text-muted-foreground mb-0.5 xs:mb-1">Contact Number</p>
-                        <a href={`tel:${candidate.personalInfo.contactNumber}`} className="text-sm xs:text-base sm:text-lg text-primary hover:underline">
-                          {candidate.personalInfo.contactNumber}
-                        </a>
+                    )}
+
+                    {/* Additional Info */}
+                    <div>
+                      <h3 className="text-lg font-bold text-foreground mb-3 pb-2 border-b">Additional Information</h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {candidate.isActive !== undefined && <div><p className="text-xs font-semibold text-muted-foreground">Active</p><p className="text-sm text-foreground">{candidate.isActive ? 'Yes' : 'No'}</p></div>}
+                        {candidate.isVerified !== undefined && <div><p className="text-xs font-semibold text-muted-foreground">Verified</p><p className="text-sm text-foreground">{candidate.isVerified ? 'Yes' : 'No'}</p></div>}
+                        {candidate.candidateId && <div><p className="text-xs font-semibold text-muted-foreground">Candidate ID</p><p className="text-sm text-foreground">{candidate.candidateId}</p></div>}
+                        {candidate.createdAt && <div><p className="text-xs font-semibold text-muted-foreground">Created On</p><p className="text-sm text-foreground">{new Date(candidate.createdAt).toLocaleDateString()}</p></div>}
+                        {candidate.updatedAt && <div><p className="text-xs font-semibold text-muted-foreground">Last Updated</p><p className="text-sm text-foreground">{new Date(candidate.updatedAt).toLocaleDateString()}</p></div>}
                       </div>
                     </div>
                   </div>
@@ -832,55 +1142,6 @@ const CandidateDetailPage: React.FC = () => {
                     <CardContent className="pt-8 xs:pt-10 sm:pt-12 pb-8 xs:pb-10 sm:pb-12 text-center">
                       <Target className="w-10 xs:w-12 sm:w-16 h-10 xs:h-12 sm:h-16 text-primary/30 mx-auto mb-3 xs:mb-4" />
                       <p className="text-muted-foreground text-sm xs:text-base">No key issues listed</p>
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
-            )}
-
-            {/* Achievements Section */}
-            {activeTab === 'achievements' && (
-              <div className="space-y-3 xs:space-y-4">
-                {candidate.achievements.length > 0 ? (
-                  candidate.achievements.map((achievement, index) => (
-                    <Card key={index} className="border-0 shadow-lg hover:shadow-xl transition-shadow overflow-hidden">
-                      {achievement.achievementImage && (
-                        <img
-                          src={achievement.achievementImage}
-                          alt={achievement.achievementTitle_en}
-                          className="w-full h-32 xs:h-40 sm:h-48 object-cover"
-                        />
-                      )}
-                      <CardHeader className="p-3 xs:p-4 sm:p-6">
-                        <div className="flex items-start justify-between gap-2">
-                          <div>
-                            <CardTitle className="text-base xs:text-lg sm:text-xl text-primary">
-                              {achievement.achievementTitle_en}
-                            </CardTitle>
-                            <Badge className="mt-1.5 xs:mt-2 bg-accent text-white text-[10px] xs:text-xs" variant="default">
-                              {achievement.achievementCategory}
-                            </Badge>
-                          </div>
-                          <Award className="w-5 xs:w-6 h-5 xs:h-6 text-secondary flex-shrink-0" />
-                        </div>
-                      </CardHeader>
-                      <CardContent className="px-3 xs:px-4 sm:px-6 pb-3 xs:pb-4 sm:pb-6">
-                        <p className="text-foreground/90 leading-relaxed mb-2 xs:mb-3 text-xs xs:text-sm sm:text-base">
-                          {achievement.achievementDescription_en}
-                        </p>
-                        {achievement.achievementDate && (
-                          <p className="text-[10px] xs:text-xs sm:text-sm text-muted-foreground">
-                            {new Date(achievement.achievementDate).toLocaleDateString()}
-                          </p>
-                        )}
-                      </CardContent>
-                    </Card>
-                  ))
-                ) : (
-                  <Card className="border-0 shadow-lg">
-                    <CardContent className="pt-8 xs:pt-10 sm:pt-12 pb-8 xs:pb-10 sm:pb-12 text-center">
-                      <Award className="w-10 xs:w-12 sm:w-16 h-10 xs:h-12 sm:h-16 text-primary/30 mx-auto mb-3 xs:mb-4" />
-                      <p className="text-muted-foreground text-sm xs:text-base">No achievements listed</p>
                     </CardContent>
                   </Card>
                 )}

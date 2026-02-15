@@ -2,6 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { Facebook, Twitter, Linkedin, Youtube, Instagram, Mail, Phone, MapPin } from 'lucide-react';
+import nekapaFlagLogo from '@/assets/images/nekapaflag.png';
 
 const Footer = () => {
   const { t } = useTranslation();
@@ -29,17 +30,17 @@ const Footer = () => {
   ];
 
   return (
-    <footer className="bg-gradient-to-br from-primary/95 via-accent to-secondary/80 text-white">
+    <footer className="bg-primary text-white">
       {/* Main footer content */}
-      <div className="container mx-auto px-2 sm:px-2 py-8 sm:py-6">
+      <div className="container mx-auto px-3 xs:px-4 sm:px-6 py-12 xs:py-16 sm:py-20">
         <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-6 xs:gap-8">
           {/* Logo and description */}
           <div className="xs:col-span-2 sm:col-span-1 lg:col-span-1">
             <div className="flex items-center gap-2 xs:gap-3 mb-4 xs:mb-6">
               <img
-                src="/assets/images/ncp-logo.jpg"
+                src={nekapaFlagLogo}
                 alt="नेपाली कम्युनिस्ट पार्टी"
-                className="h-10 xs:h-12 w-10 xs:w-12 rounded-full object-cover border-2 border-secondary flex-shrink-0"
+                className="h-10 xs:h-12 w-10 xs:w-12 object-cover border-2 border-secondary flex-shrink-0"
               />
               <div className="min-w-0">
                 <h3 className="text-base xs:text-lg sm:text-xl font-bold text-white truncate">नेपाली कम्युनिस्ट पार्टी</h3>
@@ -145,7 +146,7 @@ const Footer = () => {
 
       {/* Bottom bar */}
       <div className="border-t border-white/15 bg-primary/90">
-        <div className="container mx-auto px-2 py-4 xs:py-6">
+        <div className="container mx-auto px-3 xs:px-4 sm:px-6 py-6 xs:py-8">
           <div className="flex flex-col xs:gap-3 sm:flex-row sm:justify-between sm:items-center gap-3 xs:gap-4">
             <div className="text-white/80 text-xs xs:text-sm">
               © 2024 नेपाली कम्युनिस्ट पार्टी. All rights reserved.

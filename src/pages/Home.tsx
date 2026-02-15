@@ -1,17 +1,21 @@
+import Header from '../components/Header';
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRight, Globe, Users, Lightbulb, Target, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import NewsCard from '@/components/NewsCard';
+import bannerImage from '@/assets/images/banner.png';
+import mobileBannerImage from '@/assets/images/mobilebanner.png';
 // import ModernYouTubeSection from '@/components/youtubeSection';
 import API, { Post, StatsResponse } from '@/lib/api';
 import { ModernYoutubeSection } from '@/components/youtubeSection';
 import CandidateCard from '@/components/CandidateCard';
 // import API, { Post, StatsResponse } from '@/services/api';
 import ActivePolls from '@/components/ActivePolls';
+import LivePollResults from '@/components/LivePollResults';
 
 const StatsSkeleton = () => (
   <div className="grid grid-cols-2 md:grid-cols-4 gap-3 xs:gap-6 sm:gap-8">
@@ -47,20 +51,45 @@ const CategoriesSkeleton = () => (
 
 interface Candidate {
   _id: string;
+  candidateId?: string;
   personalInfo: {
     fullName: string;
     position: string;
     constituency: string;
+    profilePhoto?: string;
+    fullName_np?: string;
+    age?: number;
+    dateOfBirth?: string;
+    gender?: string;
   };
-  biography: {
+  biography?: {
     bio_en: string;
     profilePhoto?: string;
   };
-  achievements: Array<any>;
-  issues: Array<any>;
+  politicalInfo?: {
+    partyName?: string;
+    partyName_np?: string;
+    constituency?: string;
+    candidacyLevel?: string;
+  };
+  education?: {
+    highestQualification?: string;
+  };
+  socialMedia?: {
+    facebook?: string;
+    twitter?: string;
+    instagram?: string;
+  };
+  achievements?: Array<any>;
+  issues?: Array<any>;
 }
 
-const FeaturedCandidatesSection: React.FC = () => {
+interface FeaturedCandidatesSectionProps {
+  ageRange: [number, number];
+  setAgeRange: React.Dispatch<React.SetStateAction<[number, number]>>;
+}
+
+const FeaturedCandidatesSection: React.FC<FeaturedCandidatesSectionProps> = ({ ageRange, setAgeRange }) => {
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -68,11 +97,11 @@ const FeaturedCandidatesSection: React.FC = () => {
     const fetchCandidates = async () => {
       try {
         const response = await fetch(
-          `${import.meta.env.VITE_API_URL || 'https://api.abhushangallery.com'}/api/candidates?limit=3`
+          `${import.meta.env.VITE_API_URL || 'https://api.abhushangallery.com'}/api/candidates?limit=8`
         );
         if (response.ok) {
           const data = await response.json();
-          setCandidates(data.data.slice(0, 3));
+          setCandidates(data.data.slice(0, 8));
         }
       } catch (error) {
         console.error('Error fetching candidates:', error);
@@ -80,62 +109,66 @@ const FeaturedCandidatesSection: React.FC = () => {
         setLoading(false);
       }
     };
-
     fetchCandidates();
   }, []);
 
   return (
-    <section className="py-12 xs:py-16 sm:py-20 bg-white">
-      <div className="container mx-auto px-0 xs:px-1 sm:px-2">
-        <div className="text-center mb-8 xs:mb-12 sm:mb-16">
-          <h2 className="text-2xl xs:text-3xl sm:text-4xl font-bold text-primary mb-2 xs:mb-4">
-            Featured Candidates
-          </h2>
-          <div className="w-16 xs:w-24 h-1 bg-gradient-to-r from-primary to-secondary mx-auto rounded-full"></div>
-          <p className="text-muted-foreground mt-2 xs:mt-4 mx-auto text-xs xs:text-sm sm:text-base">
-            Meet some of our outstanding candidates leading the way to a brighter future
-          </p>
-        </div>
-
-        {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 xs:gap-6">
-            {[...Array(3)].map((_, idx) => (
-              <div key={idx} className="animate-pulse">
-                <div className="bg-muted h-60 xs:h-80 rounded-lg mb-2 xs:mb-4"></div>
-              </div>
-            ))}
-          </div>
-        ) : candidates.length > 0 ? (
-          <>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 xs:gap-4 sm:gap-6 mb-8 xs:mb-12">
-              {candidates.map(candidate => (
-                <CandidateCard key={candidate._id} candidate={candidate} />
+    <>
+      {/* Header is rendered globally in App.tsx */}
+      <section className="py-12 xs:py-16 sm:py-24 bg-white">
+        <div className="container mx-auto">
+          <h2 className="text-2xl xs:text-3xl sm:text-4xl font-bold text-gray-900 mb-6 text-center">Our Candidates</h2>
+          {loading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 xs:gap-6">
+              {[...Array(8)].map((_, idx) => (
+                <div key={idx} className="animate-pulse">
+                  <div className="bg-muted h-60 xs:h-80 rounded-lg mb-2 xs:mb-4"></div>
+                </div>
               ))}
             </div>
-            <div className="text-center">
-              <Link to="/candidates">
-                <Button size="sm" className="bg-primary hover:bg-primary/90 text-white px-4 xs:px-6 sm:px-8 py-2 xs:py-3 sm:py-4 text-xs xs:text-sm sm:text-base">
-                  View All Candidates
-                  <ArrowRight className="ml-1 xs:ml-2 w-3 xs:w-5" />
-                </Button>
-              </Link>
+          ) : candidates.length > 0 ? (
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 xs:gap-4 sm:gap-6 mb-8 xs:mb-12">
+                {candidates.map(candidate => (
+                  <CandidateCard key={candidate._id} candidate={candidate} />
+                ))}
+              </div>
+              <div className="text-center">
+                <Link to="/candidates">
+                  <Button size="sm" className="bg-primary hover:bg-primary/90 text-white px-4 xs:px-6 sm:px-8 py-2 xs:py-3 sm:py-4 text-xs xs:text-sm sm:text-base">
+                    View All Candidates
+                    <ArrowRight className="ml-1 xs:ml-2 w-3 xs:w-5" />
+                  </Button>
+                </Link>
+              </div>
+            </>
+          ) : (
+            <div className="text-center text-muted-foreground py-6 xs:py-8">
+              <p className="text-sm xs:text-base">No candidates found.</p>
             </div>
-          </>
-        ) : (
-          <div className="text-center text-muted-foreground py-6 xs:py-8">
-            <p className="text-sm xs:text-base">Candidates coming soon!</p>
-          </div>
-        )}
-      </div>
-    </section>
+          )}
+        </div>
+      </section>
+    </>
   );
 };
 
-const Home = () => {
+interface HomeProps {
+  searchTerm: string;
+  setSearchTerm: (v: string) => void;
+}
+
+const Home: React.FC<HomeProps> = ({ searchTerm, setSearchTerm }) => {
+  const navigate = useNavigate();
+  const [ageRange, setAgeRange] = useState<[number, number]>([18, 100]);
   const { t, i18n } = useTranslation();
   const currentLanguage = i18n.language as 'en' | 'np';
 
-  // State management
+  // Search state
+  const [searchResults, setSearchResults] = useState<Candidate[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+
+  // Fix stats undefined error
   const [featuredPosts, setFeaturedPosts] = useState<Post[]>([]);
   const [stats, setStats] = useState<StatsResponse['data'] | null>(null);
   const [categories, setCategories] = useState<any[]>([]);
@@ -149,6 +182,49 @@ const Home = () => {
     stats: '',
     categories: '',
   });
+  // Candidate search handler
+  const handleSearchChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchTerm(value);
+    if (!value.trim()) {
+      setSearchResults([]);
+      return;
+    }
+    setSearchLoading(true);
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL || 'https://api.abhushangallery.com'}/api/candidates?search=${encodeURIComponent(value)}&limit=100`
+      );
+      if (response.ok) {
+        const data = await response.json();
+        // Filter results strictly on client side for robust search
+        const lower = value.trim().toLowerCase();
+        const filtered = (data.data || []).filter(c => {
+          const fields = [
+            c.personalInfo?.fullName,
+            c.personalInfo?.fullName_np,
+            c.politicalInfo?.partyName,
+            c.politicalInfo?.partyName_np,
+            c.personalInfo?.constituency,
+            c.politicalInfo?.constituency,
+            c.nepaliName,
+            c.englishName,
+            c.CandidateName,
+            c.PartyName,
+            c.ConstituencyName
+          ];
+          return fields.some(f => (f || '').toString().toLowerCase().includes(lower));
+        });
+        setSearchResults(filtered.slice(0, 10));
+      } else {
+        setSearchResults([]);
+      }
+    } catch (error) {
+      setSearchResults([]);
+    } finally {
+      setSearchLoading(false);
+    }
+  };
 
   // Static category data with icons
   const staticCategories = [
@@ -255,12 +331,12 @@ const Home = () => {
     }
   };
 
-  // Load data on component mount and language change
-  useEffect(() => {
-    fetchFeaturedPosts();
-    fetchStats();
-    fetchCategories();
-  }, [currentLanguage]);
+  // ...existing code...
+
+  // Handler for selecting candidate from search results
+  const handleCandidateSelect = (candidateId: string) => {
+    navigate(`/candidate/${candidateId}`);
+  };
 
   // Generate stats display data
   const displayStats = stats ? [
@@ -287,89 +363,106 @@ const Home = () => {
   ] : [];
 
   console.log(featuredPosts,"featuredPosts");
-
+   
   return (
     <div className="min-h-screen">
-      {/* Hero Section with Background Image */}
-      <section className="relative text-white overflow-hidden min-h-[60vh] xs:min-h-[70vh] sm:min-h-[80vh] flex items-center w-['100vw] px-0">
-        {/* Banner image: use mobile image on small screens */}
-        <picture>
-          <source media="(max-width: 639px)" srcSet={`${import.meta.env.BASE_URL || '/'}assets/images/mobilebanner.png`} />
+      {/* Hero Section with Background Image - Full Screen Width */}
+      <section className="relative text-white overflow-hidden min-h-[60vh] flex items-center w-screen">
+        <picture className="w-full h-full flex justify-center items-center">
+          <source media="(max-width: 639px)" srcSet={mobileBannerImage} />
           <img
-            src={`${import.meta.env.BASE_URL || '/'}assets/images/banner.png`}
+            src={bannerImage}
             alt="banner"
-            className="absolute inset-0 w-full h-full object-cover object-top block"
-            style={{ zIndex: 0, objectFit: 'cover' as const }}
+            className="w-full h-full object-contain object-center block"
+            style={{ zIndex: 0, background: '#000' }}
           />
         </picture>
-
-
-        {/* Dark overlay for contrast */}
-        {/* <div className="absolute inset-0 bg-black/40" style={{ zIndex: 1 }} /> */}
-
-        {/* Hero content intentionally left minimal */}
-        <div className="relative z-10 container mx-auto px-0 sm:px-2 py-24 text-center" />
+        <div className="absolute inset-0 z-10 w-full flex flex-col items-center justify-center py-16 text-center">
+          {/* Add hero content here if needed */}
+        </div>
       </section>
 
-      {/* Featured Candidates Section */}
-      <FeaturedCandidatesSection />
-
-      {/* Active Polls (public) */}
-      <ActivePolls />
-
-      {/* Stats Section */}
-      <section className="py-12 xs:py-16 sm:py-20 bg-gradient-to-r from-primary/5 to-secondary/10">
-        <div className="container mx-auto px-0 xs:px-1 sm:px-2">
-          <div className="text-center mb-8 xs:mb-12">
-            <h2 className="text-2xl xs:text-3xl sm:text-4xl font-bold text-gray-900 mb-2 xs:mb-4">
-              {t('home.impact.title', 'Our Impact')}
-            </h2>
-            <div className="w-16 xs:w-24 h-1 bg-gradient-to-r from-primary via-accent to-secondary mx-auto rounded-full"></div>
-          </div>
-          
-          {loading.stats ? (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 xs:gap-6 sm:gap-8">
-              {[...Array(4)].map((_, index) => (
-                <div key={index} className="text-center animate-pulse">
-                  <div className="w-12 xs:w-16 h-12 xs:h-16 rounded-full bg-muted mx-auto mb-2 xs:mb-4"></div>
-                  <div className="h-6 xs:h-8 bg-muted rounded w-12 mx-auto mb-1 xs:mb-2"></div>
-                  <div className="h-3 xs:h-4 bg-muted rounded w-16 mx-auto"></div>
-                </div>
-              ))}
+      {/* Modern Search UI with description */}
+      <section className="flex flex-col items-center mt-4 mb-2 px-4">
+        <div className="mb-4 text-center">
+          <h3 className="text-2xl font-bold text-primary mb-2">Find Your Candidate</h3>
+          <p className="text-gray-600 text-base md:text-lg">Search for candidates by name, constituency, or party. Select a candidate to view their details and profile.</p>
+        </div>
+        <div className="relative w-full max-w-xl">
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={handleSearchChange}
+            placeholder="🔍 Type to search..."
+            className="w-full px-5 py-3 rounded-xl border border-primary/60 focus:border-accent focus:ring-2 focus:ring-accent/30 shadow-lg font-semibold text-gray-900 bg-white placeholder-gray-400 outline-none transition-all duration-200 text-lg"
+            style={{ minHeight: '3rem', maxWidth: '100%', fontSize: '1.1rem', fontWeight: 600 }}
+            autoComplete="off"
+          />
+          {searchLoading && (
+            <div className="absolute right-3 top-3 text-gray-400 animate-spin">
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" /></svg>
             </div>
-          ) : errors.stats ? (
-            <div className="text-center text-red-600 py-4 xs:py-8">
-              <p className="text-sm xs:text-base">{errors.stats}</p>
-              <Button 
-                variant="outline" 
-                onClick={fetchStats}
-                className="mt-2 xs:mt-4 text-xs xs:text-sm"
-              >
-                Retry Loading Stats
-              </Button>
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 xs:gap-6 sm:gap-8">
-              {displayStats.map((stat, index) => (
-                <div key={index} className="text-center group">
-                  <div className="bg-gradient-to-br from-primary via-accent to-secondary w-12 xs:w-16 h-12 xs:h-16 rounded-full flex items-center justify-center mx-auto mb-2 xs:mb-4 shadow-lg group-hover:scale-110 transition-transform duration-300">
-                    <stat.icon className="text-white w-5 xs:w-6" />
+          )}
+          {searchTerm.trim() && searchResults.length > 0 && (
+            <ul className="absolute left-0 right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-xl z-20 max-h-80 overflow-y-auto">
+              {searchResults.map(candidate => (
+                <li
+                  key={candidate._id}
+                  className="px-4 py-3 cursor-pointer hover:bg-primary/10 transition-all text-base flex items-center gap-5"
+                  onClick={() => handleCandidateSelect(candidate._id)}
+                >
+                  <img
+                    src={`https://result.election.gov.np/Images/Candidate/${candidate.candidateId || candidate.CandidateID || ''}.jpg`}
+                    alt={candidate.personalInfo?.fullName || candidate._id}
+                    className="w-16 h-16 rounded-full object-cover border border-gray-200"
+                    onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="font-bold text-gray-900 truncate">
+                      {candidate.personalInfo?.fullName || candidate.nepaliName || candidate.englishName || candidate.CandidateName || candidate._id}
+                    </div>
+                    <div className="text-xs text-gray-500 truncate">{candidate.politicalInfo?.partyName || ''} {candidate.personalInfo?.constituency ? `| ${candidate.personalInfo.constituency}` : ''}</div>
                   </div>
-                  <h3 className="text-xl xs:text-2xl sm:text-3xl font-bold text-gray-900 mb-1 xs:mb-2 text-sm xs:text-base sm:text-lg">{stat.value}</h3>
-                  <p className="text-gray-600 text-xs xs:text-sm">{stat.label}</p>
-                </div>
+                </li>
               ))}
-            </div>
+            </ul>
           )}
         </div>
       </section>
 
+      {/* Featured Candidates Section */}
+      <FeaturedCandidatesSection ageRange={ageRange} setAgeRange={setAgeRange} />
+
+      {/* Search Results Dropdown Example (if implemented) */}
+      {/*
+      {searchResults.length > 0 && (
+        <ul className="search-dropdown">
+          {searchResults.map(candidate => (
+            <li key={candidate._id} onClick={() => handleCandidateSelect(candidate._id)}>
+              {candidate.personalInfo?.fullName || candidate._id}
+            </li>
+          ))}
+        </ul>
+      )}
+      */}
+
+      {/* Live Poll Results */}
+      <section className="pb-8 bg-gradient-to-b from-white to-gray-50">
+        <div className="container mx-auto">
+          <LivePollResults />
+        </div>
+      </section>
+
+      {/* Active Polls (public) */}
+      <ActivePolls />
+
+
       {/* CPN Hero Banner Section */}
-      <section className="relative bg-gradient-to-r from-primary via-primary/80 to-accent text-white py-12 xs:py-16 sm:py-24 overflow-hidden">
+      <section className="relative bg-gradient-to-r from-primary via-primary/80 to-accent text-white py-8 overflow-hidden">
         <div className="absolute inset-0 opacity-10">
           <div className="absolute inset-0 bg-[linear-gradient(45deg,rgba(255,255,255,.05)_1px,transparent_1px)] bg-[length:20px_20px]"></div>
         </div>
-        <div className="container mx-auto px-0 sm:px-2 relative z-10">
+        <div className="container mx-auto relative z-10">
           <div className="text-center">
             <h2 className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-2 xs:mb-4 sm:mb-6 leading-tight">
               CPN - Building a Better Nepal
@@ -388,8 +481,8 @@ const Home = () => {
       </section>
 
       {/* Featured Posts */}
-      <section className="py-12 xs:py-16 sm:py-20 bg-white">
-        <div className="container mx-auto px-0 xs:px-1 sm:px-2">
+      <section className="py-8 bg-white">
+        <div className="container mx-auto">
           <div className="text-center mb-8 xs:mb-12 sm:mb-16">
             <h2 className="text-2xl xs:text-3xl sm:text-4xl font-bold text-gray-900 mb-2 xs:mb-4">
               {t('home.featuredPosts', 'Featured Posts')}
@@ -465,61 +558,6 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Categories Section */}
-      <section className="py-12 xs:py-16 sm:py-20 bg-gradient-to-br from-gray-50 to-blue-50">
-        <div className="container mx-auto px-0 xs:px-1 sm:px-2">
-          <div className="text-center mb-8 xs:mb-12 sm:mb-16">
-            <h2 className="text-2xl xs:text-3xl sm:text-4xl font-bold text-gray-900 mb-2 xs:mb-4">
-              {t('home.categories', 'Explore Categories')}
-            </h2>
-            <div className="w-16 xs:w-24 h-1 bg-gradient-to-r from-blue-600 to-green-600 mx-auto rounded-full"></div>
-            <p className="text-gray-600 mt-2 xs:mt-4 mx-auto text-xs xs:text-sm sm:text-base">
-              {t('home.categories.subtitle', 'Explore different areas of party work and political engagement across Nepal.')}
-            </p>
-          </div>
-          
-          {loading.categories ? (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 xs:gap-4 sm:gap-6">
-              {[...Array(8)].map((_, index) => (
-                <div key={index} className="animate-pulse">
-                  <div className="bg-muted h-32 xs:h-40 rounded-lg"></div>
-                </div>
-              ))}
-            </div>
-          ) : errors.categories ? (
-            <div className="text-center text-red-600 py-4 xs:py-8">
-              <p className="text-sm xs:text-base">{errors.categories}</p>
-              <Button 
-                variant="outline" 
-                onClick={fetchCategories}
-                className="mt-2 xs:mt-4 text-xs xs:text-sm"
-              >
-                Retry Loading Categories
-              </Button>
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 xs:gap-4 sm:gap-6">
-              {categories.map((category) => (
-                <Link key={category.key} to={`/news?category=${category.key}`}>
-                  <Card className="group hover:shadow-xl transition-all duration-300 hover:-translate-y-2 border-0 shadow-md bg-white h-full">
-                    <CardContent className="p-3 xs:p-4 sm:p-6 text-center">
-                      <div className="text-2xl xs:text-3xl sm:text-4xl mb-2 xs:mb-3 sm:mb-4 group-hover:scale-110 transition-transform duration-300">
-                        {category.icon}
-                      </div>
-                      <h3 className="font-semibold text-gray-900 mb-1 xs:mb-2 group-hover:text-primary transition-colors text-xs xs:text-sm sm:text-base">
-                        {t(`categories.${category.key}`, category.key)}
-                      </h3>
-                      <p className="text-xs text-gray-500">
-                        {category.count} {t('common.posts', 'posts')}
-                      </p>
-                    </CardContent>
-                  </Card>
-                </Link>
-              ))}
-            </div>
-          )}
-        </div>
-      </section>
 
       <ModernYoutubeSection/>
     </div>

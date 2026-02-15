@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import './i18n';
 import Header from './components/Header';
+import React, { useState } from 'react';
 import Footer from './components/Footer';
 import Home from './pages/Home';
 import News from './pages/News';
@@ -19,6 +20,10 @@ import CandidateRegistrationForm from './pages/CandidateRegistrationForm';
 import FeedbackPage from './pages/Feedback';
 import Polls from './pages/Polls';
 import PollDetail from './pages/PollDetail';
+import CandidateFinder from './pages/CandidateFinder';
+import VoterEducationHub from './pages/VoterEducationHub';
+import DigitalCampaignCenter from './pages/DigitalCampaignCenter';
+import VolunteerRegistration from './pages/VolunteerRegistration';
 import { useEffect } from 'react';
 
 const queryClient = new QueryClient();
@@ -33,51 +38,55 @@ const ScrollToTop = () => {
   return null
 }
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-
-    <TooltipProvider>
-
-      <Toaster />
-      <BrowserRouter>
-        <div className="min-h-screen flex flex-col">
-          <Routes>
-            {/* Admin route without header/footer */}
-            <Route path="/admin" element={<div className="container mx-auto px-1"><AdminDashboard /></div>} />
-            
-            {/* Regular routes with header/footer */}
-            <Route path="/*" element={
-              <>
-                <Header />
-                <main className="flex-1">
-               
-                    <div className='container'>
-                    <Routes>
-                    <Route path="/" element={<Home />} />
-                    <Route path="/news" element={<News />} />
-                    <Route path="/post/:id" element={<PostDetails />} />
-                    <Route path="/about" element={<About />} />
-                    <Route path="/contact" element={<Contact />} />
-                    <Route path="/candidates" element={<Candidates />} />
-                    <Route path="/candidate/:id" element={<CandidateDetailPage />} />
-                    <Route path="/polls" element={<Polls />} />
-                    <Route path="/polls/:id" element={<PollDetail />} />
-                    <Route path="/candidate-registration" element={<CandidateRegistrationForm />} />
-                    <Route path="/membership-form" element={<MembershipForm />} />
-                    <Route path="/feedback" element={<FeedbackPage />} />
-                    <Route path="*" element={<NotFound />} />
-                         {/* <ScrollToTop />  */}
-                    </Routes>
-                  </div>
-                </main>
-                <Footer />
-              </>
-            } />
-          </Routes>
-        </div>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  const [searchTerm, setSearchTerm] = useState('');
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <BrowserRouter>
+          <ScrollToTop />
+          <div className="min-h-screen flex flex-col">
+            <Routes>
+              {/* Admin route without header/footer */}
+              <Route path="/admin" element={<div className="container mx-auto px-1"><AdminDashboard /></div>} />
+              {/* Regular routes with header/footer */}
+              <Route path="/*" element={
+                <>
+                  <Header searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
+                  <main className="flex-1">
+                    {/* <div className='container'> */}
+                      <Routes>
+                        <Route path="/" element={<Home searchTerm={searchTerm} setSearchTerm={setSearchTerm} />} />
+                        <Route path="/news" element={<News />} />
+                        <Route path="/post/:id" element={<PostDetails />} />
+                        <Route path="/about" element={<About />} />
+                        <Route path="/contact" element={<Contact />} />
+                        <Route path="/candidates" element={<Candidates />} />
+                        <Route path="/candidate/:id" element={<CandidateDetailPage />} />
+                        <Route path="/polls" element={<Polls />} />
+                        <Route path="/polls/:id" element={<PollDetail />} />
+                        <Route path="/candidate-finder" element={<CandidateFinder />} />
+                        <Route path="/voter-education" element={<VoterEducationHub />} />
+                        <Route path="/campaign-center" element={<DigitalCampaignCenter />} />
+                        <Route path="/volunteer" element={<VolunteerRegistration />} />
+                        <Route path="/candidate-registration" element={<CandidateRegistrationForm />} />
+                        <Route path="/membership-form" element={<MembershipForm />} />
+                        <Route path="/feedback" element={<FeedbackPage />} />
+                        <Route path="*" element={<NotFound />} />
+                        {/* <ScrollToTop />  */}
+                      </Routes>
+                    {/* </div> */}
+                  </main>
+                  <Footer />
+                </>
+              } />
+            </Routes>
+          </div>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+}
 
 export default App;

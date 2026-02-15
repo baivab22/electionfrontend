@@ -1,96 +1,247 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
+import { MapPin, Calendar, GraduationCap, Maximize2, Facebook, Twitter, Instagram, X, Eye } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 interface CandidateCardProps {
   candidate: {
     _id: string;
-    personalInfo: {
-      fullName: string;
-      position: string;
-      constituency: string;
-    };
-    biography: {
-      bio_en: string;
+    candidateId?: string;
+    personalInfo?: {
+      fullName?: string;
+      fullName_np?: string;
+      position?: string;
+      constituency?: string;
       profilePhoto?: string;
+      gender?: string;
+      age?: number;
+      dateOfBirth?: string;
     };
-    achievements: Array<any>;
-    issues: Array<any>;
+    politicalInfo?: {
+      partyName?: string;
+      partyName_np?: string;
+      constituency?: string;
+      candidacyLevel?: string;
+      electionSymbol?: string;
+      electionSymbol_np?: string;
+      electionSymbolImage?: string;
+    };
+    electionInfo?: {
+      district?: string;
+      municipality?: string;
+      constituency?: string;
+    };
+    rawSource?: {
+      DISTRICT?: string;
+      District?: string;
+      AREA?: string;
+      Area?: string;
+      CandidateName?: string;
+      DistrictName?: string;
+      ConstName?: string;
+      PoliticalPartyName?: string;
+      AGE_YR?: number;
+      Gender?: string;
+      QUALIFICATION?: string;
+      [key: string]: any;
+    };
+    education?: {
+      highestQualification?: string;
+    };
+    socialMedia?: {
+      facebook?: string;
+      twitter?: string;
+      instagram?: string;
+    };
   };
 }
 
-const getPositionColor = (position: string): string => {
-  const colors: { [key: string]: string } = {
-    'Presidential': 'bg-blue-100 text-blue-800',
-    'Vice Presidential': 'bg-purple-100 text-purple-800',
-    'Parliamentary': 'bg-cyan-100 text-cyan-800',
-    'Local Body': 'bg-emerald-100 text-emerald-800',
-    'Other': 'bg-gray-100 text-gray-800',
+// Normalize education qualification text - replace old values with new ones
+const normalizeEducationQualification = (text?: string): string => {
+  if (!text) return '';
+  return text
+    .replace(/विदया वारिणी/g, 'विद्यावारिधि')
+    .trim();
+};
+
+// Normalize party names - replace all variations with standard NCP name
+const normalizePartyName = (partyName?: string): string => {
+  if (!partyName) return 'स्वतन्त्र';
+  const normalized = partyName.trim();
+  // Replace any variation of NCP with the standard name
+  if (normalized.includes('कम्युनिस्ट') || normalized.includes('कम्युनिसट')) {
+    return 'नेपाली कम्युनिस्ट पार्टी';
+  }
+  return normalized;
+};
+
+const getPartyBadgeColor = (partyName?: string): string => {
+  const normalizedName = normalizePartyName(partyName);
+  const partyColors: { [key: string]: string } = {
+    'नेपाली कांग्रेस': 'bg-green-100 text-green-800 border-green-200',
+    'नेपाली कम्युनिस्ट पार्टी': 'bg-red-100 text-red-800 border-red-200',
+    'राप्रपा': 'bg-blue-100 text-blue-800 border-blue-200',
+    'स्वतन्त्र': 'bg-purple-100 text-purple-800 border-purple-200',
   };
-  return colors[position] || 'bg-blue-100 text-blue-800';
+  return partyColors[normalizedName || ''] || 'bg-gray-100 text-gray-800 border-gray-200';
+};
+
+const calculateAge = (dateOfBirth?: string, age?: number, rawSourceAge?: number): number => {
+  // Priority 1: Use rawSource.AGE_YR if available
+  if (rawSourceAge && rawSourceAge > 0 && rawSourceAge <= 150) return rawSourceAge;
+  
+  // Priority 2: If age is provided from API, use it
+  if (age && age > 0 && age <= 150) return age;
+  if (!dateOfBirth) return 0;
+  
+  // Parse date string
+  const parts = String(dateOfBirth).trim().split(/[\/\-\.\s]+/).map(p => p.trim()).filter(Boolean);
+  let y: number | undefined, m: number | undefined, d: number | undefined;
+  
+  if (parts.length === 3) {
+    if (parts[0].length === 4) { // YYYY-MM-DD
+      y = Number(parts[0]); m = Number(parts[1]) - 1; d = Number(parts[2]);
+    } else { // DD-MM-YYYY
+      y = Number(parts[2]); m = Number(parts[1]) - 1; d = Number(parts[0]);
+    }
+  } else {
+    const birthDate = new Date(dateOfBirth);
+    if (!isNaN(birthDate.getTime())) {
+      y = birthDate.getFullYear();
+      m = birthDate.getMonth();
+      d = birthDate.getDate();
+    }
+  }
+  
+  if (y === undefined || m === undefined || d === undefined) return 0;
+  
+  const today = new Date();
+  
+  // Try AD calculation first
+  let calculatedAge = today.getFullYear() - y;
+  const monthDiff = today.getMonth() - m;
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < d)) {
+    calculatedAge--;
+  }
+  
+  // If AD result is valid (18-150), use it
+  if (calculatedAge >= 18 && calculatedAge <= 150) {
+    return calculatedAge;
+  }
+  
+  // If year looks like Nepali Bikram Sambat (BS) (e.g., 2000-2100), compute age using BS current year 2082
+  if (y >= 2000 && y <= 2100) {
+    const ageBs = 2082 - y;
+    if (ageBs >= 18 && ageBs <= 150) return ageBs;
+  }
+  
+  // Return calculated age or 0
+  return calculatedAge > 0 && calculatedAge <= 150 ? calculatedAge : 0;
+};
+
+// Generate image URL from candidateId
+const getCandidateImageUrl = (candidate: any): string | null => {
+  const id = candidate.CandidateID || candidate.candidateId;
+  if (id) return `https://result.election.gov.np/Images/Candidate/${id}.jpg`;
+  return null;
 };
 
 const CandidateCard: React.FC<CandidateCardProps> = ({ candidate }) => {
+  const [isPhotoDialogOpen, setIsPhotoDialogOpen] = useState(false);
+  // Use new flat backend fields if available, fallback to old
+  const fullName = (candidate as any).CandidateName || candidate.personalInfo?.fullName || 'Candidate';
+  const district = (candidate as any).DistrictName || (candidate as any).CTZDIST || (candidate as any).StateName || candidate.electionInfo?.district || '';
+  const constituency = (candidate as any).ConstName || candidate.politicalInfo?.constituency || candidate.personalInfo?.constituency || 'Unknown';
+  const partyName = (candidate as any).PoliticalPartyName || candidate.politicalInfo?.partyName || 'स्वतन्त्र';
+  const age = (candidate as any).AGE_YR || candidate.personalInfo?.age || 0;
+  const gender = (candidate as any).Gender || candidate.personalInfo?.gender || '';
+  const education = (candidate as any).QUALIFICATION || candidate.education?.highestQualification || '';
+  const imageUrl = getCandidateImageUrl(candidate) || '';
+  const socialMedia = candidate.socialMedia;
+  const partyBadgeColor = getPartyBadgeColor(partyName);
+  const genderBadgeColor = gender === 'Male' || gender === 'पुरुष' ? 'bg-blue-100 text-blue-800 border-blue-200' : 'bg-pink-100 text-pink-800 border-pink-200';
+  const displayImage = imageUrl;
+  
+  const handleImageClick = (e: React.MouseEvent) => {
+    if (displayImage) {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsPhotoDialogOpen(true);
+    }
+  };
+
+  const handleSocialClick = (e: React.MouseEvent, url?: string) => {
+    if (url) {
+      e.preventDefault();
+      e.stopPropagation();
+      window.open(url, '_blank', 'noopener,noreferrer');
+    }
+  };
+
   return (
-    <Link to={`/candidate/${candidate._id}`} className="group">
-      <Card className="h-full overflow-hidden hover:shadow-xl transition-all duration-300 border border-gray-200 hover:border-primary/30 cursor-pointer">
-        {/* Badge Section */}
-        <div className="relative h-20 xs:h-24 sm:h-28 bg-gradient-to-br from-primary/20 to-secondary/20 flex items-end p-2 xs:p-3 sm:p-4">
-          <Badge className={`${getPositionColor(candidate.personalInfo.position)} text-[10px] xs:text-xs font-semibold`}>
-            {candidate.personalInfo.position}
-          </Badge>
-        </div>
-
-        {/* Image Section */}
-        <div className="flex justify-center -mt-10 xs:-mt-12 sm:-mt-14 mb-2 xs:mb-3 sm:mb-4">
-          {candidate.biography?.profilePhoto ? (
-            <img
-              src={candidate.biography.profilePhoto}
-              alt={candidate.personalInfo.fullName}
-              className="w-16 xs:w-20 sm:w-24 h-16 xs:h-20 sm:h-24 rounded-full object-cover border-3 xs:border-4 border-white shadow-lg group-hover:shadow-xl transition-shadow"
-            />
-          ) : (
-            <div className="w-16 xs:w-20 sm:w-24 h-16 xs:h-20 sm:h-24 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center border-3 xs:border-4 border-white text-white text-xl xs:text-2xl sm:text-3xl font-bold shadow-lg">
-              {candidate.personalInfo.fullName.charAt(0)}
-            </div>
-          )}
-        </div>
-
-        <CardContent className="text-center pb-4 xs:pb-5 sm:pb-6 px-2 xs:px-3 sm:px-4">
-          {/* Name */}
-          <h3 className="text-sm xs:text-base sm:text-lg font-extrabold text-foreground mb-0.5 xs:mb-1 group-hover:text-primary transition-colors line-clamp-1">
-            {candidate.personalInfo.fullName}
-          </h3>
-
-          {/* Constituency */}
-          <p className="text-xs xs:text-sm font-medium text-muted-foreground mb-2 xs:mb-3 sm:mb-4 line-clamp-1">
-            {candidate.personalInfo.constituency}
-          </p>
-
-          {/* Stats */}
-          <div className="grid grid-cols-3 gap-1 xs:gap-2 py-2 xs:py-3 border-t border-b border-gray-100">
-            <div className="text-center">
-              <div className="text-sm xs:text-base sm:text-lg font-bold text-primary">{candidate.achievements?.length || 0}</div>
-              <div className="text-[9px] xs:text-[10px] sm:text-xs font-semibold text-muted-foreground">Achievements</div>
-            </div>
-            <div className="text-center">
-              <div className="text-sm xs:text-base sm:text-lg font-bold text-secondary">{candidate.issues?.length || 0}</div>
-              <div className="text-[9px] xs:text-[10px] sm:text-xs font-semibold text-muted-foreground">Issues</div>
-            </div>
-            <div className="text-center">
-              <div className="text-sm xs:text-base sm:text-lg font-bold text-accent">1</div>
-              <div className="text-[9px] xs:text-[10px] sm:text-xs font-semibold text-muted-foreground">Manifesto</div>
-            </div>
+    <>
+      <Link to={`/candidate/${candidate._id}`} className="block h-full">
+        <Card className="overflow-hidden hover:shadow-xl transition-all duration-300 border border-gray-200 hover:border-primary/30 bg-white group h-full flex flex-col relative">
+          <div className="absolute top-3 right-3 z-10 p-2 rounded-full bg-primary/90 hover:bg-primary text-white shadow-lg transition-all duration-300 group-hover:scale-110">
+            <Eye className="w-5 h-5" />
           </div>
-
-          {/* Bio Preview */}
-          <p className="text-[10px] xs:text-xs font-medium text-foreground/70 mt-2 xs:mt-3 line-clamp-2">
-            {candidate.biography?.bio_en || 'Click to view full profile'}
-          </p>
-        </CardContent>
-      </Card>
-    </Link>
+          <div className="flex flex-col h-full p-5">
+            <div className="flex justify-center mb-4">
+              {displayImage ? (
+                <div className="relative group/image">
+                  <img
+                    src={displayImage}
+                    alt={fullName}
+                    className="w-40 h-40 rounded-lg object-cover border-2 border-gray-200 group-hover:border-primary/50 transition-all cursor-pointer"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = '';
+                      (e.target as HTMLImageElement).style.display = 'none';
+                    }}
+                    onClick={handleImageClick}
+                  />
+                  <div 
+                    className="absolute inset-0 bg-black/40 rounded-lg opacity-0 group-hover/image:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
+                    onClick={handleImageClick}
+                  >
+                    <Maximize2 className="w-8 h-8 text-white" />
+                  </div>
+                </div>
+              ) : (
+                <div className="w-40 h-40 rounded-lg bg-primary/10 flex items-center justify-center border-2 border-gray-200 group-hover:border-primary/50 transition-all">
+                  <span className="text-6xl font-bold text-primary">{fullName.charAt(0)}</span>
+                </div>
+              )}
+            </div>
+            <h3 className="text-lg font-extrabold text-gray-900 mb-2 text-center line-clamp-2 group-hover:text-primary transition-colors">
+              {fullName}
+            </h3>
+            <div className="mb-2 flex flex-wrap justify-center gap-2">
+              <Badge className={genderBadgeColor}>{gender}</Badge>
+              {age > 0 && <Badge>{age} वर्ष</Badge>}
+            </div>
+            <div className="mb-2 text-center text-sm text-gray-700">
+              <strong>जिल्ला:</strong> {district}<br/>
+              <strong>निर्वाचन क्षेत्र:</strong> {constituency}
+            </div>
+            {/* Only 6 major key data shown above: Name, Party, Age, Gender, District, Constituency */}
+            {/* All other details are intentionally omitted from the card for brevity as per user request */}
+          </div>
+        </Card>
+      </Link>
+      {/* Photo Dialog */}
+      <Dialog open={isPhotoDialogOpen} onOpenChange={setIsPhotoDialogOpen}>
+        <DialogContent className="max-w-lg">
+          <img src={displayImage || ''} alt={fullName} className="w-full h-auto rounded-lg" />
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 

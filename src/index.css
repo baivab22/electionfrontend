@@ -18,87 +18,87 @@ h1, h2, h3, h4, h5, h6 {
 
 @layer base {
   :root {
-    /* CPN Red and Gold color scheme - Modern refresh */
+    /* CPN Red and Gold color scheme - Communist Party RED - Exact Match */
     --background: 0 0% 100%;
-    --foreground: 222 47% 11%;
+    --foreground: 0 0% 13%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card-foreground: 0 0% 13%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+    --popover-foreground: 0 0% 13%;
 
-    /* CPN Primary Red - Enhanced */
-    --primary: 0 84% 54%;
+    /* CPN Primary Red - Deep Communist Red #C41E3A */
+    --primary: 355 73% 45%;
     --primary-foreground: 0 0% 100%;
 
-    /* CPN Gold/Secondary - Enhanced */
-    --secondary: 38 92% 50%;
+    /* CPN Gold/Secondary - Bright Yellow #FDB913 */
+    --secondary: 42 100% 52%;
     --secondary-foreground: 0 0% 13%;
 
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 47%;
 
     /* CPN Accent - Darker Red */
-    --accent: 0 74% 42%;
+    --accent: 355 73% 35%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 0 0% 98%;
 
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 0 84% 54%;
+    --border: 0 0% 91%;
+    --input: 0 0% 91%;
+    --ring: 355 73% 45%;
 
     --radius: 0.75rem;
 
-    --sidebar-background: 0 84% 54%;
+    --sidebar-background: 355 73% 45%;
     --sidebar-foreground: 0 0% 100%;
-    --sidebar-primary: 0 74% 42%;
+    --sidebar-primary: 355 73% 35%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 38 92% 50%;
+    --sidebar-accent: 42 100% 52%;
     --sidebar-accent-foreground: 0 0% 13%;
-    --sidebar-border: 0 84% 54%;
-    --sidebar-ring: 38 92% 50%;
+    --sidebar-border: 355 73% 45%;
+    --sidebar-ring: 42 100% 52%;
   }
 
   .dark {
-    --background: 222 47% 11%;
-    --foreground: 210 40% 98%;
+    --background: 0 0% 13%;
+    --foreground: 0 0% 98%;
 
-    --card: 222 47% 15%;
-    --card-foreground: 210 40% 98%;
+    --card: 0 0% 20%;
+    --card-foreground: 0 0% 98%;
 
-    --popover: 222 47% 15%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 0 0% 20%;
+    --popover-foreground: 0 0% 98%;
 
-    --primary: 0 84% 54%;
+    --primary: 355 73% 50%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 38 92% 50%;
+    --secondary: 42 100% 52%;
     --secondary-foreground: 0 0% 13%;
 
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
+    --muted: 0 0% 25%;
+    --muted-foreground: 0 0% 65%;
 
-    --accent: 0 74% 42%;
+    --accent: 355 73% 40%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 0 0% 98%;
 
-    --border: 217 33% 17%;
-    --input: 217 33% 17%;
-    --ring: 0 84% 54%;
+    --border: 0 0% 25%;
+    --input: 0 0% 25%;
+    --ring: 355 73% 45%;
     
-    --sidebar-background: 222 47% 11%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 0 84% 54%;
+    --sidebar-background: 0 0% 13%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 355 73% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 38 92% 50%;
+    --sidebar-accent: 42 100% 52%;
     --sidebar-accent-foreground: 0 0% 13%;
-    --sidebar-border: 217 33% 17%;
-    --sidebar-ring: 38 92% 50%;
+    --sidebar-border: 0 0% 25%;
+    --sidebar-ring: 42 100% 52%;
   }
 }
 
