@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export const ModernYoutubeSection = () => {
+  const { t, i18n } = useTranslation();
   const videos = [
     {
       id: "ODSfyJy8CAo",
-      title: "New Maobadi Krantikari Song",
-      subtitle: "Kasle bhanchh safal hudaina || Maila Lama",
+      title: t('videos.maobadiSongTitle', 'New Maobadi Krantikari Song'),
+      subtitle: t('videos.maobadiSongSubtitle', 'Kasle bhanchh safal hudaina || Maila Lama'),
       thumbnail: `https://img.youtube.com/vi/ODSfyJy8CAo/maxresdefault.jpg`
     },
     // {
@@ -34,12 +36,12 @@ export const ModernYoutubeSection = () => {
         <div className="text-center mb-10 xs:mb-14 sm:mb-20">
           <div className="inline-block mb-3 xs:mb-4">
             <div className="w-12 xs:w-16 sm:w-20 h-0.5 xs:h-1 bg-red-600 mx-auto mb-3 xs:mb-4"></div>
-            <h1 className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 xs:mb-5 sm:mb-6 bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
-              Featured Videos
+            <h1 className="text-3xl sm:text-4xl font-extrabold text-white mb-4 text-center">
+              {t('videos.featured', 'Featured Videos')}
             </h1>
           </div>
           <p className="text-gray-400 text-sm xs:text-base sm:text-lg lg:text-xl max-w-2xl mx-auto leading-relaxed px-2">
-            Watch our latest revolutionary content and stay updated with our movement
+            {t('videos.featuredDesc', 'Watch our latest revolutionary content and stay updated with our movement')}
           </p>
         </div>
 
@@ -117,7 +119,7 @@ export const ModernYoutubeSection = () => {
                   <svg className="w-4 xs:w-5 h-4 xs:h-5" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/>
                   </svg>
-                  Watch on YouTube
+                  {t('videos.watchOnYoutube', 'Watch on YouTube')}
                 </button>
               </div>
             </div>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -72,6 +73,8 @@ const LivePollResults: React.FC = () => {
     }
   };
 
+  const { t, i18n } = useTranslation();
+
   if (loading && !poll) {
     return (
       <div className="w-full">
@@ -93,6 +96,11 @@ const LivePollResults: React.FC = () => {
 
   return (
     <div className="w-full">
+      <div className="mb-4">
+        <h2 className="text-2xl md:text-3xl font-extrabold text-primary text-center mb-2">
+          {t('polls.electionResults', 'Election Results')}
+        </h2>
+      </div>
       <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow overflow-hidden">
         {/* Header */}
         <CardHeader className="bg-primary border-b border-primary/30 py-5 px-6">
@@ -102,7 +110,9 @@ const LivePollResults: React.FC = () => {
             </div>
             <div>
               <h2 className="text-xl md:text-2xl font-black text-white">{poll.title}</h2>
-              <p className="text-sm text-blue-100 mt-1">Live Poll Results • {totalVotes} total votes</p>
+              <p className="text-sm text-blue-100 mt-1">
+                {t('polls.liveResults', 'Live Poll Results')} • {totalVotes} {t('polls.totalVotes', 'total votes')}
+              </p>
             </div>
           </CardTitle>
         </CardHeader>
@@ -180,7 +190,7 @@ const LivePollResults: React.FC = () => {
           <div className="mt-6 pt-6 border-t border-gray-200 text-center">
             <p className="text-xs md:text-sm text-gray-600 flex items-center justify-center gap-2">
               <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-              Updates in real-time • Last updated just now
+              {t('polls.updatesRealtime', 'Updates in real-time')} • {t('polls.lastUpdated', 'Last updated just now')}
             </p>
           </div>
         </CardContent>

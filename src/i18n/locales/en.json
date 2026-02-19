@@ -1,4 +1,31 @@
-{
+  {
+    "candidates": {
+      "know": "Know Our Candidates",
+      "desc": "Discover detailed information about our political candidates and their vision for the future",
+      "total": "Total Candidates",
+      "parliamentary": "Parliamentary Candidates",
+      "provincial": "Provincial Candidates",
+      "filter": "Filter Candidates",
+      "searchPlaceholder": "Search by name...",
+      "allProvinces": "All Provinces",
+      "allDistricts": "All Districts"
+    },
+  "polls": {
+      "electionResults": "Election Results",
+    "participate": "Participate in Polls",
+    "seeCurrent": "See current polls and share your voice",
+    "liveResults": "Live Poll Results",
+    "totalVotes": "total votes",
+    "updatesRealtime": "Updates in real-time",
+    "lastUpdated": "Last updated just now"
+  },
+  "videos": {
+    "featured": "Featured Videos",
+    "featuredDesc": "Watch our latest revolutionary content and stay updated with our movement",
+    "maobadiSongTitle": "New Maobadi Krantikari Song",
+    "maobadiSongSubtitle": "Kasle bhanchh safal hudaina || Maila Lama",
+    "watchOnYoutube": "Watch on YouTube"
+  },
   "nav": {
     "home": "Home",
     "news": "News & Forum",
@@ -19,11 +46,17 @@
     "description": "Fighting for social justice, equality, and the rights of workers, farmers, and all working people of Nepal."
   },
   "home": {
+      "featuredPosts.subtitle": "Stay updated with the latest political developments, party news, and social initiatives.",
     "latestNews": "Latest News",
     "featuredPosts": "Featured Posts",
     "categories": "Categories",
     "readMore": "Read More",
-    "viewAll": "View All News"
+    "viewAll": "View All News",
+    "findCandidate": "Find Your Candidate",
+    "findCandidateDesc": "Search for candidates by name, constituency, or party. Select a candidate to view their details and profile.",
+    "knowCandidates": "Know Our Candidates",
+    "knowCandidatesDesc": "Discover detailed information about our political candidates and their vision for the future",
+    "viewAllCandidates": "View All Candidates"
   },
   "categories": {
     "technology": "Technology",

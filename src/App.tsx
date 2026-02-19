@@ -4,7 +4,9 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import './i18n';
 import Header from './components/Header';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import AOS from 'aos';
+import 'aos/dist/aos.css';
 import Footer from './components/Footer';
 import Home from './pages/Home';
 import News from './pages/News';
@@ -24,7 +26,7 @@ import CandidateFinder from './pages/CandidateFinder';
 import VoterEducationHub from './pages/VoterEducationHub';
 import DigitalCampaignCenter from './pages/DigitalCampaignCenter';
 import VolunteerRegistration from './pages/VolunteerRegistration';
-import { useEffect } from 'react';
+
 
 const queryClient = new QueryClient();
 
@@ -40,6 +42,22 @@ const ScrollToTop = () => {
 
 const App = () => {
   const [searchTerm, setSearchTerm] = useState('');
+
+  // Initialize AOS on mount
+  useEffect(() => {
+    AOS.init({
+      duration: 700,
+      once: true,
+      offset: 60,
+      easing: 'ease-in-out',
+    });
+  }, []);
+
+  useEffect(() => {
+    // Refresh AOS on route/page changes
+    AOS.refresh();
+  });
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>

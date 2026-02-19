@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import API from '@/lib/api';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { useTranslation } from 'react-i18next';
 
 interface PollSummary {
   _id: string;
@@ -31,6 +32,7 @@ const ActivePolls: React.FC = () => {
     }
   };
 
+  const { t } = useTranslation();
   if (loading) return null;
   if (!loading && polls.length === 0) return null;
 
@@ -38,8 +40,8 @@ const ActivePolls: React.FC = () => {
     <section className="py-8 bg-white">
       <div className="container">
         <div className="text-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">Participate in Polls</h2>
-          <p className="text-sm text-gray-600 mt-1">See current polls and share your voice</p>
+          <h2 className="text-2xl font-bold text-gray-900">{t('polls.participate', 'Participate in Polls')}</h2>
+          <p className="text-sm text-gray-600 mt-1">{t('polls.seeCurrent', 'See current polls and share your voice')}</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

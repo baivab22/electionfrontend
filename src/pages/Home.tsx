@@ -90,6 +90,7 @@ interface FeaturedCandidatesSectionProps {
 }
 
 const FeaturedCandidatesSection: React.FC<FeaturedCandidatesSectionProps> = ({ ageRange, setAgeRange }) => {
+  const { t } = useTranslation();
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -117,7 +118,7 @@ const FeaturedCandidatesSection: React.FC<FeaturedCandidatesSectionProps> = ({ a
       {/* Header is rendered globally in App.tsx */}
       <section className="py-12 xs:py-16 sm:py-24 bg-white">
         <div className="container mx-auto">
-          <h2 className="text-2xl xs:text-3xl sm:text-4xl font-bold text-gray-900 mb-6 text-center">Our Candidates</h2>
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-6 text-center">{t('home.ourCandidates', 'हाम्रा उम्मेदवारहरू')}</h2>
           {loading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 xs:gap-6">
               {[...Array(8)].map((_, idx) => (
@@ -367,7 +368,7 @@ const Home: React.FC<HomeProps> = ({ searchTerm, setSearchTerm }) => {
   return (
     <div className="min-h-screen">
       {/* Hero Section with Background Image - Full Screen Width */}
-      <section className="relative text-white overflow-hidden min-h-[60vh] flex items-center w-screen">
+      <section className="relative text-white overflow-hidden min-h-[60vh] flex items-center w-screen" data-aos="fade-up">
         <picture className="w-full h-full flex justify-center items-center">
           <source media="(max-width: 639px)" srcSet={mobileBannerImage} />
           <img
@@ -383,18 +384,18 @@ const Home: React.FC<HomeProps> = ({ searchTerm, setSearchTerm }) => {
       </section>
 
       {/* Modern Search UI with description */}
-      <section className="flex flex-col items-center mt-4 mb-2 px-4">
+      <section className="flex flex-col items-center mt-4 mb-2 px-4" data-aos="fade-up" data-aos-delay="100">
         <div className="mb-4 text-center">
-          <h3 className="text-2xl font-bold text-primary mb-2">Find Your Candidate</h3>
-          <p className="text-gray-600 text-base md:text-lg">Search for candidates by name, constituency, or party. Select a candidate to view their details and profile.</p>
+          <h3 className="text-3xl sm:text-4xl font-extrabold text-primary mb-2">{t('home.findCandidate', 'Find Your Candidate')}</h3>
+          <p className="text-gray-600 text-base md:text-lg">{t('home.findCandidateDesc', 'Search for candidates by name, constituency, or party. Select a candidate to view their details and profile.')}</p>
         </div>
         <div className="relative w-full max-w-xl">
           <input
             type="text"
             value={searchTerm}
             onChange={handleSearchChange}
-            placeholder="🔍 Type to search..."
-            className="w-full px-5 py-3 rounded-xl border border-primary/60 focus:border-accent focus:ring-2 focus:ring-accent/30 shadow-lg font-semibold text-gray-900 bg-white placeholder-gray-400 outline-none transition-all duration-200 text-lg"
+            placeholder="🔍 Search by candidate name"
+            className="w-full px-5 py-3 rounded-xl border border-primary/60 focus:border-primary focus:ring-0 shadow-lg font-semibold text-gray-900 bg-white placeholder-gray-400 outline-none transition-all duration-200 text-lg"
             style={{ minHeight: '3rem', maxWidth: '100%', fontSize: '1.1rem', fontWeight: 600 }}
             autoComplete="off"
           />
@@ -431,7 +432,9 @@ const Home: React.FC<HomeProps> = ({ searchTerm, setSearchTerm }) => {
       </section>
 
       {/* Featured Candidates Section */}
-      <FeaturedCandidatesSection ageRange={ageRange} setAgeRange={setAgeRange} />
+      <div data-aos="fade-up" data-aos-delay="200">
+        <FeaturedCandidatesSection ageRange={ageRange} setAgeRange={setAgeRange} />
+      </div>
 
       {/* Search Results Dropdown Example (if implemented) */}
       {/*
@@ -446,33 +449,35 @@ const Home: React.FC<HomeProps> = ({ searchTerm, setSearchTerm }) => {
       )}
       */}
 
-      {/* Live Poll Results */}
-      <section className="pb-8 bg-gradient-to-b from-white to-gray-50">
+
+      {/* Polls Section: Results and Participate side by side */}
+      <section className="py-8 bg-gradient-to-b from-white to-gray-50" data-aos="fade-up" data-aos-delay="300">
         <div className="container mx-auto">
-          <LivePollResults />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+            <div>
+              <ActivePolls />
+            </div>
+            <div>
+              <LivePollResults />
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* Active Polls (public) */}
-      <ActivePolls />
 
-
-      {/* CPN Hero Banner Section */}
-      <section className="relative bg-gradient-to-r from-primary via-primary/80 to-accent text-white py-8 overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute inset-0 bg-[linear-gradient(45deg,rgba(255,255,255,.05)_1px,transparent_1px)] bg-[length:20px_20px]"></div>
-        </div>
-        <div className="container mx-auto relative z-10">
+      {/* CPN Hero Banner Section (now plain background) */}
+      <section className="py-8 bg-white" data-aos="fade-up" data-aos-delay="400">
+        <div className="container mx-auto">
           <div className="text-center">
-            <h2 className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-2 xs:mb-4 sm:mb-6 leading-tight">
-              CPN - Building a Better Nepal
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-2 text-center">
+              {t('home.knowCandidates', 'Know Our Candidates')}
             </h2>
-            <p className="text-xs xs:text-sm sm:text-base md:text-xl lg:text-2xl text-primary/20 mb-4 xs:mb-6 sm:mb-8">
-              Meet our dedicated candidates committed to progress and prosperity
+            <p className="text-base sm:text-lg text-gray-600 mb-4 text-center">
+              {t('home.knowCandidatesDesc', 'Discover detailed information about our political candidates and their vision for the future')}
             </p>
             <Link to="/candidates">
-              <Button size="sm" className="bg-white text-primary hover:bg-primary/10 px-4 xs:px-6 sm:px-8 py-2 xs:py-3 sm:py-4 text-xs xs:text-sm sm:text-base font-semibold">
-                View All Candidates
+              <Button size="sm" className="bg-primary text-white hover:bg-primary/90 px-4 xs:px-6 sm:px-8 py-2 xs:py-3 sm:py-4 text-xs xs:text-sm sm:text-base font-semibold">
+                {t('home.viewAllCandidates', 'View All Candidates')}
                 <ArrowRight className="ml-1 xs:ml-2 w-3 xs:w-5" />
               </Button>
             </Link>
@@ -481,14 +486,14 @@ const Home: React.FC<HomeProps> = ({ searchTerm, setSearchTerm }) => {
       </section>
 
       {/* Featured Posts */}
-      <section className="py-8 bg-white">
+      <section className="py-8 bg-white" data-aos="fade-up" data-aos-delay="500">
         <div className="container mx-auto">
           <div className="text-center mb-8 xs:mb-12 sm:mb-16">
-            <h2 className="text-2xl xs:text-3xl sm:text-4xl font-bold text-gray-900 mb-2 xs:mb-4">
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-2 text-center">
               {t('home.featuredPosts', 'Featured Posts')}
             </h2>
             <div className="w-16 xs:w-24 h-1 bg-gradient-to-r from-blue-600 to-green-600 mx-auto rounded-full"></div>
-            <p className="text-gray-600 mt-2 xs:mt-4 mx-auto text-xs xs:text-sm sm:text-base">
+            <p className="text-base sm:text-lg text-gray-600 mt-2 mx-auto text-center">
               {t('home.featuredPosts.subtitle', 'Stay updated with the latest political developments, party news, and social initiatives.')}
             </p>
           </div>
@@ -559,7 +564,9 @@ const Home: React.FC<HomeProps> = ({ searchTerm, setSearchTerm }) => {
       </section>
 
 
-      <ModernYoutubeSection/>
+      <div data-aos="fade-up" data-aos-delay="600">
+        <ModernYoutubeSection/>
+      </div>
     </div>
   );
 };

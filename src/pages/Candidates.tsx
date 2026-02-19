@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { provincesAndDistricts } from '../../constants/provincesAndDistricts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,6 +12,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import CandidateCard from '@/components/CandidateCard';
+import { useTranslation } from 'react-i18next';
 import { Search, Users, Target, Award, ChevronLeft, ChevronRight } from 'lucide-react';
 
 // Add range slider styling
@@ -87,6 +89,7 @@ interface Candidate {
 }
 
 const CandidatesPage: React.FC = () => {
+    const { t } = useTranslation();
   // Get actual age from candidate with proper priority
   const getCandidateAge = (candidate: any): number | null => {
     // Priority 1: Use rawSource.AGE_YR if available
@@ -152,6 +155,9 @@ const CandidatesPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPosition, setSelectedPosition] = useState('');
   const [selectedConstituency, setSelectedConstituency] = useState('');
+  const [selectedDistrict, setSelectedDistrict] = useState('');
+  const [selectedProvince, setSelectedProvince] = useState('');
+    const [selectedStateName, setSelectedStateName] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 12;
 
@@ -205,6 +211,14 @@ const CandidatesPage: React.FC = () => {
         return name.includes(term) || nameNp.includes(term);
       });
     }
+    // Province filter
+        if (selectedProvince && selectedProvince !== 'all') {
+          filtered = filtered.filter(c => c.StateName === selectedProvince);
+    }
+    // District filter (after province)
+    if (selectedDistrict && selectedDistrict !== 'all') {
+      filtered = filtered.filter(c => c.personalInfo?.district === selectedDistrict || c.politicalInfo?.district === selectedDistrict || c.DistrictName === selectedDistrict);
+    }
     // Age filter
     if (minAgeFilter !== null || maxAgeFilter !== null) {
       filtered = filtered.filter(c => {
@@ -216,7 +230,7 @@ const CandidatesPage: React.FC = () => {
       });
     }
     return filtered;
-  }, [candidates, searchTerm, minAgeFilter, maxAgeFilter]);
+  }, [candidates, searchTerm, selectedPosition, selectedConstituency, selectedDistrict, selectedProvince, minAgeFilter, maxAgeFilter]);
   const totalPages = Math.ceil(filteredCandidates.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedCandidates = filteredCandidates.slice(startIndex, startIndex + itemsPerPage);
@@ -224,6 +238,27 @@ const CandidatesPage: React.FC = () => {
   const constituencies = [...new Set(
     candidates.map(c => c.personalInfo?.constituency || c.politicalInfo?.constituency || 'Unknown')
       .filter(Boolean)
+  )];
+  // Province options from constants
+      const provinceOptions = useMemo(() => {
+        return [...new Set(candidates.map(c => c.StateName).filter(Boolean))];
+      }, [candidates]);
+
+  // District options depend on selectedProvince
+      const districtOptions = useMemo(() => {
+        if (!selectedProvince || selectedProvince === 'all') {
+          // Show all districts if no province selected
+          return [...new Set(candidates.map(c => c.personalInfo?.district || c.politicalInfo?.district || c.DistrictName).filter(Boolean))];
+        }
+        // Find all districts for candidates in the selected province
+        return [...new Set(
+          candidates
+            .filter(c => c.StateName === selectedProvince)
+            .map(c => c.personalInfo?.district || c.politicalInfo?.district || c.DistrictName)
+        )].filter(Boolean);
+      }, [selectedProvince, candidates]);
+  const stateNames = [...new Set(
+    candidates.map(c => c.StateName || '').filter(Boolean)
   )];
 
   // Chart data: age distribution buckets
@@ -266,19 +301,19 @@ const CandidatesPage: React.FC = () => {
 
   const stats = [
     {
-      label: 'Total Candidates',
+      label: t('candidates.total', 'Total Candidates'),
       value: candidates.length,
       icon: Users,
       color: 'bg-blue-100 text-blue-600'
     },
     {
-      label: 'Parliamentary Candidates',
+      label: t('candidates.parliamentary', 'Parliamentary Candidates'),
       value: partyFilteredCandidates.filter(c => c.personalInfo.position === 'Parliamentary').length,
       icon: Target,
       color: 'bg-cyan-100 text-cyan-600'
     },
     {
-      label: 'Provincial Candidates',
+      label: t('candidates.provincial', 'Provincial Candidates'),
       value: partyFilteredCandidates.filter(c => c.personalInfo.position === 'Provincial').length,
       icon: Award,
       color: 'bg-emerald-100 text-emerald-600'
@@ -290,13 +325,13 @@ const CandidatesPage: React.FC = () => {
   return (
     <>
       <style>{rangeSliderStyles}</style>
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      <div className="min-h-screen bg-gray-50">
       {/* Header Section */}
-      <div className="bg-gradient-to-r from-primary via-primary/80 to-secondary text-white py-8 xs:py-12 sm:py-16 px-2 xs:px-4 sm:px-6 lg:px-8">
+      <div className="bg-primary text-white py-8 xs:py-12 sm:py-16 px-2 xs:px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto text-center">
-          <h1 className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl font-bold mb-2 xs:mb-4">Know Our Candidates</h1>
+          <h1 className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl font-bold mb-2 xs:mb-4">{t('candidates.know', 'Know Our Candidates')}</h1>
           <p className="text-xs xs:text-sm sm:text-base lg:text-lg text-white/90 px-2">
-            Discover detailed information about our political candidates and their vision for the future
+            {t('candidates.desc', 'Discover detailed information about our political candidates and their vision for the future')}
           </p>
         </div>
       </div>
@@ -329,59 +364,57 @@ const CandidatesPage: React.FC = () => {
       <div className="max-w-7xl mx-auto px-2 xs:px-4 sm:px-6 lg:px-8 mb-6 xs:mb-8">
         <Card className="border-0 shadow-lg">
           <CardHeader className="pb-3 xs:pb-4">
-            <CardTitle className="text-sm xs:text-base sm:text-lg text-foreground">Filter Candidates</CardTitle>
+            <CardTitle className="text-sm xs:text-base sm:text-lg text-foreground">{t('candidates.filter', 'Filter Candidates')}</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 xs:gap-3 sm:gap-4">
-              {/* Search */}
-              <div className="relative col-span-1 sm:col-span-2 lg:col-span-1">
-                <Search className="absolute left-2 xs:left-3 top-1/2 -translate-y-1/2 w-4 xs:w-5 h-4 xs:h-5 text-muted-foreground" />
-                <Input
-                  placeholder="Search by name..."
-                  className="pl-8 xs:pl-10 border-gray-200 focus:border-primary text-xs xs:text-sm h-9 xs:h-10"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2 xs:gap-3 sm:gap-4">
+                            {/* Search */}
+                            <div className="relative col-span-1 sm:col-span-2 lg:col-span-1">
+                              <Search className="absolute left-2 xs:left-3 top-1/2 -translate-y-1/2 w-4 xs:w-5 h-4 xs:h-5 text-muted-foreground" />
+                              <Input
+                                placeholder={t('candidates.searchPlaceholder', 'Search by name...')}
+                                className="pl-8 xs:pl-10 border-gray-200 focus:border-primary text-xs xs:text-sm h-9 xs:h-10"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                              />
+                            </div>
 
-              {/* Position Filter */}
-              <Select value={selectedPosition || "all"} onValueChange={setSelectedPosition}>
+              {/* Province Filter */}
+              <Select value={selectedProvince || "all"} onValueChange={value => {
+                setSelectedProvince(value === "all" ? '' : value);
+                setSelectedDistrict(''); // Reset district when province changes
+              }}>
                 <SelectTrigger className="border-gray-200 focus:border-primary text-xs xs:text-sm h-9 xs:h-10">
-                  <SelectValue placeholder="Select Position" />
+                  <SelectValue placeholder="Select Province" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Positions</SelectItem>
-                  {positions.map(pos => (
-                    <SelectItem key={pos} value={pos}>
-                      {pos}
-                    </SelectItem>
+                  <SelectItem value="all">{t('candidates.allProvinces', 'All Provinces')}</SelectItem>
+                  {provinceOptions.map(province => (
+                    <SelectItem key={province} value={province}>{province}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
 
-              {/* Constituency Filter */}
-              <Select value={selectedConstituency || "all"} onValueChange={(value) => setSelectedConstituency(value === "all" ? "" : value)}>
+              {/* District Filter (depends on province) */}
+              <Select value={selectedDistrict || "all"} onValueChange={value => setSelectedDistrict(value === "all" ? '' : value)}>
                 <SelectTrigger className="border-gray-200 focus:border-primary text-xs xs:text-sm h-9 xs:h-10">
-                  <SelectValue placeholder="Select Constituency" />
+                  <SelectValue placeholder={selectedProvince ? "Select District" : "Select Province first"} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Constituencies</SelectItem>
-                  {constituencies.map(constituency => (
-                    <SelectItem key={constituency} value={constituency}>
-                      {constituency}
-                    </SelectItem>
+                  <SelectItem value="all">{t('candidates.allDistricts', 'All Districts')}</SelectItem>
+                  {districtOptions.map(district => (
+                    <SelectItem key={district} value={district}>{district}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-
               {/* Clear Filters */}
               {hasActiveFilters && (
                 <Button
                   variant="outline"
                   onClick={() => {
                     setSearchTerm('');
-                    setSelectedPosition('all');
-                    setSelectedConstituency('');
+                    setSelectedDistrict('');
+                    setSelectedProvince('');
                     setMinAgeFilter(null);
                     setMaxAgeFilter(null);
                   }}
