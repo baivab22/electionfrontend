@@ -6,7 +6,7 @@ import axios, { AxiosResponse, AxiosError } from 'axios';
 // ============================================================
 const CLOUDINARY_CLOUD_NAME = 'dpipulbgm';
 const CLOUDINARY_UPLOAD_PRESET = 'tu_reports';
-const CLOUDINARY_UPLOAD_URL = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/upload`;
+const CLOUDINARY_UPLOAD_URL = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`;
 
 export const uploadToCloudinary = async (
   file: File,
@@ -643,7 +643,23 @@ export const postsAPI = {
 
   createPost: async (postData: CreatePostData): Promise<PostResponse> => {
     try {
-      const response: AxiosResponse<PostResponse> = await api.post('/posts', postData);
+      // If image is a file (not a URL), use FormData
+      let data: any = postData;
+      let headers = {};
+      if (postData.image && typeof postData.image !== 'string') {
+        data = new FormData();
+        Object.entries(postData).forEach(([key, value]) => {
+          if (key === 'tags' && Array.isArray(value)) {
+            data.append(key, value.join(','));
+          } else if (key === 'image' && value) {
+            data.append('image', value);
+          } else {
+            data.append(key, value ?? '');
+          }
+        });
+        headers = { 'Content-Type': 'multipart/form-data' };
+      }
+      const response: AxiosResponse<PostResponse> = await api.post('/posts', data, { headers });
       return response.data;
     } catch (error) {
       throw handleApiError(error);

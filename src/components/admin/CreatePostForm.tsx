@@ -1,9 +1,27 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { Upload, Image, Eye, Save, X, Type, FileText } from 'lucide-react';
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
+import { uploadToCloudinary } from '../../lib/api';
+import { useToast } from '@/hooks/use-toast';
 
-const CreatePostForm = ({ onSubmit, initialData, isEdit = false }) => {
+
+import API from '../../lib/api';
+
+interface CreatePostFormProps {
+  onSubmit?: (data: any) => void;
+  onCancel?: () => void;
+  initialData?: any;
+  isEdit?: boolean;
+}
+
+const CreatePostForm: React.FC<CreatePostFormProps> = ({ onSubmit, onCancel, initialData, isEdit = false }) => {
+  // Use a unique key for the form to force remount on post switch
+  // Use a stable key for create mode to avoid remounting on every render
+  const formKey = isEdit
+    ? `edit-${initialData?.id || initialData?._id || ''}`
+    : 'create';
   const [formData, setFormData] = useState({
     title_en: '',
     title_np: '',
@@ -19,7 +37,8 @@ const CreatePostForm = ({ onSubmit, initialData, isEdit = false }) => {
   });
   const [imagePreview, setImagePreview] = useState('');
   const [isUploading, setIsUploading] = useState(false);
-  const [selectedFile, setSelectedFile] = useState(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const { toast } = useToast();
 
   const categories = [
     'technology',
@@ -34,13 +53,15 @@ const CreatePostForm = ({ onSubmit, initialData, isEdit = false }) => {
 
   // Initialize form with initialData when in edit mode
   useEffect(() => {
+    // Always reset form state when formKey changes (switching posts or mode)
     if (isEdit && initialData) {
+      // Support both API shapes: title_en/content_en and title/content
       setFormData({
-        title_en: initialData.title_en || '',
+        title_en: initialData.title_en || initialData.title || '',
         title_np: initialData.title_np || '',
-        content_en: initialData.content_en || '',
+        content_en: initialData.content_en || initialData.content || '',
         content_np: initialData.content_np || '',
-        excerpt_en: initialData.excerpt_en || '',
+        excerpt_en: initialData.excerpt_en || initialData.excerpt || '',
         excerpt_np: initialData.excerpt_np || '',
         category: initialData.category || '',
         image: initialData.image || '',
@@ -48,13 +69,11 @@ const CreatePostForm = ({ onSubmit, initialData, isEdit = false }) => {
         featured: initialData.featured || false,
         published: initialData.published !== undefined ? initialData.published : true
       });
-
       // Set image preview if image exists
       if (initialData.image) {
         if (initialData.image.startsWith('http') || initialData.image.startsWith('data:')) {
           setImagePreview(initialData.image);
         } else {
-          // For stored images, construct the full URL
           const API_ASSET_URL = (() => {
             const vite = import.meta.env.VITE_API_URL as string | undefined;
             if (vite) return `${vite.replace(/\/+$/g, '')}/`;
@@ -65,8 +84,27 @@ const CreatePostForm = ({ onSubmit, initialData, isEdit = false }) => {
           setImagePreview(`${API_ASSET_URL}uploads/posts/${initialData.image}`);
         }
       }
+    } else if (!isEdit) {
+      setFormData({
+        title_en: '',
+        title_np: '',
+        content_en: '',
+        content_np: '',
+        excerpt_en: '',
+        excerpt_np: '',
+        category: '',
+        image: '',
+        tags: '',
+        featured: false,
+        published: true
+      });
+      setImagePreview('');
     }
-  }, [isEdit, initialData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formKey]);
+
+  // Force ReactQuill to update when switching posts by using a key
+  const quillKey = `${isEdit ? 'edit' : 'create'}-${initialData?.id || initialData?._id || ''}`;
 
   // Quill modules configuration
   const modules = useMemo(() => ({
@@ -100,27 +138,16 @@ const CreatePostForm = ({ onSubmit, initialData, isEdit = false }) => {
     'link', 'image', 'video'
   ];
 
-  const handleInputChange = (field, value) => {
+  const handleInputChange = (field: string, value: any) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
     }));
   };
 
-  const convertToBase64 = (file) => {
-    return new Promise((resolve, reject) => {
-      const fileReader = new FileReader();
-      fileReader.readAsDataURL(file);
-      fileReader.onload = () => {
-        resolve(fileReader.result);
-      };
-      fileReader.onerror = (error) => {
-        reject(error);
-      };
-    });
-  };
+  // Removed base64 logic: all uploads go to Cloudinary, only URL is used.
 
-  const handleImageUpload = async (event) => {
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -137,14 +164,14 @@ const CreatePostForm = ({ onSubmit, initialData, isEdit = false }) => {
 
     setIsUploading(true);
     setSelectedFile(file);
-    
     try {
-      const base64String = await convertToBase64(file);
-      setImagePreview(base64String);
-      handleInputChange('image', base64String);
+      // Upload to Cloudinary and get URL
+      const imageUrl = await uploadToCloudinary(file, 'image');
+      setImagePreview(imageUrl);
+      handleInputChange('image', imageUrl);
     } catch (error) {
-      console.error('Failed to convert image to base64:', error);
-      alert('Failed to process image');
+      console.error('Failed to upload image to Cloudinary:', error);
+      alert('Failed to upload image');
       setImagePreview('');
       setSelectedFile(null);
     } finally {
@@ -152,24 +179,22 @@ const CreatePostForm = ({ onSubmit, initialData, isEdit = false }) => {
     }
   };
 
-  const handleImageUrlChange = (value) => {
+  const handleImageUrlChange = (value: string) => {
     handleInputChange('image', value);
     if (value && !selectedFile) {
       setImagePreview(value);
     }
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (!formData.title_en || !formData.content_en || !formData.category) {
-      alert('Please fill in all required fields');
+      toast({ title: 'Error', description: 'Please fill in all required fields', variant: 'destructive' });
       return;
     }
 
     try {
       setIsUploading(true);
-
       // Prepare the data for submission
       const submitData = {
         title_en: formData.title_en,
@@ -185,67 +210,39 @@ const CreatePostForm = ({ onSubmit, initialData, isEdit = false }) => {
         image: formData.image
       };
 
-      // If we have a new file selected, we'll handle it in FormData
-      // Otherwise, we'll just submit the image URL/base64
-      if (selectedFile) {
-        const submitFormData = new FormData();
-        
-        // Append all fields to FormData
-        Object.keys(submitData).forEach(key => {
-          if (key === 'tags') {
-            submitFormData.append(key, JSON.stringify(submitData[key]));
-          } else if (key !== 'image') {
-            submitFormData.append(key, submitData[key]);
-          }
-        });
-
-        submitFormData.append('image', selectedFile);
-
-        const response = await fetch(`https://ictforumbackend-5.onrender.com/api/posts${isEdit ? `/${initialData.id}` : ''}`, {
-          method: isEdit ? 'PUT' : 'POST',
-          body: submitFormData,
-        });
-
-        const result = await response.json();
-        
-        if (result.success) {
-          if (onSubmit) {
-            onSubmit(result.data);
-          }
-          if (!isEdit) {
-            resetForm();
-          }
-          alert(isEdit ? 'Post updated successfully!' : 'Post created successfully!');
-        } else {
-          throw new Error(result.message || `Failed to ${isEdit ? 'update' : 'create'} post`);
-        }
-      } else {
-        // No new file, submit as JSON
-        const response = await fetch(`https://ictforumbackend-5.onrender.com/api/api/posts${isEdit ? `/${initialData.id}` : ''}`, {
-          method: isEdit ? 'PUT' : 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(submitData),
-        });
-
-        const result = await response.json();
-        
-        if (result.success) {
-          if (onSubmit) {
-            onSubmit(result.data);
-          }
-          if (!isEdit) {
-            resetForm();
-          }
-          alert(isEdit ? 'Post updated successfully!' : 'Post created successfully!');
-        } else {
-          throw new Error(result.message || `Failed to ${isEdit ? 'update' : 'create'} post`);
-        }
+      // If a file is selected but not yet uploaded (should not happen), upload it now
+      if (selectedFile && (!formData.image || !formData.image.startsWith('http'))) {
+        const imageUrl = await uploadToCloudinary(selectedFile, 'image');
+        submitData.image = imageUrl;
       }
-    } catch (error) {
+
+      let result;
+      if (isEdit && initialData && initialData.id) {
+        // Use API abstraction for update
+        result = await API.posts.updatePost(initialData.id, submitData);
+      } else {
+        // Use API abstraction for create
+        result = await API.posts.createPost(submitData);
+      }
+
+      if (onSubmit) {
+        onSubmit(result.data);
+      }
+      if (!isEdit) {
+        resetForm();
+      }
+      toast({
+        title: isEdit ? 'Post updated!' : 'Post created!',
+        description: isEdit ? 'The post was updated successfully.' : 'Your post was added successfully.',
+      });
+    } catch (error: any) {
       console.error('Submit failed:', error);
-      alert(`Failed to ${isEdit ? 'update' : 'create'} post: ${error.message}`);
+      let message = error?.message || 'Unknown error';
+      toast({
+        title: 'Error',
+        description: `Failed to ${isEdit ? 'update' : 'create'} post: ${message}`,
+        variant: 'destructive',
+      });
     } finally {
       setIsUploading(false);
     }
@@ -276,7 +273,7 @@ const CreatePostForm = ({ onSubmit, initialData, isEdit = false }) => {
   };
 
   return (
-    <div className="max-w-6xl mx-auto bg-gradient-to-br from-gray-50 to-blue-50 p-8">
+    <form key={formKey} className="max-w-6xl mx-auto bg-gradient-to-br from-gray-50 to-blue-50 p-8" onSubmit={handleSubmit}>
       <style>{`
         .quill-editor-wrapper {
           background: white;
@@ -516,6 +513,7 @@ const CreatePostForm = ({ onSubmit, initialData, isEdit = false }) => {
               </label>
               <div className="quill-editor-wrapper">
                 <ReactQuill
+                  key={quillKey}
                   theme="snow"
                   value={formData.content_en}
                   onChange={(value) => handleInputChange('content_en', value)}
@@ -621,20 +619,14 @@ const CreatePostForm = ({ onSubmit, initialData, isEdit = false }) => {
           <button 
             type="button" 
             className="px-8 py-4 border-2 border-gray-300 rounded-xl text-gray-700 bg-white hover:bg-gray-50 font-semibold focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-all shadow-lg hover:shadow-xl"
+            onClick={onCancel}
+            disabled={isUploading}
           >
             <X className="mr-2 inline" size={18} />
             Cancel
           </button>
-          {/* <button 
-            type="button"
-            className="px-8 py-4 border-2 border-blue-500 text-blue-600 bg-white hover:bg-blue-50 rounded-xl font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all shadow-lg hover:shadow-xl"
-          >
-            <Eye className="mr-2 inline" size={18} />
-            Preview
-          </button> */}
           <button 
-            type="button"
-            onClick={handleSubmit}
+            type="submit"
             disabled={isUploading}
             className={`bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:via-indigo-700 hover:to-purple-700 px-10 py-4 text-white rounded-xl font-bold shadow-xl hover:shadow-2xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transform hover:scale-105 ${
               isUploading ? 'opacity-50 cursor-not-allowed' : ''
@@ -645,7 +637,7 @@ const CreatePostForm = ({ onSubmit, initialData, isEdit = false }) => {
           </button>
         </div>
       </div>
-    </div>
+    </form>
   );
 };
 

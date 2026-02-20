@@ -53,7 +53,7 @@ const EditPostForm: React.FC<EditPostFormProps> = ({ post, onSubmit, onCancel })
         excerpt_np: post.excerpt_np || '',
         category: post.category || '',
         image: post.image || '',
-        tags: post.tags ? post.tags.join(', ') : '',
+        tags: Array.isArray(post.tags) ? post.tags.join(', ') : post.tags || '',
         featured: post.featured || false,
         published: post.published !== false
       });
@@ -94,13 +94,14 @@ const EditPostForm: React.FC<EditPostFormProps> = ({ post, onSubmit, onCancel })
             <CardContent className="space-y-4">
               <div>
                 <Label htmlFor="title_en">Title (English) *</Label>
-                <Input
+                {/* <Input
                   id="title_en"
-                  value={formData.title_en}
+                  // value={formData.title_en}
+                  value="myname"
                   onChange={(e) => handleInputChange('title_en', e.target.value)}
                   placeholder="Enter English title"
                   required
-                />
+                /> */}
               </div>
 
               <div>

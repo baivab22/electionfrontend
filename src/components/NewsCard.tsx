@@ -145,17 +145,16 @@ const NewsCard: React.FC<NewsCardProps> = ({
 
 const getCategoryColor = (cat: string) => {
   const colors: { [key: string]: string } = {
-    technology: 'bg-blue-100 text-blue-800 border-blue-300',
-    digitalTransformation: 'bg-emerald-100 text-emerald-800 border-emerald-300',
-    socialJustice: 'bg-violet-100 text-violet-800 border-violet-300',
-    events: 'bg-orange-100 text-orange-800 border-orange-300',
-    innovation: 'bg-teal-100 text-teal-800 border-teal-300',
-    policy: 'bg-indigo-100 text-indigo-800 border-indigo-300',
-    education: 'bg-rose-100 text-rose-800 border-rose-300',
-    startups: 'bg-amber-100 text-amber-800 border-amber-300',
+    technology: 'bg-gradient-to-r from-primary to-accent text-white',
+    digitalTransformation: 'bg-gradient-to-r from-accent to-secondary text-white',
+    socialJustice: 'bg-gradient-to-r from-primary/90 to-accent/90 text-white',
+    events: 'bg-gradient-to-r from-secondary to-accent text-white',
+    innovation: 'bg-gradient-to-r from-accent to-primary text-white',
+    policy: 'bg-gradient-to-r from-secondary/90 to-primary/90 text-white',
+    education: 'bg-gradient-to-r from-primary to-secondary text-white',
+    startups: 'bg-gradient-to-r from-yellow-500 to-yellow-600 text-white',
   };
-
-  return colors[cat] || 'bg-gray-100 text-gray-800 border-gray-300';
+  return colors[cat] || 'bg-gradient-to-r from-gray-500 to-gray-600 text-white';
 };
 
   const calculateReadingTime = (text: string) => {
@@ -208,7 +207,7 @@ const getCategoryColor = (cat: string) => {
       featured 
         ? 'border-amber-200 bg-gradient-to-br from-amber-50/50 to-white shadow-lg' 
         : 'border-gray-100 bg-white'
-    } rounded-2xl relative h-full flex flex-col`}>
+    } rounded-2xl relative h-full flex flex-col`} style={{padding: 0}}>
       
       {/* Social Media Plugin */}
       {showSocialPlugin && (
@@ -371,9 +370,9 @@ const getCategoryColor = (cat: string) => {
       </CardHeader>
 
       {/* Content Area */}
-      <CardContent className="p-2 xs:p-3 sm:p-5 flex-1 flex flex-col">
+      <CardContent className="p-4 xs:p-6 sm:p-8 flex-1 flex flex-col">
         {/* Meta Info */}
-        <div className="flex items-center gap-2 xs:gap-3 text-[10px] xs:text-xs text-gray-500 mb-2 xs:mb-3">
+        <div className="flex items-center gap-2 xs:gap-3 text-[10px] xs:text-xs text-gray-500 mb-3 xs:mb-4">
           <div className="flex items-center gap-1 xs:gap-1.5">
             <Calendar size={12} className="xs:w-3.5 xs:h-3.5" />
             <span>{formatDate(publishedAt)}</span>
@@ -386,14 +385,14 @@ const getCategoryColor = (cat: string) => {
         </div>
 
         {/* Title */}
-        <Link to={`/post/${id}`} className="mb-2 xs:mb-3 group/title">
+        <Link to={`/post/${id}`} className="mb-3 xs:mb-4 group/title">
           <h3 className="text-sm xs:text-base sm:text-lg md:text-xl font-bold text-gray-900 leading-tight line-clamp-2 group-hover/title:text-blue-600 transition-colors duration-300 mb-1 xs:mb-2">
             {title}
           </h3>
         </Link>
 
         {/* Stats Bar */}
-        <div className="flex items-center justify-between pt-2 xs:pt-3 border-t border-gray-100 mt-auto">
+        <div className="flex items-center justify-between pt-3 xs:pt-4 border-t border-gray-100 mt-auto">
           <div className="flex items-center gap-2 xs:gap-4 text-[10px] xs:text-xs text-gray-500">
             <span className="flex items-center gap-1 xs:gap-1.5">
               <Eye size={12} className="xs:w-3.5 xs:h-3.5" />
@@ -408,7 +407,7 @@ const getCategoryColor = (cat: string) => {
       </CardContent>
 
       {/* Footer */}
-      <CardFooter className="px-2 xs:px-3 sm:px-5 pb-3 xs:pb-4 sm:pb-5 pt-0 flex items-center justify-between gap-2">
+      <CardFooter className="px-4 xs:px-6 sm:px-8 pb-4 xs:pb-6 sm:pb-8 pt-0 flex items-center justify-between gap-2">
         {/* Author Info */}
         <div className="flex items-center gap-1.5 xs:gap-2 sm:gap-3 min-w-0">
           <div className="w-7 xs:w-8 sm:w-10 h-7 xs:h-8 sm:h-10 bg-gradient-to-br from-primary via-accent to-secondary rounded-full flex items-center justify-center shadow-sm flex-shrink-0">

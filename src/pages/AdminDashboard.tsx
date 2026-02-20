@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -540,28 +540,25 @@ const AdminDashboard: React.FC = () => {
   };
 
   const handleCreatePost = async (postData: CreatePostData) => {
+
+    console.log("Creating post with data:", postData);
     try {
-      console.log("Creating post with data:", postData);
       const response = await API.posts.createPost(postData);
-      
       setPosts(prevPosts => [response.data, ...prevPosts]);
-      
       setStats(prevStats => ({
         ...prevStats,
         totalPosts: prevStats.totalPosts + 1,
         featuredPosts: postData.featured ? prevStats.featuredPosts + 1 : prevStats.featuredPosts
       }));
-      
-      setIsCreateDialogOpen(false);
-      
       toast({
         title: "Success",
         description: "Post created successfully!",
       });
-      
+      setIsCreateDialogOpen(false); // Move after toast, before fetchPosts
       // Refresh posts to get updated data
       await fetchPosts(currentPage);
     } catch (error) {
+      setIsCreateDialogOpen(false); // Also close on error to avoid stuck dialog
       const errorMessage = API.utils.formatErrorMessage(error);
       toast({
         title: "Error",
@@ -1359,19 +1356,19 @@ const AdminDashboard: React.FC = () => {
             </CardContent>
           </Card>
 
-          <Card className="border-0 shadow-xl bg-gradient-to-br from-purple-500 to-purple-600 text-white hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
+          <Card className="border-0 shadow-xl bg-gradient-to-br from-accent to-primary text-primary-foreground hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-purple-100 text-sm font-medium">Pending Applications</p>
+                  <p className="text-primary-foreground/80 text-sm font-medium">Pending Applications</p>
                   {isStatsLoading ? (
                     <Loader2 className="h-8 w-8 animate-spin" />
                   ) : (
                     <p className="text-4xl font-bold">{stats.membershipStats?.pending || 0}</p>
                   )}
-                  <p className="text-purple-200 text-xs mt-1">Awaiting review</p>
+                  <p className="text-primary-foreground/60 text-xs mt-1">Awaiting review</p>
                 </div>
-                <div className="bg-white/20 p-4 rounded-xl">
+                <div className="bg-accent/10 p-4 rounded-xl">
                   <UserCheck size={28} />
                 </div>
               </div>
@@ -3877,12 +3874,16 @@ const AdminDashboard: React.FC = () => {
                 <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">
                   Edit Post
                 </DialogTitle>
+                <DialogDescription>
+                  Update the post content, image, and settings. All fields are required unless marked optional.
+                </DialogDescription>
               </DialogHeader>
               <CreatePostForm 
                 onSubmit={handleEditPost}
                 onCancel={handleCloseEditDialog}
                 initialData={editingPost}
                 isEdit={true}
+                key={editingPost?.id || editingPost?._id || ''}
               />
             </DialogContent>
           </Dialog>

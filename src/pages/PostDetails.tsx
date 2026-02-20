@@ -229,16 +229,16 @@ const PostDetails: React.FC = () => {
 
   const getCategoryColor = (cat: string): string => {
     const colors: { [key: string]: string } = {
-      technology: 'bg-blue-100 text-blue-800 border-blue-200',
-      digitalTransformation: 'bg-green-100 text-green-800 border-green-200',
-      socialJustice: 'bg-purple-100 text-purple-800 border-purple-200',
-      events: 'bg-orange-100 text-orange-800 border-orange-200',
-      innovation: 'bg-teal-100 text-teal-800 border-teal-200',
-      policy: 'bg-indigo-100 text-indigo-800 border-indigo-200',
-      education: 'bg-pink-100 text-pink-800 border-pink-200',
-      startups: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+      technology: 'bg-gradient-to-r from-primary to-accent text-white',
+      digitalTransformation: 'bg-gradient-to-r from-accent to-secondary text-white',
+      socialJustice: 'bg-gradient-to-r from-primary/90 to-accent/90 text-white',
+      events: 'bg-gradient-to-r from-secondary to-accent text-white',
+      innovation: 'bg-gradient-to-r from-accent to-primary text-white',
+      policy: 'bg-gradient-to-r from-secondary/90 to-primary/90 text-white',
+      education: 'bg-gradient-to-r from-primary to-secondary text-white',
+      startups: 'bg-gradient-to-r from-yellow-500 to-yellow-600 text-white',
     };
-    return colors[cat] || 'bg-gray-100 text-gray-800 border-gray-200';
+    return colors[cat] || 'bg-gradient-to-r from-gray-500 to-gray-600 text-white';
   };
 
   const postUrl = window.location.href;
@@ -467,9 +467,9 @@ const PostDetails: React.FC = () => {
         </div>
 
         {/* Article Header */}
-        <section className="py-6 xs:py-8 sm:py-12 bg-white">
-          <div className="container mx-auto px-3 xs:px-4">
-            <div className=" mx-auto">
+        <section className="py-10 xs:py-14 sm:py-20 bg-white">
+          <div className="container mx-auto px-4 xs:px-8">
+            <div className="max-w-3xl mx-auto">
               <div className="mb-4 xs:mb-6">
                 <Badge className={`${getCategoryColor(post.category)} border mb-3 xs:mb-4 text-xs xs:text-sm`}>
                   {t(`categories.${post.category}`)}
@@ -525,13 +525,13 @@ const PostDetails: React.FC = () => {
 
         {/* Featured Image */}
         {post.image && (
-          <section className="pb-6 xs:pb-8 sm:pb-12 bg-white">
-            <div className="container mx-auto px-3 xs:px-4">
-              <div className=" mx-auto">
+          <section className="pb-10 xs:pb-14 sm:pb-20 bg-white">
+            <div className="container mx-auto px-4 xs:px-8">
+              <div className="max-w-3xl mx-auto">
                 <img
                   src={getImageUrl()}
                   alt={post.title}
-                  className="w-full h-48 xs:h-56 sm:h-72 md:h-80 lg:h-96 object-cover rounded-lg shadow-xl"
+                  className="w-full h-56 xs:h-72 sm:h-96 md:h-[28rem] lg:h-[32rem] object-cover rounded-xl shadow-2xl border border-gray-200"
                   onError={(e) => {
                     (e.target as HTMLImageElement).style.display = 'none';
                   }}
@@ -542,9 +542,9 @@ const PostDetails: React.FC = () => {
         )}
 
         {/* Article Content */}
-        <section className="pb-8 xs:pb-12 sm:pb-16 bg-white">
-          <div className="container mx-auto px-3 xs:px-4">
-            <div className=" mx-auto">
+        <section className="pb-12 xs:pb-16 sm:pb-24 bg-white">
+          <div className="container mx-auto px-4 xs:px-8">
+            <div className="max-w-3xl mx-auto">
               {post.content ? (
                 <div 
                   className="prose prose-sm xs:prose sm:prose-lg max-w-none text-gray-700 leading-relaxed"
@@ -559,11 +559,11 @@ const PostDetails: React.FC = () => {
 
         {/* Author Bio */}
         {(getAuthorBio(post.author) || typeof post.author === 'object') && (
-          <section className="py-6 xs:py-8 sm:py-12 bg-gray-50">
-            <div className="container mx-auto px-3 xs:px-4">
-              <div className=" mx-auto">
-                <Card className="border-0 shadow-lg">
-                  <CardContent className="p-4 xs:p-6 sm:p-8">
+          <section className="py-10 xs:py-14 sm:py-20 bg-gray-50">
+            <div className="container mx-auto px-4 xs:px-8">
+              <div className="max-w-2xl mx-auto">
+                <Card className="border-0 shadow-xl rounded-xl">
+                  <CardContent className="p-6 xs:p-8 sm:p-12">
                     <div className="flex flex-col xs:flex-row items-center xs:items-start gap-4 xs:gap-5 sm:gap-6">
                       {getAuthorAvatar(post.author) && (
                         <img
@@ -602,8 +602,8 @@ const PostDetails: React.FC = () => {
 
         {/* Related Posts */}
         {relatedPosts.length > 0 && (
-          <section className="py-8 xs:py-12 sm:py-16 bg-white">
-            <div className="container mx-auto px-3 xs:px-4">
+          <section className="py-12 xs:py-16 sm:py-24 bg-white">
+            <div className="container mx-auto px-4 xs:px-8">
               <div className="max-w-6xl mx-auto">
                 <div className="text-center mb-6 xs:mb-8 sm:mb-12">
                   <h2 className="text-xl xs:text-2xl sm:text-3xl font-bold text-gray-900 mb-2 xs:mb-3 sm:mb-4">
@@ -612,7 +612,7 @@ const PostDetails: React.FC = () => {
                   <div className="w-16 xs:w-20 sm:w-24 h-1 bg-gradient-to-r from-blue-600 to-green-600 mx-auto rounded-full"></div>
                 </div>
                 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 xs:gap-6 sm:gap-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 xs:gap-8 sm:gap-12">
                   {relatedPosts.map((relatedPost) => (
                     <NewsCard key={relatedPost.id} {...relatedPost} content="" viewCount={0} commentCount={0} />
                   ))}
