@@ -184,7 +184,8 @@ const Home: React.FC<HomeProps> = ({ searchTerm, setSearchTerm }) => {
     categories: '',
   });
   // Candidate search handler
-  const handleSearchChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const [allCandidates, setAllCandidates] = useState<Candidate[]>([]);
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearchTerm(value);
     if (!value.trim()) {
@@ -192,41 +193,46 @@ const Home: React.FC<HomeProps> = ({ searchTerm, setSearchTerm }) => {
       return;
     }
     setSearchLoading(true);
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL || 'https://api.abhushangallery.com'}/api/candidates?search=${encodeURIComponent(value)}&limit=100`
-      );
-      if (response.ok) {
-        const data = await response.json();
-        // Filter results strictly on client side for robust search
-        const lower = value.trim().toLowerCase();
-        const filtered = (data.data || []).filter(c => {
-          const fields = [
-            c.personalInfo?.fullName,
-            c.personalInfo?.fullName_np,
-            c.politicalInfo?.partyName,
-            c.politicalInfo?.partyName_np,
-            c.personalInfo?.constituency,
-            c.politicalInfo?.constituency,
-            c.nepaliName,
-            c.englishName,
-            c.CandidateName,
-            c.PartyName,
-            c.ConstituencyName
-          ];
-          return fields.some(f => (f || '').toString().toLowerCase().includes(lower));
-        });
-        setSearchResults(filtered.slice(0, 10));
-      } else {
-        setSearchResults([]);
-      }
-    } catch (error) {
-      setSearchResults([]);
-    } finally {
-      setSearchLoading(false);
-    }
+    // Filter from allCandidates
+    const lower = value.trim().toLowerCase();
+    const filtered = allCandidates.filter(c => {
+      const fields = [
+        c.personalInfo?.fullName,
+        c.name,
+        c.personalInfo?.fullName_np,
+        c.politicalInfo?.partyName,
+        c.politicalInfo?.partyName_np,
+        c.personalInfo?.constituency,
+        c.politicalInfo?.constituency,
+        c.nepaliName,
+        c.englishName,
+        c.CandidateName,
+        c.PartyName,
+        c.ConstituencyName
+      ];
+      return fields.some(f => (f || '').toString().toLowerCase().includes(lower));
+    });
+    setSearchResults(filtered.slice(0, 10));
+    setSearchLoading(false);
   };
 
+  useEffect(() => {
+    // Fetch all candidates once on mount
+    const fetchAllCandidates = async () => {
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_API_URL || 'https://api.abhushangallery.com'}/api/candidates?limit=1000`
+        );
+        if (response.ok) {
+          const data = await response.json();
+          setAllCandidates(data.data || []);
+        }
+      } catch (error) {
+        setAllCandidates([]);
+      }
+    };
+    fetchAllCandidates();
+  }, []);
   // Static category data with icons
   const staticCategories = [
     { key: 'technology', icon: '💻' },
@@ -413,16 +419,21 @@ const Home: React.FC<HomeProps> = ({ searchTerm, setSearchTerm }) => {
                   onClick={() => handleCandidateSelect(candidate._id)}
                 >
                   <img
-                    src={`https://result.election.gov.np/Images/Candidate/${candidate.candidateId || candidate.CandidateID || ''}.jpg`}
-                    alt={candidate.personalInfo?.fullName || candidate._id}
-                    className="w-16 h-16 rounded-full object-cover border border-gray-200"
+                    src={
+                      candidate.profilepicture || candidate.profilePhoto || candidate.personalInfo?.profilePhoto ||
+                      `https://result.election.gov.np/Images/Candidate/${candidate.candidateId || candidate.CandidateID || ''}.jpg`
+                    }
+                    alt={candidate.name || candidate.personalInfo?.fullName || candidate._id}
+                    className="w-12 h-12 rounded-full object-cover border border-gray-200"
                     onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
                   />
                   <div className="flex-1 min-w-0">
                     <div className="font-bold text-gray-900 truncate">
-                      {candidate.personalInfo?.fullName || candidate.nepaliName || candidate.englishName || candidate.CandidateName || candidate._id}
+                      {candidate.name || candidate.personalInfo?.fullName || candidate.nepaliName || candidate.englishName || candidate.CandidateName || candidate._id}
                     </div>
-                    <div className="text-xs text-gray-500 truncate">{candidate.politicalInfo?.partyName || ''} {candidate.personalInfo?.constituency ? `| ${candidate.personalInfo.constituency}` : ''}</div>
+                    <div className="text-xs text-gray-500 truncate">
+                      {candidate.area || candidate.personalInfo?.constituency || ''}
+                    </div>
                   </div>
                 </li>
               ))}

@@ -189,6 +189,8 @@ const CandidateDetailPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('general');
   const [searchTerm, setSearchTerm] = useState('');
+  const [allCandidates, setAllCandidates] = useState<Candidate[]>([]);
+  const [filteredCandidates, setFilteredCandidates] = useState<Candidate[]>([]);
   const [isLiked, setIsLiked] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
   const [likesCount, setLikesCount] = useState(0);
@@ -199,17 +201,16 @@ const CandidateDetailPage: React.FC = () => {
 
   useEffect(() => {
     const fetchCandidate = async () => {
+
+      console.log("Fetching candidate with ID:", id);
       try {
         const response = await fetch(`${import.meta.env.VITE_API_URL || 'https://api.abhushangallery.com'}/api/candidates/${id}`);
         if (!response.ok) throw new Error('Failed to fetch candidate');
         const data = await response.json();
-
-        
         setCandidate(data.data);
         setImageLoadError(false);
         setLikesCount(data.data.likes || 0);
         setSharesCount(data.data.shares || 0);
-        
         const likedCandidates = JSON.parse(localStorage.getItem('likedCandidates') || '[]');
         setIsLiked(likedCandidates.includes(id));
       } catch (err: any) {
@@ -219,8 +220,24 @@ const CandidateDetailPage: React.FC = () => {
       }
     };
 
+    // Fetch candidate detail for the page ONLY when id changes
     if (id) fetchCandidate();
+    // Fetch all candidates only once on mount (not on every id change)
+    // This assumes you have a local source or initial fetch for allCandidates elsewhere
+    // Remove backend API call for search
+    // No searchTerm dependency here!
   }, [id]);
+
+  useEffect(() => {
+    if (!searchTerm) {
+      setFilteredCandidates(allCandidates);
+      return;
+    }
+    const term = searchTerm.toLowerCase();
+    setFilteredCandidates(
+      allCandidates.filter(c => c.name && c.name.toLowerCase().includes(term))
+    );
+  }, [searchTerm, allCandidates]);
 
   
 
@@ -709,21 +726,32 @@ const CandidateDetailPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Mobile/desktop responsive search bar at the top */}
-      {/* <div className="w-full flex flex-col items-center py-4 bg-white border-b border-gray-200 shadow-sm sticky top-0 z-30">
+      {/* Search input and options dropdown */}
+      <div className="w-full flex flex-col items-center py-4 bg-white border-b border-gray-200 shadow-sm sticky top-0 z-30">
         <div className="w-full max-w-2xl px-2 sm:px-4">
-          <input
+          <Input
             type="text"
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
-            placeholder="🔍 Search candidate details..."
+            placeholder="🔍 Search candidate by name..."
             className="w-full px-4 py-3 sm:py-4 text-base sm:text-lg rounded-full border-4 border-primary/80 focus:border-accent focus:ring-4 focus:ring-accent/30 shadow-lg font-semibold text-gray-900 bg-white placeholder-gray-400 outline-none transition-all duration-200"
             style={{ boxShadow: '0 0 0 3px #f87171, 0 2px 8px rgba(0,0,0,0.08)' }}
           />
+          {searchTerm && filteredCandidates.length > 0 && (
+            <ul className="bg-white border rounded shadow mt-2 max-h-60 overflow-y-auto">
+              {filteredCandidates.map(c => (
+                <li key={c._id} className="px-4 py-2 hover:bg-gray-100 cursor-pointer">
+                  {c.name}
+                </li>
+              ))}
+            </ul>
+          )}
+          {searchTerm && filteredCandidates.length === 0 && (
+            <div className="mt-2 text-gray-500">No candidates found.</div>
+          )}
         </div>
-      </div> */}
+      </div>
       {/* Hero Section */}
-  
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8">
