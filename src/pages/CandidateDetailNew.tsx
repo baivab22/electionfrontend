@@ -727,7 +727,7 @@ const CandidateDetailPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-white">
       {/* Search input and options dropdown */}
-      <div className="w-full flex flex-col items-center py-4 bg-white border-b border-gray-200 shadow-sm sticky top-0 z-30">
+      {/* <div className="w-full flex flex-col items-center py-4 bg-white border-b border-gray-200 shadow-sm sticky top-0 z-30">
         <div className="w-full max-w-2xl px-2 sm:px-4">
           <Input
             type="text"
@@ -750,7 +750,7 @@ const CandidateDetailPage: React.FC = () => {
             <div className="mt-2 text-gray-500">No candidates found.</div>
           )}
         </div>
-      </div>
+      </div> */}
       {/* Hero Section */}
 
       {/* Main Content */}
@@ -1152,7 +1152,7 @@ const CandidateDetailPage: React.FC = () => {
                   {candidate.politicalHIstory && (
                     <Card className="bg-white border-0 shadow-lg rounded-2xl hover:shadow-xl transition-shadow col-span-1 md:col-span-2 lg:col-span-3">
                       <CardHeader className="pb-2">
-                        <CardTitle className="text-xl font-extrabold text-blue-600 tracking-wide border-b-2 border-blue-100 pb-1 mb-2">PoliticalHIstory</CardTitle>
+                        <CardTitle className="text-xl font-extrabold text-blue-600 tracking-wide border-b-2 border-blue-100 pb-1 mb-2">Political HIstory</CardTitle>
                       </CardHeader>
                       <CardContent>
                         <div className="prose max-w-none text-gray-900 text-base font-semibold leading-relaxed whitespace-pre-line">

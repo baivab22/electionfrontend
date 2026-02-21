@@ -202,13 +202,82 @@ const CandidatesPage: React.FC = () => {
   // Filter candidates by search term (Nepali or romanized name)
   const filteredCandidates = useMemo(() => {
     let filtered = candidates;
-    // Search filter
+    // Search filter (Nepali or romanized)
     if (searchTerm.trim()) {
       const term = searchTerm.trim().toLowerCase();
+      // Simple transliteration function for Nepali to Latin
+      const transliterate = (str: string) => {
+        return str
+          .replace(/[अआ]/g, 'a')
+          .replace(/[इई]/g, 'i')
+          .replace(/[उऊ]/g, 'u')
+          .replace(/[ए]/g, 'e')
+          .replace(/[ओ]/g, 'o')
+          .replace(/[क]/g, 'k')
+          .replace(/[ख]/g, 'kh')
+          .replace(/[ग]/g, 'g')
+          .replace(/[घ]/g, 'gh')
+          .replace(/[च]/g, 'ch')
+          .replace(/[छ]/g, 'chh')
+          .replace(/[ज]/g, 'j')
+          .replace(/[झ]/g, 'jh')
+          .replace(/[ट]/g, 't')
+          .replace(/[ठ]/g, 'th')
+          .replace(/[ड]/g, 'd')
+          .replace(/[ढ]/g, 'dh')
+          .replace(/[ण]/g, 'n')
+          .replace(/[त]/g, 't')
+          .replace(/[थ]/g, 'th')
+          .replace(/[द]/g, 'd')
+          .replace(/[ध]/g, 'dh')
+          .replace(/[न]/g, 'n')
+          .replace(/[प]/g, 'p')
+          .replace(/[फ]/g, 'ph')
+          .replace(/[ब]/g, 'b')
+          .replace(/[भ]/g, 'bh')
+          .replace(/[म]/g, 'm')
+          .replace(/[य]/g, 'y')
+          .replace(/[र]/g, 'r')
+          .replace(/[ल]/g, 'l')
+          .replace(/[व]/g, 'w')
+          .replace(/[श]/g, 'sh')
+          .replace(/[ष]/g, 'sh')
+          .replace(/[स]/g, 's')
+          .replace(/[ह]/g, 'h')
+          .replace(/[ृ]/g, 'ri')
+          .replace(/[ं]/g, 'n')
+          .replace(/[ः]/g, 'h')
+          .replace(/[ँ]/g, 'n')
+          .replace(/[्]/g, '')
+          .replace(/[ा]/g, 'a')
+          .replace(/[ि]/g, 'i')
+          .replace(/[ी]/g, 'i')
+          .replace(/[ु]/g, 'u')
+          .replace(/[ू]/g, 'u')
+          .replace(/[े]/g, 'e')
+          .replace(/[ै]/g, 'ai')
+          .replace(/[ो]/g, 'o')
+          .replace(/[ौ]/g, 'au');
+      };
       filtered = filtered.filter(c => {
-        const name = c.personalInfo?.fullName?.toLowerCase() || '';
-        const nameNp = c.personalInfo?.fullName_np?.toLowerCase() || '';
-        return name.includes(term) || nameNp.includes(term);
+        const fields = [
+          c.personalInfo?.fullName,
+          c.name,
+          c.personalInfo?.fullName_np,
+          c.politicalInfo?.partyName,
+          c.politicalInfo?.partyName_np,
+          c.personalInfo?.constituency,
+          c.politicalInfo?.constituency,
+          c.nepaliName,
+          c.englishName,
+          c.CandidateName,
+          c.PartyName,
+          c.ConstituencyName
+        ];
+        return fields.some(f => {
+          const val = (f || '').toString().toLowerCase();
+          return val.includes(term) || transliterate(val).includes(term);
+        });
       });
     }
     // Province filter

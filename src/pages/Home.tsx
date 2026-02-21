@@ -170,7 +170,25 @@ const Home: React.FC<HomeProps> = ({ searchTerm, setSearchTerm }) => {
   const [searchLoading, setSearchLoading] = useState(false);
 
   // Fix stats undefined error
-  const [featuredPosts, setFeaturedPosts] = useState<Post[]>([]);
+  const [latestPosts, setLatestPosts] = useState<Post[]>([]);
+    // Fetch latest posts from backend
+    const fetchLatestPosts = async () => {
+      try {
+        setLoading(prev => ({ ...prev, posts: true }));
+        setErrors(prev => ({ ...prev, posts: '' }));
+        const response = await API.posts.getPosts({ limit: 4, language: currentLanguage });
+        if (response.success && response.data) {
+          setLatestPosts(response.data.slice(0, 4));
+        } else {
+          setErrors(prev => ({ ...prev, posts: 'Failed to load latest posts' }));
+        }
+      } catch (error) {
+        setErrors(prev => ({ ...prev, posts: 'Failed to load latest posts' }));
+        setLatestPosts([]);
+      } finally {
+        setLoading(prev => ({ ...prev, posts: false }));
+      }
+    };
   const [stats, setStats] = useState<StatsResponse['data'] | null>(null);
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState({
@@ -195,6 +213,62 @@ const Home: React.FC<HomeProps> = ({ searchTerm, setSearchTerm }) => {
     setSearchLoading(true);
     // Filter from allCandidates
     const lower = value.trim().toLowerCase();
+    // Simple transliteration function for Nepali to Latin
+    const transliterate = (str: string) => {
+      // Replace Nepali characters with rough Latin equivalents
+      // This is a basic mapping, for better results use a library
+      return str
+        .replace(/[अआ]/g, 'a')
+        .replace(/[इई]/g, 'i')
+        .replace(/[उऊ]/g, 'u')
+        .replace(/[ए]/g, 'e')
+        .replace(/[ओ]/g, 'o')
+        .replace(/[क]/g, 'k')
+        .replace(/[ख]/g, 'kh')
+        .replace(/[ग]/g, 'g')
+        .replace(/[घ]/g, 'gh')
+        .replace(/[च]/g, 'ch')
+        .replace(/[छ]/g, 'chh')
+        .replace(/[ज]/g, 'j')
+        .replace(/[झ]/g, 'jh')
+        .replace(/[ट]/g, 't')
+        .replace(/[ठ]/g, 'th')
+        .replace(/[ड]/g, 'd')
+        .replace(/[ढ]/g, 'dh')
+        .replace(/[ण]/g, 'n')
+        .replace(/[त]/g, 't')
+        .replace(/[थ]/g, 'th')
+        .replace(/[द]/g, 'd')
+        .replace(/[ध]/g, 'dh')
+        .replace(/[न]/g, 'n')
+        .replace(/[प]/g, 'p')
+        .replace(/[फ]/g, 'ph')
+        .replace(/[ब]/g, 'b')
+        .replace(/[भ]/g, 'bh')
+        .replace(/[म]/g, 'm')
+        .replace(/[य]/g, 'y')
+        .replace(/[र]/g, 'r')
+        .replace(/[ल]/g, 'l')
+        .replace(/[व]/g, 'w')
+        .replace(/[श]/g, 'sh')
+        .replace(/[ष]/g, 'sh')
+        .replace(/[स]/g, 's')
+        .replace(/[ह]/g, 'h')
+        .replace(/[ृ]/g, 'ri')
+        .replace(/[ं]/g, 'n')
+        .replace(/[ः]/g, 'h')
+        .replace(/[ँ]/g, 'n')
+        .replace(/[्]/g, '')
+        .replace(/[ा]/g, 'a')
+        .replace(/[ि]/g, 'i')
+        .replace(/[ी]/g, 'i')
+        .replace(/[ु]/g, 'u')
+        .replace(/[ू]/g, 'u')
+        .replace(/[े]/g, 'e')
+        .replace(/[ै]/g, 'ai')
+        .replace(/[ो]/g, 'o')
+        .replace(/[ौ]/g, 'au');
+    };
     const filtered = allCandidates.filter(c => {
       const fields = [
         c.personalInfo?.fullName,
@@ -210,7 +284,11 @@ const Home: React.FC<HomeProps> = ({ searchTerm, setSearchTerm }) => {
         c.PartyName,
         c.ConstituencyName
       ];
-      return fields.some(f => (f || '').toString().toLowerCase().includes(lower));
+      // Check normal and romanized match
+      return fields.some(f => {
+        const val = (f || '').toString().toLowerCase();
+        return val.includes(lower) || transliterate(val).includes(lower);
+      });
     });
     setSearchResults(filtered.slice(0, 10));
     setSearchLoading(false);
@@ -232,6 +310,7 @@ const Home: React.FC<HomeProps> = ({ searchTerm, setSearchTerm }) => {
       }
     };
     fetchAllCandidates();
+    fetchLatestPosts();
   }, []);
   // Static category data with icons
   const staticCategories = [
@@ -369,7 +448,7 @@ const Home: React.FC<HomeProps> = ({ searchTerm, setSearchTerm }) => {
     },
   ] : [];
 
-  console.log(featuredPosts,"featuredPosts");
+  // console.log(latestPosts,"latestPosts");
    
   return (
     <div className="min-h-screen">
@@ -476,44 +555,27 @@ const Home: React.FC<HomeProps> = ({ searchTerm, setSearchTerm }) => {
       </section>
 
 
-      {/* CPN Hero Banner Section (now plain background) */}
-      <section className="py-8 bg-white" data-aos="fade-up" data-aos-delay="400">
-        <div className="container mx-auto">
-          <div className="text-center">
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-2 text-center">
-              {t('home.knowCandidates', 'Know Our Candidates')}
-            </h2>
-            <p className="text-base sm:text-lg text-gray-600 mb-4 text-center">
-              {t('home.knowCandidatesDesc', 'Discover detailed information about our political candidates and their vision for the future')}
-            </p>
-            <Link to="/candidates">
-              <Button size="sm" className="bg-primary text-white hover:bg-primary/90 px-4 xs:px-6 sm:px-8 py-2 xs:py-3 sm:py-4 text-xs xs:text-sm sm:text-base font-semibold">
-                {t('home.viewAllCandidates', 'View All Candidates')}
-                <ArrowRight className="ml-1 xs:ml-2 w-3 xs:w-5" />
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </section>
 
-      {/* Featured Posts */}
+
+      {/* Latest Posts Section (News & Forum style) */}
       <section className="py-8 bg-white" data-aos="fade-up" data-aos-delay="500">
         <div className="container mx-auto">
           <div className="text-center mb-8 xs:mb-12 sm:mb-16">
             <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-2 text-center">
-              {t('home.featuredPosts', 'Featured Posts')}
+              {t('home.latestPosts', 'Latest Posts')}
             </h2>
             <div className="w-16 xs:w-24 h-1 bg-gradient-to-r from-blue-600 to-green-600 mx-auto rounded-full"></div>
             <p className="text-base sm:text-lg text-gray-600 mt-2 mx-auto text-center">
-              {t('home.featuredPosts.subtitle', 'Stay updated with the latest political developments, party news, and social initiatives.')}
+              {t('home.latestPosts.subtitle', 'Read the latest posts, news, and forum updates.')}
             </p>
           </div>
-          
           {loading.posts ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 xs:gap-6 sm:gap-8">
-              {[...Array(3)].map((_, index) => (
+              {[...Array(4)].map((_, index) => (
                 <div key={index} className="animate-pulse">
                   <div className="bg-muted h-40 xs:h-48 w-full rounded-lg mb-2 xs:mb-4"></div>
+                  <div className="bg-muted h-5 w-full rounded mb-2"></div>
+                  <div className="bg-muted h-3 w-3/4 rounded"></div>
                 </div>
               ))}
             </div>
@@ -522,15 +584,15 @@ const Home: React.FC<HomeProps> = ({ searchTerm, setSearchTerm }) => {
               <p className="text-sm xs:text-base">{errors.posts}</p>
               <Button 
                 variant="outline" 
-                onClick={fetchFeaturedPosts}
+                onClick={fetchLatestPosts}
                 className="mt-2 xs:mt-4 text-xs xs:text-sm"
               >
                 Retry Loading Posts
               </Button>
             </div>
-          ) : featuredPosts.length === 0 ? (
+          ) : latestPosts.length === 0 ? (
             <div className="text-center text-gray-600 py-4 xs:py-8">
-              <p className="text-sm xs:text-base">{t('home.noFeaturedPosts', 'No featured posts available at the moment.')}</p>
+              <p className="text-sm xs:text-base">{t('home.noPosts', 'No posts available at the moment.')}</p>
               <Link to="/news" className="inline-block mt-2 xs:mt-4">
                 <Button variant="outline" size="sm" className="text-xs xs:text-sm">
                   {t('home.browseAllPosts', 'Browse All Posts')}
@@ -539,38 +601,41 @@ const Home: React.FC<HomeProps> = ({ searchTerm, setSearchTerm }) => {
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 xs:gap-6 sm:gap-8">
-                {featuredPosts.map((post) => {
-                  console.log(post,"post in home");
-                  return(
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 xs:gap-6 sm:gap-8">
+                {latestPosts.map((post) => (
                   <NewsCard 
-                    key={post.id} 
+                    key={post.id}
                     id={post.id}
                     title={post.title}
                     excerpt={currentLanguage === 'np' ? post.excerpt_np : post.excerpt_en}
                     image={post.image}
                     category={post.category}
-                    author={post.author.name}
+                    author={post.author?.name || 'Anonymous'}
                     publishedAt={post.publishedAt}
                     featured={post.featured}
                     content={post.content}
                   />
-                )
-                }
-              
-              )}
+                ))}
+                {/* Fill with skeletons if less than 4 posts */}
+                {latestPosts.length < 4 && [...Array(4 - latestPosts.length)].map((_, idx) => (
+                  <div key={"skeleton-"+idx} className="animate-pulse">
+                    <div className="bg-muted h-40 xs:h-48 w-full rounded-lg mb-2 xs:mb-4"></div>
+                    <div className="bg-muted h-5 w-full rounded mb-2"></div>
+                    <div className="bg-muted h-3 w-3/4 rounded"></div>
+                  </div>
+                ))}
               </div>
-              
               <div className="text-center mt-8 xs:mt-12">
                 <Link to="/news">
-                  <Button size="sm" className="bg-gradient-to-r from-primary via-accent to-secondary hover:from-primary/90 hover:via-accent/90 hover:to-secondary/90 text-white px-4 xs:px-6 sm:px-8 py-2 xs:py-3 sm:py-4 text-xs xs:text-sm sm:text-base">
+                  <Button size="sm" className="bg-primary hover:bg-primary/90 text-white px-4 xs:px-6 sm:px-8 py-2 xs:py-3 sm:py-4 text-xs xs:text-sm sm:text-base">
                     {t('home.viewAll', 'View All Posts')}
                     <ArrowRight className="ml-1 xs:ml-2 w-3 xs:w-5" />
                   </Button>
                 </Link>
               </div>
             </>
-          )}
+          )
+          }
         </div>
       </section>
 

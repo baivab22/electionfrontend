@@ -145,16 +145,16 @@ const NewsCard: React.FC<NewsCardProps> = ({
 
 const getCategoryColor = (cat: string) => {
   const colors: { [key: string]: string } = {
-    technology: 'bg-gradient-to-r from-primary to-accent text-white',
-    digitalTransformation: 'bg-gradient-to-r from-accent to-secondary text-white',
-    socialJustice: 'bg-gradient-to-r from-primary/90 to-accent/90 text-white',
-    events: 'bg-gradient-to-r from-secondary to-accent text-white',
-    innovation: 'bg-gradient-to-r from-accent to-primary text-white',
-    policy: 'bg-gradient-to-r from-secondary/90 to-primary/90 text-white',
-    education: 'bg-gradient-to-r from-primary to-secondary text-white',
-    startups: 'bg-gradient-to-r from-yellow-500 to-yellow-600 text-white',
+    technology: 'bg-blue-600 text-white',
+    digitalTransformation: 'bg-purple-600 text-white',
+    socialJustice: 'bg-pink-600 text-white',
+    events: 'bg-green-600 text-white',
+    innovation: 'bg-yellow-500 text-white',
+    policy: 'bg-indigo-600 text-white',
+    education: 'bg-orange-500 text-white',
+    startups: 'bg-gray-700 text-white',
   };
-  return colors[cat] || 'bg-gradient-to-r from-gray-500 to-gray-600 text-white';
+  return colors[cat] || 'bg-gray-500 text-white';
 };
 
   const calculateReadingTime = (text: string) => {
@@ -203,11 +203,11 @@ const getCategoryColor = (cat: string) => {
   const readingTime = calculateReadingTime(content);
 
   return (
-    <Card className={`group overflow-hidden transition-all duration-300 hover:shadow-xl border ${
+    <Card className={`group overflow-hidden transition-all duration-300 hover:shadow-2xl border-0 ${
       featured 
-        ? 'border-amber-200 bg-gradient-to-br from-amber-50/50 to-white shadow-lg' 
-        : 'border-gray-100 bg-white'
-    } rounded-2xl relative h-full flex flex-col`} style={{padding: 0}}>
+        ? 'bg-amber-50 shadow-lg' 
+        : 'bg-gray-50 shadow-md'
+    } rounded-3xl relative h-full flex flex-col`} style={{padding: 0}}>
       
       {/* Social Media Plugin */}
       {showSocialPlugin && (
@@ -295,18 +295,18 @@ const getCategoryColor = (cat: string) => {
       <CardHeader className="p-0 relative flex-shrink-0">
         <Link to={`/post/${id}`} className="block relative overflow-hidden">
           <div 
-            className="w-full bg-gray-100 relative overflow-hidden h-40 xs:h-48 sm:h-56 md:h-60"
+            className="w-full bg-white relative overflow-hidden h-40 xs:h-48 sm:h-56 md:h-60 rounded-t-3xl"
           >
             <img
               src={getImageUrl()}
               alt={title}
-              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 rounded-t-3xl"
               onError={() => setImageError(true)}
               loading="lazy"
             />
             
-            {/* Overlay gradient */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+            {/* Overlay solid color */}
+            <div className="absolute inset-0 bg-black/10" />
             
             {/* Top Badges */}
             <div className="absolute top-2 xs:top-3 left-2 xs:left-3 right-2 xs:right-3 flex items-start justify-between">
@@ -314,7 +314,7 @@ const getCategoryColor = (cat: string) => {
                 {/* Featured Badge */}
                 {featured && (
                   <Badge className="bg-gradient-to-r from-amber-400 to-orange-500 text-white border-0 shadow-lg font-semibold text-[10px] xs:text-xs px-2 xs:px-3 py-1 xs:py-1.5 backdrop-blur-sm">
-                    ⭐ Featured
+                    <span role="img" aria-label="Featured">⭐</span> Featured
                   </Badge>
                 )}
                 
@@ -333,8 +333,8 @@ const getCategoryColor = (cat: string) => {
                   }}
                   className={`p-1.5 xs:p-2.5 rounded-full backdrop-blur-md transition-all duration-300 shadow-lg ${
                     isBookmarked 
-                      ? 'bg-amber-500 text-white' 
-                      : 'bg-white/90 text-gray-700 hover:bg-white'
+                      ? 'bg-gradient-to-br from-amber-400 to-orange-400 text-white' 
+                      : 'bg-white/90 text-primary hover:bg-white border border-primary/10'
                   }`}
                 >
                   <Bookmark 
@@ -349,7 +349,7 @@ const getCategoryColor = (cat: string) => {
                     e.preventDefault();
                     setShowSocialPlugin(true);
                   }}
-                  className="p-1.5 xs:p-2.5 rounded-full bg-white/90 text-gray-700 hover:bg-white backdrop-blur-md transition-all duration-300 shadow-lg"
+                  className="p-1.5 xs:p-2.5 rounded-full bg-white/90 text-primary hover:bg-white border border-primary/10 backdrop-blur-md transition-all duration-300 shadow-lg"
                 >
                   <Share2 size={14} className="xs:w-4 xs:h-4" />
                 </button>
@@ -372,7 +372,7 @@ const getCategoryColor = (cat: string) => {
       {/* Content Area */}
       <CardContent className="p-4 xs:p-6 sm:p-8 flex-1 flex flex-col">
         {/* Meta Info */}
-        <div className="flex items-center gap-2 xs:gap-3 text-[10px] xs:text-xs text-gray-500 mb-3 xs:mb-4">
+        <div className="flex items-center gap-2 xs:gap-3 text-[10px] xs:text-xs text-primary/80 mb-3 xs:mb-4">
           <div className="flex items-center gap-1 xs:gap-1.5">
             <Calendar size={12} className="xs:w-3.5 xs:h-3.5" />
             <span>{formatDate(publishedAt)}</span>
@@ -393,7 +393,7 @@ const getCategoryColor = (cat: string) => {
 
         {/* Stats Bar */}
         <div className="flex items-center justify-between pt-3 xs:pt-4 border-t border-gray-100 mt-auto">
-          <div className="flex items-center gap-2 xs:gap-4 text-[10px] xs:text-xs text-gray-500">
+          <div className="flex items-center gap-2 xs:gap-4 text-[10px] xs:text-xs text-primary/60">
             <span className="flex items-center gap-1 xs:gap-1.5">
               <Eye size={12} className="xs:w-3.5 xs:h-3.5" />
               {viewCount.toLocaleString()}
@@ -410,12 +410,12 @@ const getCategoryColor = (cat: string) => {
       <CardFooter className="px-4 xs:px-6 sm:px-8 pb-4 xs:pb-6 sm:pb-8 pt-0 flex items-center justify-between gap-2">
         {/* Author Info */}
         <div className="flex items-center gap-1.5 xs:gap-2 sm:gap-3 min-w-0">
-          <div className="w-7 xs:w-8 sm:w-10 h-7 xs:h-8 sm:h-10 bg-gradient-to-br from-primary via-accent to-secondary rounded-full flex items-center justify-center shadow-sm flex-shrink-0">
-            <User size={12} className="text-white xs:w-3.5 xs:h-3.5 sm:w-4 sm:h-4" />
+          <div className="w-7 xs:w-8 sm:w-10 h-7 xs:h-8 sm:h-10 bg-blue-100 rounded-full flex items-center justify-center shadow-md flex-shrink-0 border border-blue-200">
+            <User size={12} className="text-blue-600 xs:w-3.5 xs:h-3.5 sm:w-4 sm:h-4" />
           </div>
           <div className="min-w-0">
-            <p className="text-xs xs:text-sm font-semibold text-gray-900 truncate">{author}</p>
-            <p className="text-[10px] xs:text-xs text-gray-500 hidden xs:block">Author</p>
+            <p className="text-xs xs:text-sm font-semibold text-blue-700 truncate">{author === 'System Admin' ? 'System Admin' : author}</p>
+            <p className="text-[10px] xs:text-xs text-blue-500 hidden xs:block">Author</p>
           </div>
         </div>
 
@@ -423,13 +423,16 @@ const getCategoryColor = (cat: string) => {
         <Link to={`/post/${id}`} className="flex-shrink-0">
           <Button 
             size="sm"
-            className="bg-gradient-to-r from-primary via-accent to-secondary hover:from-primary/90 hover:via-accent/90 hover:to-secondary/90 text-white rounded-full px-2 xs:px-3 sm:px-5 h-7 xs:h-8 sm:h-10 text-[10px] xs:text-xs sm:text-sm font-semibold shadow-lg hover:shadow-xl transition-all duration-300 group/btn"
+            className="bg-primary hover:bg-white hover:text-primary border border-primary text-white rounded-full px-2 xs:px-3 sm:px-5 h-7 xs:h-8 sm:h-10 text-[10px] xs:text-xs sm:text-sm font-semibold shadow-md hover:shadow-xl transition-all duration-300 group/btn"
           >
             <span className="hidden xs:inline">Read More</span>
             <span className="xs:hidden">Read</span>
             <ArrowRight size={12} className="ml-1 xs:ml-2 group-hover/btn:translate-x-1 transition-transform xs:w-3.5 xs:h-3.5 sm:w-4 sm:h-4" />
           </Button>
         </Link>
+
+        {/* View All News Button */}
+
       </CardFooter>
     </Card>
   );
