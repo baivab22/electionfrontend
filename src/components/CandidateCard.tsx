@@ -228,7 +228,7 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate }) => {
               {fullName}
             </h3>
             {area && (
-              <div className="mb-2 text-center text-xs text-blue-700 font-semibold truncate">
+              <div className="mb-2 text-center text-base xs:text-lg sm:text-xl text-blue-700 font-bold truncate">
                 {area}
               </div>
             )}
