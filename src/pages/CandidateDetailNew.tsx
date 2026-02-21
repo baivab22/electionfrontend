@@ -1,3 +1,4 @@
+             
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -43,14 +44,14 @@ interface Candidate {
     CandidateName?: string;
     [key: string]: any;
   };
-  personalInfo: {
-    fullName: string;
+  personalInfo?: {
+    fullName?: string;
     fullName_np?: string;
     nickname?: string;
     nickname_np?: string;
-    dateOfBirth: string;
+    dateOfBirth?: string;
     age?: number;
-    gender: string;
+    gender?: string;
     gender_np?: string;
     maritalStatus?: string;
     maritalStatus_np?: string;
@@ -61,8 +62,8 @@ interface Candidate {
     citizenshipNumber?: string;
     citizenshipIssuedDistrict?: string;
     citizenshipIssuedDistrict_np?: string;
-    contactNumber: string;
-    email: string;
+    contactNumber?: string;
+    email?: string;
     website?: string;
     profilePhoto?: string;
   };
@@ -183,10 +184,10 @@ const CandidateDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [candidate, setCandidate] = useState<Candidate | null>(null);
+  const [candidate, setCandidate] = useState< any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState('personal');
+  const [activeTab, setActiveTab] = useState('general');
   const [searchTerm, setSearchTerm] = useState('');
   const [isLiked, setIsLiked] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
@@ -248,7 +249,7 @@ const CandidateDetailPage: React.FC = () => {
     const url = window.location.href;
     if (navigator.share) {
       try {
-        await navigator.share({ title: candidate?.personalInfo.fullName, url });
+        await navigator.share({ title: candidate?.personalInfo?.fullName, url });
         await recordShare();
       } catch (err) {
         // user cancelled or error
@@ -279,8 +280,8 @@ const CandidateDetailPage: React.FC = () => {
 
   const handleShareTo = async (platform: 'facebook' | 'twitter' | 'whatsapp' | 'linkedin' | 'email' | 'copy') => {
     const pageUrl = encodeURIComponent(window.location.href);
-    const title = encodeURIComponent(candidate?.personalInfo.fullName || '');
-    const text = encodeURIComponent(`Check out ${candidate?.personalInfo.fullName}`);
+    const title = encodeURIComponent(candidate?.personalInfo?.fullName || '');
+    const text = encodeURIComponent(`Check out ${candidate?.personalInfo?.fullName}`);
 
     if (platform === 'facebook') {
       const shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${pageUrl}`;
@@ -337,7 +338,7 @@ const CandidateDetailPage: React.FC = () => {
       { key: 'youtube', url: socialMedia.youtube, Icon: Youtube, label: 'YouTube' },
       { key: 'linkedin', url: socialMedia.linkedin, Icon: Users, label: 'LinkedIn' },
       { key: 'tiktok', url: socialMedia.tiktok, Icon: Users, label: 'TikTok' },
-      { key: 'website', url: candidate?.personalInfo.website, Icon: Globe, label: 'Website' }
+      { key: 'website', url: candidate?.personalInfo?.website, Icon: Globe, label: 'Website' }
     ];
 
     const visible = links.filter(l => l.url && l.url.trim() !== '');
@@ -374,17 +375,15 @@ const CandidateDetailPage: React.FC = () => {
 
   const getAge = (): number | string => {
     // Priority 1: Use AGE_YR from rawSource if available
-    if (candidate?.rawSource?.AGE_YR && candidate.rawSource.AGE_YR > 0) {
-      return candidate.rawSource.AGE_YR;
+    if (candidate?.rawSource?.AGE_YR && candidate?.rawSource?.AGE_YR > 0) {
+      return candidate?.rawSource?.AGE_YR;
     }
-    
     // Priority 2: Use personalInfo.age if available
-    if (candidate?.personalInfo.age && candidate.personalInfo.age > 0) {
-      return candidate.personalInfo.age;
+    if (candidate?.personalInfo?.age && candidate?.personalInfo?.age > 0) {
+      return candidate?.personalInfo?.age;
     }
-    
     // Priority 3: Calculate from dateOfBirth
-    return calculateAge(candidate?.personalInfo.dateOfBirth || '');
+    return calculateAge(candidate?.personalInfo?.dateOfBirth || '');
   };
 
   const calculateAge = (dateOfBirth: string) => {
@@ -724,207 +723,7 @@ const CandidateDetailPage: React.FC = () => {
         </div>
       </div> */}
       {/* Hero Section */}
-      <div className="bg-white border-b border-gray-200 shadow-sm">
-        <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6">
-          {/* Breadcrumb */}
-          <div className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm mb-3 sm:mb-4 text-gray-600 overflow-x-auto">
-            <button onClick={() => navigate('/')} className="hover:text-primary flex items-center gap-1 transition-colors font-semibold flex-shrink-0">
-              <Home className="w-3 sm:w-4 h-3 sm:h-4" /> <span className="hidden xs:inline">Home</span><span className="xs:hidden">H</span>
-            </button>
-            <span className="opacity-70 flex-shrink-0">/</span>
-            <button onClick={() => navigate('/candidates')} className="hover:text-primary transition-colors font-semibold flex-shrink-0">Candidates</button>
-            <span className="opacity-70 flex-shrink-0">/</span>
-            <span className="text-gray-900 font-bold truncate min-w-0">{candidate.personalInfo.fullName}</span>
-          </div>
-
-          <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 items-center lg:items-start">
-            {/* Profile Photo */}
-            <div className="relative group">
-              <button
-                onClick={() => setPhotoModalOpen(true)}
-                className="relative block w-24 h-24 sm:w-32 sm:h-32 lg:w-36 lg:h-36 rounded-full border-2 sm:border-4 border-primary/20 shadow-lg overflow-hidden bg-white backdrop-blur-sm hover:shadow-2xl transition-all cursor-pointer"
-                aria-label="View profile photo in full screen"
-              >
-                {!imageLoadError && getCandidateImageUrl(candidate) ? (
-                  <img
-                    src={getCandidateImageUrl(candidate) || ''}
-                    alt={candidate.personalInfo.fullName}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                    onLoad={() => setImageLoadError(false)}
-                    onError={() => setImageLoadError(true)}
-                  />
-                ) : candidate.personalInfo.profilePhoto ? (
-                  <img
-                    src={candidate.personalInfo.profilePhoto}
-                    alt={candidate.personalInfo.fullName}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                    onLoad={() => setImageLoadError(false)}
-                    onError={() => setImageLoadError(true)}
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-red-100">
-                    <User className="w-20 h-20 text-red-300" />
-                  </div>
-                )}
-                {/* Maximize icon overlay */}
-                <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/30 transition-colors rounded-full">
-                  <Maximize2 className="w-6 h-6 sm:w-8 sm:h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
-                </div>
-              </button>
-              {candidate.isVerified && (
-                <div className="absolute -bottom-1 -right-1 sm:-bottom-2 sm:-right-2 bg-green-500 text-white p-1.5 sm:p-2 rounded-full shadow-lg">
-                  <CheckCircle className="w-4 h-4 sm:w-6 sm:h-6" />
-                </div>
-              )}
-            </div>
-
-            {/* Basic Info */}
-            <div className="flex-1 text-center lg:text-left">
-             <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-extrabold mb-2 text-gray-900 leading-tight">
-  {candidate.personalInfo.fullName
-    ? candidate.personalInfo.fullName.charAt(0).toUpperCase() +
-      candidate.personalInfo.fullName.slice(1)
-    : ""}
-</h1>
-
-              {candidate.personalInfo.fullName_np && (
-                <p className="text-base sm:text-lg md:text-xl text-primary/80 mb-3 sm:mb-4 font-bold">{candidate.personalInfo.fullName_np}</p>
-              )}
-              
-              <div className="flex flex-wrap gap-1.5 sm:gap-2 justify-center lg:justify-start mb-3 sm:mb-4">
-                {(() => {
-                  // Get district and constituency info
-                  const district = candidate.rawSource?.DistrictName || '';
-                  const constituency = candidate.politicalInfo?.constituency || '';
-                  const constituencyNp = candidate.politicalInfo?.constituency_np || '';
-                  const constituencyNumber = candidate.politicalInfo?.constituencyNumber || '';
-                  
-                  // Build the location display
-                  let locationText = '';
-                  if (district && constituencyNumber) {
-                    locationText = `${district} - ${constituencyNumber}`;
-                  } else if (district && constituency) {
-                    locationText = `${district} - ${constituency}`;
-                  } else if (constituency && constituency !== constituencyNumber) {
-                    locationText = constituency;
-                  } else if (constituencyNumber) {
-                    locationText = `Constituency ${constituencyNumber}`;
-                  }
-                  
-                  return locationText && (
-                    <Badge className="bg-blue-100 text-blue-700 border border-blue-200 px-2 sm:px-4 py-1 sm:py-1.5 text-xs sm:text-sm font-bold">
-                      <MapPin className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-1.5" />
-                      {locationText}
-                    </Badge>
-                  );
-                })()}
-                {candidate.politicalInfo?.candidacyLevel && (
-                  <Badge className="bg-gray-100 text-gray-700 border border-gray-200 px-2 sm:px-4 py-1 sm:py-1.5 text-xs sm:text-sm font-bold">
-                    {candidate.politicalInfo.candidacyLevel}
-                  </Badge>
-                )}
-              </div>
-
-              {candidate.campaign?.campaignSlogan && (
-                <p className="text-sm sm:text-base md:text-lg lg:text-xl italic text-gray-700 font-semibold mb-3 sm:mb-5 px-2 sm:px-0">
-                  "{candidate.campaign.campaignSlogan}"
-                </p>
-              )}
-
-              <div className="flex flex-wrap gap-2 sm:gap-3 justify-center lg:justify-start text-sm sm:text-base">
-                <div className="flex items-center gap-1.5 sm:gap-2 bg-gray-50 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-full border border-gray-200">
-                  <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-600" />
-                  <span className="text-gray-800 font-semibold">{getAge()} years</span>
-                </div>
-                <a 
-                  href={`tel:${candidate.personalInfo.contactNumber}`}
-                  className="flex items-center gap-1.5 sm:gap-2 bg-gray-50 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-full border border-gray-200 hover:bg-gray-100 transition-all cursor-pointer text-gray-800 font-semibold"
-                >
-                  <Phone className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-600" />
-                  <span>{candidate.personalInfo.contactNumber}</span>
-                </a>
-                <a 
-                  href={`mailto:${candidate.personalInfo.email}`}
-                  className="flex items-center gap-1.5 sm:gap-2 bg-gray-50 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-full border border-gray-200 hover:bg-gray-100 transition-all cursor-pointer text-gray-800 font-semibold"
-                >
-                  <Mail className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-600" />
-                  <span>{candidate.personalInfo.email}</span>
-                </a>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex flex-wrap gap-2 sm:gap-3 justify-center lg:justify-start mt-4 sm:mt-6">
-                <Button
-                  onClick={handleLike}
-                  variant={isLiked ? "default" : "outline"}
-                  aria-pressed={isLiked}
-                  size="sm"
-                  className={`flex items-center gap-1 sm:gap-2 text-xs sm:text-sm ${isLiked ? 'bg-pink-500 hover:bg-pink-600 text-white' : 'border-gray-300 text-gray-700 hover:bg-gray-100 hover:text-gray-900'}`}
-                >
-                  <Heart className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${isLiked ? 'fill-current text-white' : ''}`} />
-                  <span className="hidden xs:inline">{likesCount} Likes</span><span className="xs:hidden">{likesCount}</span>
-                </Button>
-                <div className="relative">
-                  <Button onClick={handleShare} variant="outline" size="sm" className="border-gray-300 text-gray-700 hover:bg-gray-100 hover:text-gray-900 text-xs sm:text-sm">
-                    <Share2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                    <span className="hidden xs:inline">Share ({sharesCount})</span><span className="xs:hidden">({sharesCount})</span>
-                  </Button>
-                  {/* Share menu for non-native share-capable browsers */}
-                  {showShareMenu && (
-                    <div className="absolute mt-2 bg-white rounded-lg shadow-lg right-0 z-50 w-56 text-sm">
-                      <div className="p-2">
-                        <button onClick={() => handleShareTo('facebook')} className="flex items-center gap-2 w-full p-2 hover:bg-gray-50 rounded">
-                          <Facebook className="w-4 h-4" /> Share on Facebook
-                        </button>
-                        <button onClick={() => handleShareTo('twitter')} className="flex items-center gap-2 w-full p-2 hover:bg-gray-50 rounded">
-                          <Twitter className="w-4 h-4" /> Share on Twitter
-                        </button>
-                        <button onClick={() => handleShareTo('whatsapp')} className="flex items-center gap-2 w-full p-2 hover:bg-gray-50 rounded">
-                          <Instagram className="w-4 h-4" /> Share on WhatsApp
-                        </button>
-                        <button onClick={() => handleShareTo('linkedin')} className="flex items-center gap-2 w-full p-2 hover:bg-gray-50 rounded">
-                          <Globe className="w-4 h-4" /> Share on LinkedIn
-                        </button>
-                        <div className="border-t my-1" />
-                      <button onClick={() => handleShareTo('copy')} className="flex items-center gap-2 w-full p-2 hover:bg-gray-50 rounded">
-                        <FileText className="w-4 h-4" /> Copy Link
-                      </button>
-                      <button onClick={() => handleShareTo('email')} className="flex items-center gap-2 w-full p-2 hover:bg-gray-50 rounded">
-                        <Mail className="w-4 h-4" /> Share via Email
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            {/* Social links */}
-              {candidate.socialMedia && Object.values(candidate.socialMedia).some(v => v) && (
-                <div className="flex flex-wrap gap-2 sm:gap-3 mt-3 sm:mt-4">
-                  {candidate.socialMedia.facebook && (
-                    <a href={candidate.socialMedia.facebook} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800">
-                      <Facebook className="w-5 h-5" />
-                    </a>
-                  )}
-                  {candidate.socialMedia.twitter && (
-                    <a href={candidate.socialMedia.twitter} target="_blank" rel="noopener noreferrer" className="text-sky-500 hover:text-sky-700">
-                      <Twitter className="w-5 h-5" />
-                    </a>
-                  )}
-                  {candidate.socialMedia.instagram && (
-                    <a href={candidate.socialMedia.instagram} target="_blank" rel="noopener noreferrer" className="text-pink-600 hover:text-pink-800">
-                      <Instagram className="w-5 h-5" />
-                    </a>
-                  )}
-                  {candidate.socialMedia.youtube && (
-                    <a href={candidate.socialMedia.youtube} target="_blank" rel="noopener noreferrer" className="text-red-600 hover:text-red-800">
-                      <Youtube className="w-5 h-5" />
-                    </a>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
+  
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8">
@@ -939,6 +738,20 @@ const CandidateDetailPage: React.FC = () => {
                 </h3>
               </div>
               <div className="p-2 space-y-1">
+                <button
+                  onClick={() => setActiveTab('general')}
+                  className={`w-full px-3 py-2.5 text-left font-medium transition-all flex items-center gap-2.5 rounded-lg ${
+                    activeTab === 'general'
+                      ? 'bg-red-500 text-white shadow-sm'
+                      : 'text-gray-700 hover:bg-red-50 hover:text-red-600'
+                  }`}
+                >
+                  <Award className="w-4 h-4 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-semibold truncate">General Detail</div>
+                    <div className="text-xs opacity-70 truncate">सामान्य विवरण</div>
+                  </div>
+                </button>
                 <button
                   onClick={() => setActiveTab('personal')}
                   className={`w-full px-3 py-2.5 text-left font-medium transition-all flex items-center gap-2.5 rounded-lg ${
@@ -1071,15 +884,266 @@ const CandidateDetailPage: React.FC = () => {
 
           {/* Content Area */}
           <div className="flex-1 min-w-0">
+            {/* General Detail Tab */}
+            {activeTab === 'general' && candidate && (
+              <div className="space-y-6">
+                {/* Banner with profile photo, name, area */}
+                <div className="relative w-full h-56 sm:h-64 md:h-72 rounded-2xl overflow-hidden flex items-end bg-red-600 shadow-lg">
+                  <img
+                    src={candidate.profilepicture}
+                    alt={candidate.name}
+                    className="absolute inset-0 w-full h-full object-contain object-center opacity-80"
+                    style={{ background: '#fff' }}
+                  />
+                  {/* Fullscreen button overlay */}
+                  <button
+                    className="absolute top-3 right-3 z-20 bg-black/60 hover:bg-black/80 text-white rounded-full p-2 transition"
+                    onClick={() => setPhotoModalOpen(true)}
+                    aria-label="View profile photo in full screen"
+                  >
+                    <Maximize2 className="w-6 h-6" />
+                  </button>
+                  <div className="relative z-10 w-full flex flex-col items-center justify-end pb-6 bg-gradient-to-t from-black/70 via-black/30 to-transparent">
+                    <h2 className="text-3xl sm:text-4xl font-extrabold text-white drop-shadow mb-1">{candidate.name}</h2>
+                    <div className="flex items-center gap-2 mb-2">
+                      <MapPin className="w-6 h-6 text-white/80" />
+                      <span className="text-xl sm:text-2xl md:text-3xl font-semibold text-white/90 drop-shadow">{candidate.area}</span>
+                    </div>
+                  </div>
+                </div>
+                {/* Cards for each detail */}
+                {/* Battleground Analysis Section */}
+           
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {/* Age & Gender Card */}
+                  <Card className="bg-white border-0 shadow-lg rounded-2xl col-span-1 md:col-span-2 lg:col-span-3">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-xl font-extrabold text-red-600 tracking-wide border-b-2 border-red-100 pb-1 mb-2">About Candidate</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      {/* Content before Battleground Analysis */}
+                      {candidate.detaildescription && (() => {
+                        const desc = candidate.detaildescription;
+                        const highlight = 'Battleground Analysis';
+                        const highlightIdx = desc.indexOf(highlight);
+                        let beforeBattleground = '';
+                        if (highlightIdx !== -1) {
+                          beforeBattleground = desc.slice(0, highlightIdx).trim();
+                        } else {
+                          beforeBattleground = desc.trim();
+                        }
+                        return (
+                          <div className="prose max-w-none text-gray-900 text-base font-semibold leading-relaxed whitespace-pre-line mb-6">
+                            {beforeBattleground}
+                          </div>
+                        );
+                      })()}
+                      {/* Battleground Analysis parsing and cards */}
+                      {candidate.detaildescription && candidate.detaildescription.includes('Battleground Analysis') && (() => {
+                        const desc = candidate.detaildescription;
+                        const highlight = 'Battleground Analysis';
+                        const highlightIdx = desc.indexOf(highlight);
+                        let analysisBlock = '';
+                        if (highlightIdx !== -1) {
+                          analysisBlock = desc.slice(highlightIdx);
+                        }
+                        // Split by 'अनुकूलता' and 'प्रतिकूलता'
+                        const favorableIdx = analysisBlock.indexOf('अनुकूलता');
+                        const unfavorableIdx = analysisBlock.indexOf('प्रतिकूलता');
+                        let beforeFavorable = '';
+                        let favorableBlock = '';
+                        let unfavorableBlock = '';
+                        let afterUnfavorable = '';
+                        if (favorableIdx !== -1) {
+                          beforeFavorable = analysisBlock.slice(0, favorableIdx).trim();
+                          if (unfavorableIdx !== -1) {
+                            favorableBlock = analysisBlock.slice(favorableIdx + 'अनुकूलता'.length, unfavorableIdx).trim();
+                            unfavorableBlock = analysisBlock.slice(unfavorableIdx + 'प्रतिकूलता'.length).trim();
+                          } else {
+                            favorableBlock = analysisBlock.slice(favorableIdx + 'अनुकूलता'.length).trim();
+                          }
+                        } else {
+                          beforeFavorable = analysisBlock.trim();
+                        }
+                        // Extract points
+                        const favorablePoints = favorableBlock ? favorableBlock.split(/\s{10,}|\r\n{2,}|\n{2,}/).map(p => p.trim()).filter(Boolean) : [];
+                        const unfavorablePoints = unfavorableBlock ? unfavorableBlock.split(/\s{10,}|\r\n{2,}|\n{2,}/).map(p => p.trim()).filter(Boolean) : [];
+                        // After 3 points, rest go to afterUnfavorable
+                        afterUnfavorable = unfavorablePoints.length > 3 ? unfavorablePoints.slice(3).join('\n\n') : '';
+                        return (
+                          <>
+                            <div className="text-lg font-extrabold text-red-600 mb-4">Battleground Analysis</div>
+                            {/* Main card for content before अनुकूलता */}
+                            {beforeFavorable && (
+                              <div className="text-base font-semibold text-gray-800 whitespace-pre-line mb-6">{beforeFavorable}</div>
+                            )}
+                            <div className="flex flex-col md:flex-row gap-6 mb-6">
+                              {/* अनुकूलता card */}
+                              {favorablePoints.length > 0 && (
+                                <div className="flex-1 bg-green-50 border-0 rounded-2xl p-6 shadow-sm flex flex-col">
+                                  <div className="flex items-center mb-4">
+                                    <span className="text-2xl font-bold text-green-900 mr-2">अनुकूलता</span>
+                                    <span className="ml-auto bg-green-500 text-white rounded-full w-7 h-7 flex items-center justify-center">
+                                      <svg width="20" height="20" fill="none" viewBox="0 0 20 20"><path d="M7.5 13.5l-3-3 1.41-1.41L7.5 10.67l6.09-6.09L15 6l-7.5 7.5z" fill="currentColor"/></svg>
+                                    </span>
+                                  </div>
+                                  <ul className="space-y-3">
+                                    {favorablePoints.map((point, idx) => (
+                                      <li key={idx} className="flex items-center text-gray-800 font-semibold text-base">
+                                        <span className="mr-2 text-gray-400">
+                                          <svg width="18" height="18" fill="none" viewBox="0 0 18 18"><circle cx="9" cy="9" r="8" stroke="#BDBDBD" strokeWidth="2"/><path d="M7 9l2 2 4-4" stroke="#BDBDBD" strokeWidth="2" fill="none"/></svg>
+                                        </span>
+                                        {point}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+                              {/* प्रतिकूलता card (first 3 points) */}
+                              {unfavorablePoints.length > 0 && (
+                                <div className="flex-1 bg-red-50 border-0 rounded-2xl p-6 shadow-sm flex flex-col">
+                                  <div className="flex items-center mb-4">
+                                    <span className="text-2xl font-bold text-red-900 mr-2">प्रतिकूलता</span>
+                                    <span className="ml-auto bg-red-500 text-white rounded-full w-7 h-7 flex items-center justify-center">
+                                      <svg width="20" height="20" fill="none" viewBox="0 0 20 20"><path d="M6.5 6.5l7 7m0-7l-7 7" stroke="currentColor" strokeWidth="2"/></svg>
+                                    </span>
+                                  </div>
+                                  <ul className="space-y-3">
+                                    {unfavorablePoints.slice(0, 3).map((point, idx) => (
+                                      <li key={idx} className="flex items-center text-gray-800 font-semibold text-base">
+                                        <span className="mr-2 text-gray-400">
+                                          <svg width="18" height="18" fill="none" viewBox="0 0 18 18"><circle cx="9" cy="9" r="8" stroke="#BDBDBD" strokeWidth="2"/><path d="M7 9l2 2 4-4" stroke="#BDBDBD" strokeWidth="2" fill="none"/></svg>
+                                        </span>
+                                        {point}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+                            </div>
+                            {/* Main card for rest of प्रतिकूलता points */}
+                            {afterUnfavorable && (
+                              <div className="text-base font-semibold text-gray-800 whitespace-pre-line mt-6">{afterUnfavorable}</div>
+                            )}
+                          </>
+                        );
+                      })()}
+                    </CardContent>
+                  </Card>
+                </div>
+                  {/* Political History Card */}
+                  {candidate.politicalhistory && (
+                    <Card className="bg-white border-0 shadow-lg rounded-2xl hover:shadow-xl transition-shadow col-span-1 md:col-span-2 lg:col-span-3">
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-xl font-extrabold text-blue-600 tracking-wide border-b-2 border-blue-100 pb-1 mb-2">Political History</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="prose max-w-none text-gray-900 text-base font-semibold leading-relaxed whitespace-pre-line">
+                          {candidate.politicalhistory}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* Political Behaviour Card */}
+                  {candidate.politicalBehaviour && (
+                    <Card className="bg-white border-0 shadow-lg rounded-2xl hover:shadow-xl transition-shadow col-span-1 md:col-span-2 lg:col-span-3">
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-xl font-extrabold text-green-600 tracking-wide border-b-2 border-green-100 pb-1 mb-2">Political Behaviour</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="prose max-w-none text-gray-900 text-base font-semibold leading-relaxed whitespace-pre-line">
+                          {candidate.politicalBehaviour}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* Political Timeline Card */}
+                  {candidate.politicaltimeline && (
+                    <Card className="bg-white border-0 shadow-lg rounded-2xl hover:shadow-xl transition-shadow col-span-1 md:col-span-2 lg:col-span-3">
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-xl font-extrabold text-red-600 tracking-wide border-b-2 border-red-100 pb-1 mb-2">Political Timeline</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        {(() => {
+                          let timelineData = candidate.politicaltimeline;
+                          // Reduce excessive multiline gaps to single line gap
+                          if (typeof timelineData === 'string') {
+                            timelineData = timelineData.replace(/(\r\n|\n|\r){2,}/g, '\n');
+                          }
+                          // Try to parse as JSON array
+                          try {
+                            if (typeof timelineData === 'string' && timelineData.trim().startsWith('[')) {
+                              timelineData = JSON.parse(timelineData);
+                            }
+                          } catch {}
+                          // If array of objects, render as timeline with two points side by side
+                          if (Array.isArray(timelineData) && timelineData.length > 0 && typeof timelineData[0] === 'object') {
+                            // Group timelineData into pairs
+                            const pairs = [];
+                            for (let i = 0; i < timelineData.length; i += 2) {
+                              pairs.push([timelineData[i], timelineData[i + 1]]);
+                            }
+                            return (
+                              <div className="relative">
+                                <div className="absolute left-2 top-0 bottom-0 w-1 bg-red-200 rounded-full" style={{marginLeft: '0.5rem'}}></div>
+                                <div className="space-y-6 pl-10">
+                                  {pairs.map((pair, idx) => (
+                                    <div key={idx} className="flex gap-6">
+                                      {pair.map((item, jdx) => item && (
+                                        <div key={jdx} className="relative flex-1 flex items-start gap-4 bg-gray-50 rounded-xl p-4 shadow-sm border border-gray-200">
+                                          <div className="absolute left-0 top-6 w-4 h-4 flex items-center justify-center">
+                                            <span className="w-3 h-3 rounded-full bg-red-500 block"></span>
+                                          </div>
+                                          <div className="flex flex-col">
+                                            <span className="inline-block px-3 py-1 rounded-md bg-red-500 text-white font-bold text-sm mb-2" style={{width: 'fit-content'}}>{item.year || item.tag || Object.keys(item)[0]}</span>
+                                            <div className="font-bold text-lg text-gray-900 mb-1">{item.title || item[Object.keys(item)[1]]}</div>
+                                            <div className="text-base font-semibold text-gray-700 leading-relaxed whitespace-pre-line">{(item.content || item[Object.keys(item)[2]] || '').replace(/(\r\n|\n|\r){2,}/g, '\n')}</div>
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            );
+                          }
+                          // Fallback: show as text
+                          return (
+                            <div className="prose max-w-none text-gray-900 text-base font-semibold leading-relaxed whitespace-pre-line">
+                              {typeof timelineData === 'string' ? (timelineData.replace(/(\r\n|\n|\r){2,}/g, '\n')) : JSON.stringify(timelineData)}
+                            </div>
+                          );
+                        })()}
+                      </CardContent>
+                    </Card>
+                  )}
+
+                       {/* PoliticalHIstory Card */}
+                  {candidate.politicalHIstory && (
+                    <Card className="bg-white border-0 shadow-lg rounded-2xl hover:shadow-xl transition-shadow col-span-1 md:col-span-2 lg:col-span-3">
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-xl font-extrabold text-blue-600 tracking-wide border-b-2 border-blue-100 pb-1 mb-2">PoliticalHIstory</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="prose max-w-none text-gray-900 text-base font-semibold leading-relaxed whitespace-pre-line">
+                          {candidate.politicalHIstory}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
+            
+            )}
+            
+            
             {/* Personal Info Tab */}
             {activeTab === 'personal' && (
               <>
                 <SectionCard title="Basic Personal Information" titleNp="१. आधारभूत व्यक्तिगत विवरण" icon={User}>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {/* Robustly render both flat and nested fields using index access for flat fields */}
-                    {(!searchTerm || (candidate.personalInfo?.fullName || '').toLowerCase().includes(searchTerm.toLowerCase())) && (
-                      <InfoItem icon={User} label="पूरा नाम / Full Name" value={candidate.personalInfo?.fullName || (candidate as any)['CandidateName']} />
-                    )}
+                    {/* ...existing code... */}
                     {(!searchTerm || (candidate.personalInfo?.nickname || '').toLowerCase().includes(searchTerm.toLowerCase())) && (
                       <InfoItem icon={User} label="उपनाम / Nickname" value={candidate.personalInfo?.nickname} />
                     )}
@@ -1510,7 +1574,7 @@ const CandidateDetailPage: React.FC = () => {
 
                           {/* Share on Twitter */}
                           <a
-                            href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(`Check out ${candidate.personalInfo.fullName} - Election Candidate Profile`)}`}
+                            href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(`Check out ${candidate?.personalInfo?.fullName} - Election Candidate Profile`)}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="flex items-center justify-center gap-2 px-4 py-3 bg-sky-500 text-white rounded-lg hover:bg-sky-600 transition-colors shadow-md hover:shadow-lg"
@@ -1532,7 +1596,7 @@ const CandidateDetailPage: React.FC = () => {
 
                           {/* Share via WhatsApp */}
                           <a
-                            href={`https://wa.me/?text=${encodeURIComponent(`Check out ${candidate.personalInfo.fullName} - Election Candidate Profile: ${window.location.href}`)}`}
+                            href={`https://wa.me/?text=${encodeURIComponent(`Check out ${candidate?.personalInfo?.fullName} - Election Candidate Profile: ${window.location.href}`)}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="flex items-center justify-center gap-2 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors shadow-md hover:shadow-lg"
@@ -1543,7 +1607,7 @@ const CandidateDetailPage: React.FC = () => {
 
                           {/* Share via Email */}
                           <a
-                            href={`mailto:?subject=${encodeURIComponent(`Election Candidate: ${candidate.personalInfo.fullName}`)}&body=${encodeURIComponent(`Check out this candidate profile: ${window.location.href}`)}`}
+                            href={`mailto:?subject=${encodeURIComponent(`Election Candidate: ${candidate?.personalInfo?.fullName}`)}&body=${encodeURIComponent(`Check out this candidate profile: ${window.location.href}`)}`}
                             className="flex items-center justify-center gap-2 px-4 py-3 bg-gray-700 text-white rounded-lg hover:bg-gray-800 transition-colors shadow-md hover:shadow-lg"
                           >
                             <Mail className="w-5 h-5" />
@@ -1552,7 +1616,7 @@ const CandidateDetailPage: React.FC = () => {
 
                           {/* Share via Telegram */}
                           <a
-                            href={`https://t.me/share/url?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(`Check out ${candidate.personalInfo.fullName} - Election Candidate`)}`}
+                            href={`https://t.me/share/url?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(`Check out ${candidate?.personalInfo?.fullName} - Election Candidate`)}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="flex items-center justify-center gap-2 px-4 py-3 bg-sky-600 text-white rounded-lg hover:bg-sky-700 transition-colors shadow-md hover:shadow-lg"
@@ -1711,7 +1775,7 @@ const CandidateDetailPage: React.FC = () => {
         {/* Feedback Section */}
         <div className="mt-8">
           <div className="bg-gradient-to-r from-gray-50 to-white p-6 rounded-2xl border border-gray-200 shadow-sm">
-            <CandidateFeedbackSection candidateId={id as string} candidateName={candidate.personalInfo.fullName} />
+            <CandidateFeedbackSection candidateId={id as string} candidateName={candidate?.personalInfo?.fullName} />
           </div>
         </div>
 
@@ -1744,13 +1808,13 @@ const CandidateDetailPage: React.FC = () => {
             {!imageLoadError && getCandidateImageUrl(candidate) ? (
               <img
                 src={getCandidateImageUrl(candidate) || ''}
-                alt={candidate.personalInfo.fullName}
+                alt={candidate?.personalInfo?.fullName}
                 className="min-w-[50vw] max-w-[90vw] max-h-[85vh] object-contain"
               />
-            ) : candidate.personalInfo.profilePhoto ? (
+            ) : candidate?.personalInfo?.profilePhoto ? (
               <img
-                src={candidate.personalInfo.profilePhoto}
-                alt={candidate.personalInfo.fullName}
+                src={candidate?.personalInfo?.profilePhoto}
+                alt={candidate?.personalInfo?.fullName}
                 className="min-w-[50vw] max-w-[90vw] max-h-[85vh] object-contain"
               />
             ) : (
@@ -1763,10 +1827,10 @@ const CandidateDetailPage: React.FC = () => {
           {/* Candidate Info Overlay */}
           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent p-6 text-center">
             <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">
-              {candidate.personalInfo.fullName}
+              {candidate?.personalInfo?.fullName}
             </h2>
-            {candidate.personalInfo.fullName_np && (
-              <p className="text-lg text-gray-200 mb-3">{candidate.personalInfo.fullName_np}</p>
+            {candidate?.personalInfo?.fullName_np && (
+              <p className="text-lg text-gray-200 mb-3">{candidate?.personalInfo?.fullName_np}</p>
             )}
             {candidate.politicalInfo?.constituency && (
               <div className="flex items-center justify-center gap-2 text-gray-200">
@@ -1777,9 +1841,8 @@ const CandidateDetailPage: React.FC = () => {
           </div>
         </DialogContent>
       </Dialog>
-      </div>
     </div>
   );
-};
+}
 
 export default CandidateDetailPage;

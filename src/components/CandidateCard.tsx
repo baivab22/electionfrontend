@@ -156,19 +156,24 @@ const getCandidateImageUrl = (candidate: any): string | null => {
 const CandidateCard: React.FC<CandidateCardProps> = ({ candidate }) => {
   const [isPhotoDialogOpen, setIsPhotoDialogOpen] = useState(false);
   // Use new flat backend fields if available, fallback to old
-  const fullName = (candidate as any).CandidateName || candidate.personalInfo?.fullName || 'Candidate';
+  const fullName = candidate.name || (candidate as any).CandidateName || candidate.personalInfo?.fullName || 'Candidate';
+  const area = candidate.area || (candidate.rawSource?.AREA || candidate.rawSource?.Area || candidate.electionInfo?.constituency || candidate.politicalInfo?.constituency || '');
   const district = (candidate as any).DistrictName || (candidate as any).CTZDIST || (candidate as any).StateName || candidate.electionInfo?.district || '';
   const constituency = (candidate as any).ConstName || candidate.politicalInfo?.constituency || candidate.personalInfo?.constituency || 'Unknown';
   const partyName = (candidate as any).PoliticalPartyName || candidate.politicalInfo?.partyName || 'स्वतन्त्र';
   const age = (candidate as any).AGE_YR || candidate.personalInfo?.age || 0;
   const gender = (candidate as any).Gender || candidate.personalInfo?.gender || '';
   const education = (candidate as any).QUALIFICATION || candidate.education?.highestQualification || '';
-  const imageUrl = getCandidateImageUrl(candidate) || '';
+  // Prefer profilepicture if available, else fallback to old image logic
+  const displayImage = candidate.profilepicture
+    ? (candidate.profilepicture.startsWith('http://') || candidate.profilepicture.startsWith('https://')
+        ? candidate.profilepicture
+        : `/uploads/candidates/${candidate.profilepicture}`)
+    : getCandidateImageUrl(candidate) || '';
   const socialMedia = candidate.socialMedia;
   const partyBadgeColor = getPartyBadgeColor(partyName);
   const genderBadgeColor = gender === 'Male' || gender === 'पुरुष' ? 'bg-blue-100 text-blue-800 border-blue-200' : 'bg-pink-100 text-pink-800 border-pink-200';
-  const displayImage = imageUrl;
-  
+
   const handleImageClick = (e: React.MouseEvent) => {
     if (displayImage) {
       e.preventDefault();
@@ -222,14 +227,16 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate }) => {
             <h3 className="text-lg font-extrabold text-gray-900 mb-2 text-center line-clamp-2 group-hover:text-primary transition-colors">
               {fullName}
             </h3>
+            {area && (
+              <div className="mb-2 text-center text-xs text-blue-700 font-semibold truncate">
+                {area}
+              </div>
+            )}
             <div className="mb-2 flex flex-wrap justify-center gap-2">
               <Badge className={genderBadgeColor}>{gender}</Badge>
               {age > 0 && <Badge>{age} वर्ष</Badge>}
             </div>
-            <div className="mb-2 text-center text-sm text-gray-700">
-              <strong>जिल्ला:</strong> {district}<br/>
-              <strong>निर्वाचन क्षेत्र:</strong> {constituency}
-            </div>
+            {/* Removed district and constituency display as per user request */}
             {/* Only 6 major key data shown above: Name, Party, Age, Gender, District, Constituency */}
             {/* All other details are intentionally omitted from the card for brevity as per user request */}
           </div>
