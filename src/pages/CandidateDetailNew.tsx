@@ -923,13 +923,13 @@ const CandidateDetailPage: React.FC = () => {
             {/* General Detail Tab */}
             {activeTab === 'general' && candidate && (
               <div className="space-y-6">
-                {/* Banner with profile photo, name, area */}
-                <div className="relative w-full h-56 sm:h-64 md:h-72 rounded-2xl overflow-hidden flex items-end bg-red-600 shadow-lg">
+                {/* Banner with profile photo, responsive layout for mobile/desktop */}
+                <div className="relative w-full h-56 sm:h-64 md:h-72 rounded-2xl overflow-hidden bg-red-600 shadow-lg">
                   <img
                     src={candidate.profilepicture}
                     alt={candidate.name}
                     className="absolute inset-0 w-full h-full object-cover object-center opacity-80"
-                    style={{ background: '#fff' }}
+                    style={{ background: '#fff', transform: 'scale3d(1.15,1.15,1)' }}
                   />
                   {/* Fullscreen button overlay */}
                   <button
@@ -939,19 +939,84 @@ const CandidateDetailPage: React.FC = () => {
                   >
                     <Maximize2 className="w-6 h-6" />
                   </button>
-                  <div className="relative z-10 w-full flex flex-col items-center justify-end pb-6 bg-gradient-to-t from-black/70 via-black/30 to-transparent">
-                    <h2 className="text-3xl sm:text-4xl font-extrabold text-white drop-shadow mb-1">{candidate.name}</h2>
-                    <div className="flex items-center gap-2 mb-2">
-                      <MapPin className="w-6 h-6 text-white/80" />
-                      <span className="text-xl sm:text-2xl md:text-3xl font-semibold text-white/90 drop-shadow">{candidate.area}</span>
+                  {/* Desktop: Overlay at right bottom; Mobile: No overlay, show below */}
+                  <div className="hidden sm:block">
+                    <div
+                      className="absolute right-0 bottom-0 z-10 flex flex-col items-end justify-end p-6"
+                      style={{ maxWidth: '80%', width: 'auto' }}
+                    >
+                      <div className="bg-black/70 rounded-xl px-5 py-3 flex flex-col items-end shadow-lg">
+                        <h2 className="text-2xl sm:text-3xl font-extrabold text-white drop-shadow mb-1 text-right">{candidate.name}</h2>
+                        <div className="flex items-center gap-2 mb-2 justify-end">
+                          <MapPin className="w-6 h-6 text-white/80" />
+                          <span className="text-lg sm:text-xl md:text-2xl font-semibold text-white/90 drop-shadow">{candidate.area}</span>
+                        </div>
+                        {/* Social Media Share Icons on Banner */}
+                        <div className="flex items-center gap-3 mt-2 justify-end">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            aria-label="Share to Facebook"
+                            className="rounded-full bg-white/90 shadow-md transition-all hover:bg-blue-600 hover:text-white hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                            onClick={() => handleShareTo('facebook', candidate)}
+                          >
+                            <Facebook className="w-5 h-5" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            aria-label="Share to Twitter"
+                            className="rounded-full bg-white/90 shadow-md transition-all hover:bg-sky-500 hover:text-white hover:scale-110 focus:outline-none focus:ring-2 focus:ring-sky-400"
+                            onClick={() => handleShareTo('twitter', candidate)}
+                          >
+                            <Twitter className="w-5 h-5" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            aria-label="Share to WhatsApp"
+                            className="rounded-full bg-white/90 shadow-md transition-all hover:bg-green-500 hover:text-white hover:scale-110 focus:outline-none focus:ring-2 focus:ring-green-400"
+                            onClick={() => handleShareTo('whatsapp', candidate)}
+                          >
+                            <MessageCircle className="w-5 h-5" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            aria-label="Share to LinkedIn"
+                            className="rounded-full bg-white/90 shadow-md transition-all hover:bg-blue-700 hover:text-white hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-700"
+                            onClick={() => handleShareTo('linkedin', candidate)}
+                          >
+                            <Linkedin className="w-5 h-5" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            aria-label="Copy Link"
+                            className="rounded-full bg-white/90 shadow-md transition-all hover:bg-gray-700 hover:text-white hover:scale-110 focus:outline-none focus:ring-2 focus:ring-gray-400"
+                            onClick={() => handleShareTo('copy', candidate)}
+                          >
+                            <Link className="w-5 h-5" />
+                          </Button>
+                        </div>
+                      </div>
                     </div>
-                    {/* Social Media Share Icons on Banner */}
-                    <div className="flex items-center gap-3 mt-2">
+                  </div>
+                </div>
+                {/* Mobile: Show text content below image */}
+                <div className="block sm:hidden mt-4">
+                  <div className="flex flex-col items-center justify-center">
+                    <h2 className="text-2xl font-extrabold text-black mb-1 text-center">{candidate.name}</h2>
+                    <div className="flex items-center gap-2 mb-2 justify-center">
+                      <MapPin className="w-6 h-6 text-red-600" />
+                      <span className="text-lg font-semibold text-gray-800">{candidate.area}</span>
+                    </div>
+                    <div className="flex items-center gap-3 mt-2 justify-center">
                       <Button
                         variant="ghost"
                         size="icon"
                         aria-label="Share to Facebook"
-                        className="rounded-full bg-white/90 shadow-md transition-all hover:bg-blue-600 hover:text-white hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                        className="rounded-full bg-gray-200 shadow-md transition-all hover:bg-blue-600 hover:text-white hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-400"
                         onClick={() => handleShareTo('facebook', candidate)}
                       >
                         <Facebook className="w-5 h-5" />
@@ -960,7 +1025,7 @@ const CandidateDetailPage: React.FC = () => {
                         variant="ghost"
                         size="icon"
                         aria-label="Share to Twitter"
-                        className="rounded-full bg-white/90 shadow-md transition-all hover:bg-sky-500 hover:text-white hover:scale-110 focus:outline-none focus:ring-2 focus:ring-sky-400"
+                        className="rounded-full bg-gray-200 shadow-md transition-all hover:bg-sky-500 hover:text-white hover:scale-110 focus:outline-none focus:ring-2 focus:ring-sky-400"
                         onClick={() => handleShareTo('twitter', candidate)}
                       >
                         <Twitter className="w-5 h-5" />
@@ -969,7 +1034,7 @@ const CandidateDetailPage: React.FC = () => {
                         variant="ghost"
                         size="icon"
                         aria-label="Share to WhatsApp"
-                        className="rounded-full bg-white/90 shadow-md transition-all hover:bg-green-500 hover:text-white hover:scale-110 focus:outline-none focus:ring-2 focus:ring-green-400"
+                        className="rounded-full bg-gray-200 shadow-md transition-all hover:bg-green-500 hover:text-white hover:scale-110 focus:outline-none focus:ring-2 focus:ring-green-400"
                         onClick={() => handleShareTo('whatsapp', candidate)}
                       >
                         <MessageCircle className="w-5 h-5" />
@@ -978,7 +1043,7 @@ const CandidateDetailPage: React.FC = () => {
                         variant="ghost"
                         size="icon"
                         aria-label="Share to LinkedIn"
-                        className="rounded-full bg-white/90 shadow-md transition-all hover:bg-blue-700 hover:text-white hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-700"
+                        className="rounded-full bg-gray-200 shadow-md transition-all hover:bg-blue-700 hover:text-white hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-700"
                         onClick={() => handleShareTo('linkedin', candidate)}
                       >
                         <Linkedin className="w-5 h-5" />
@@ -987,7 +1052,7 @@ const CandidateDetailPage: React.FC = () => {
                         variant="ghost"
                         size="icon"
                         aria-label="Copy Link"
-                        className="rounded-full bg-white/90 shadow-md transition-all hover:bg-gray-700 hover:text-white hover:scale-110 focus:outline-none focus:ring-2 focus:ring-gray-400"
+                        className="rounded-full bg-gray-200 shadow-md transition-all hover:bg-gray-700 hover:text-white hover:scale-110 focus:outline-none focus:ring-2 focus:ring-gray-400"
                         onClick={() => handleShareTo('copy', candidate)}
                       >
                         <Link className="w-5 h-5" />
