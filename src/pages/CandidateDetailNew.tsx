@@ -931,14 +931,7 @@ const CandidateDetailPage: React.FC = () => {
                     className="absolute inset-0 w-full h-full object-cover object-center opacity-80"
                     style={{ background: '#fff', transform: 'scale3d(1.15,1.15,1)' }}
                   />
-                  {/* Fullscreen button overlay */}
-                  <button
-                    className="absolute top-3 right-3 z-20 bg-black/60 hover:bg-black/80 text-white rounded-full p-2 transition"
-                    onClick={() => setPhotoModalOpen(true)}
-                    aria-label="View profile photo in full screen"
-                  >
-                    <Maximize2 className="w-6 h-6" />
-                  </button>
+                  // ...existing code...
                   {/* Desktop: Overlay at right bottom; Mobile: No overlay, show below */}
                   <div className="hidden sm:block">
                     <div
