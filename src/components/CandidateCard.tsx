@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Link } from 'react-router-dom';
-import { MapPin, Calendar, GraduationCap, Maximize2, Facebook, Twitter, Instagram, X, Eye } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import ncpLogo from '../assets/images/ncp-logo.jpg';
+import { MapPin, Calendar, GraduationCap, Facebook, Twitter, Instagram, X, Eye } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -156,7 +157,7 @@ const getCandidateImageUrl = (candidate: any): string | null => {
 };
 
 const CandidateCard: React.FC<CandidateCardProps> = ({ candidate }) => {
-  const [isPhotoDialogOpen, setIsPhotoDialogOpen] = useState(false);
+  // Removed fullscreen photo dialog state
   // Use new flat backend fields if available, fallback to old
   const fullName = candidate.name || (candidate as any).CandidateName || candidate.personalInfo?.fullName || 'Candidate';
   const area = candidate.area || (candidate.rawSource?.AREA || candidate.rawSource?.Area || candidate.electionInfo?.constituency || candidate.politicalInfo?.constituency || '');
@@ -177,11 +178,7 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate }) => {
   const genderBadgeColor = gender === 'Male' || gender === 'पुरुष' ? 'bg-blue-100 text-blue-800 border-blue-200' : 'bg-pink-100 text-pink-800 border-pink-200';
 
   const handleImageClick = (e: React.MouseEvent) => {
-    if (displayImage) {
-      e.preventDefault();
-      e.stopPropagation();
-      setIsPhotoDialogOpen(true);
-    }
+    // No fullscreen feature, so do nothing
   };
 
   const handleSocialClick = (e: React.MouseEvent, url?: string) => {
@@ -192,100 +189,107 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate }) => {
     }
   };
 
+  const navigate = useNavigate();
+
+  const handleLogoClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    navigate(`/candidate/${candidate._id}`);
+  };
+
   return (
-    <>
-      <Link
-        to={`/candidate/${candidate._id}`}
-        className="block group h-full"
-        style={{ textDecoration: 'none', color: 'inherit' }}
-      >
-        <Card className="overflow-hidden hover:shadow-2xl transition-all duration-300 border border-primary/20 hover:border-primary/40 bg-card group h-full flex flex-col relative cursor-pointer">
-          {/* View Details button in red background, top right */}
-          <div className="absolute top-3 right-3 z-10">
-            <Link
-              to={`/candidate/${candidate._id}`}
-              className="px-3 py-1 rounded-full bg-red-600 text-white text-xs font-semibold shadow-md hover:bg-red-700 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-red-400"
-              style={{ letterSpacing: '0.03em' }}
-              onClick={e => e.stopPropagation()}
-            >
-              View Details
-            </Link>
-          </div>
-          <div className="flex flex-col h-full p-5">
-          <div className="flex justify-center mb-4">
-            {/* Profile image logic */}
-            {candidate.candidancytype === 'samanupatik' ? (
-              candidate.ageDetails && candidate.ageDetails.includes('महिला') ? (
-                <div className="w-40 h-40 rounded-xl bg-pink-100 flex items-center justify-center border-2 border-gray-200 group-hover:border-primary/50 transition-all">
-                  <span className="text-6xl font-bold text-pink-600">
-                    {/* SVG icon for female */}
-                    <svg width="48" height="48" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="24" cy="24" r="24" fill="#ec4899"/><path d="M24 14c3.3 0 6 2.7 6 6s-2.7 6-6 6-6-2.7-6-6 2.7-6 6-6zm0 2c-2.2 0-4 1.8-4 4s1.8 4 4 4 4-1.8 4-4-1.8-4-4-4zm0 14c-4.4 0-8 3.6-8 8h2c0-3.3 2.7-6 6-6s6 2.7 6 6h2c0-4.4-3.6-8-8-8z" fill="#fff"/></svg>
-                  </span>
-                </div>
-              ) : (
-                <div className="w-40 h-40 rounded-xl bg-blue-100 flex items-center justify-center border-2 border-gray-200 group-hover:border-primary/50 transition-all">
-                  <span className="text-6xl font-bold text-blue-600">
-                    {/* SVG icon for male */}
-                    <svg width="48" height="48" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="24" cy="24" r="24" fill="#3B82F6"/><path d="M24 14c3.3 0 6 2.7 6 6s-2.7 6-6 6-6-2.7-6-6 2.7-6 6-6zm0 2c-2.2 0-4 1.8-4 4s1.8 4 4 4 4-1.8 4-4-1.8-4-4-4zm0 14c-4.4 0-8 3.6-8 8h2c0-3.3 2.7-6 6-6s6 2.7 6 6h2c0-4.4-3.6-8-8-8z" fill="#fff"/></svg>
-                  </span>
-                </div>
-              )
-            ) : displayImage ? (
-              <div className="relative group/image">
-                <img
-                  src={displayImage}
-                  alt={fullName}
-                  className="w-40 h-40 rounded-xl object-cover border-2 border-gray-200 group-hover:border-primary/50 transition-all cursor-pointer shadow-lg"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = '';
-                    (e.target as HTMLImageElement).style.display = 'none';
-                  }}
-                  onClick={handleImageClick}
-                />
-                <div 
-                  className="absolute inset-0 bg-black/40 rounded-xl opacity-0 group-hover/image:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
-                  onClick={handleImageClick}
-                >
-                  <Maximize2 className="w-8 h-8 text-white" />
-                </div>
+    <Link
+      to={`/candidate/${candidate._id}`}
+      className="block group h-full"
+      style={{ textDecoration: 'none', color: 'inherit' }}
+    >
+      <Card className="overflow-hidden hover:shadow-2xl transition-all duration-300 border border-primary/20 hover:border-primary/40 bg-card group h-full flex flex-col relative cursor-pointer">
+        {/* NCP Logo as View Details icon, top right */}
+        <div className="absolute top-3 right-3 z-10">
+          <img
+            src={ncpLogo}
+            alt="View Details"
+            title="View Details"
+            className="ncp-logo-icon"
+            style={{ cursor: 'pointer', width: 32, height: 32, borderRadius: '50%', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}
+            onClick={handleLogoClick}
+          />
+        </div>
+        <div className="flex flex-col h-full p-5">
+        <div className="flex justify-center mb-4">
+          {/* Profile image logic */}
+          {candidate.candidancytype === 'samanupatik' ? (
+            candidate.ageDetails && candidate.ageDetails.includes('महिला') ? (
+              <div className="w-40 h-40 rounded-xl bg-pink-100 flex items-center justify-center border-2 border-gray-200 group-hover:border-primary/50 transition-all">
+                <span className="text-6xl font-bold text-pink-600">
+                  {/* SVG icon for female */}
+                  <svg width="48" height="48" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="24" cy="24" r="24" fill="#ec4899"/><path d="M24 14c3.3 0 6 2.7 6 6s-2.7 6-6 6-6-2.7-6-6 2.7-6 6-6zm0 2c-2.2 0-4 1.8-4 4s1.8 4 4 4 4-1.8 4-4-1.8-4-4-4zm0 14c-4.4 0-8 3.6-8 8h2c0-3.3 2.7-6 6-6s6 2.7 6 6h2c0-4.4-3.6-8-8-8z" fill="#fff"/></svg>
+                </span>
               </div>
             ) : (
-              <div className="w-40 h-40 rounded-xl bg-primary/10 flex items-center justify-center border-2 border-gray-200 group-hover:border-primary/50 transition-all">
-                <span className="text-6xl font-bold text-primary">{fullName.charAt(0)}</span>
+              <div className="w-40 h-40 rounded-xl bg-blue-100 flex items-center justify-center border-2 border-gray-200 group-hover:border-primary/50 transition-all">
+                <span className="text-6xl font-bold text-blue-600">
+                  {/* SVG icon for male */}
+                  <svg width="48" height="48" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="24" cy="24" r="24" fill="#3B82F6"/><path d="M24 14c3.3 0 6 2.7 6 6s-2.7 6-6 6-6-2.7-6-6 2.7-6 6-6zm0 2c-2.2 0-4 1.8-4 4s1.8 4 4 4 4-1.8 4-4-1.8-4-4-4zm0 14c-4.4 0-8 3.6-8 8h2c0-3.3 2.7-6 6-6s6 2.7 6 6h2c0-4.4-3.6-8-8-8z" fill="#fff"/></svg>
+                </span>
+              </div>
+            )
+          ) : displayImage ? (
+            <div
+              style={{
+                width: '160px',
+                height: '160px',
+                overflow: 'hidden',
+                borderRadius: '0.75rem',
+                border: '2px solid #e5e7eb',
+              }}
+              className="transition-all shadow-lg"
+            >
+              <img
+                src={displayImage}
+                alt={fullName}
+                style={{
+                  width: '200px',
+                  height: '160px',
+                  objectFit: 'cover',
+                  objectPosition: 'center',
+                }}
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = '';
+                  (e.target as HTMLImageElement).style.display = 'none';
+                }}
+              />
+            </div>
+          ) : (
+            <div className="w-40 h-40 rounded-xl bg-primary/10 flex items-center justify-center border-2 border-gray-200 group-hover:border-primary/50 transition-all">
+              <span className="text-6xl font-bold text-primary">{fullName.charAt(0)}</span>
+            </div>
+          )}
+        </div>
+        <h3 className="text-lg font-extrabold text-gray-900 mb-2 text-center line-clamp-2 group-hover:text-primary transition-colors">
+          {fullName}
+        </h3>
+        {candidate.candidancytype === 'samanupatik' && candidate.clustername ? (
+          <div className="mb-2 text-center text-sm xs:text-base sm:text-lg text-blue-700 font-bold truncate">
+            {candidate.clustername}
+          </div>
+        ) : null}
+        {candidate.candidancytype === 'samanupatik' ? null : (
+          <>
+            {area && (
+              <div className="mb-2 text-center text-sm xs:text-base sm:text-lg text-blue-700 font-bold truncate">
+                {area}
               </div>
             )}
-          </div>
-          <h3 className="text-lg font-extrabold text-gray-900 mb-2 text-center line-clamp-2 group-hover:text-primary transition-colors">
-            {fullName}
-          </h3>
-          {candidate.candidancytype === 'samanupatik' && candidate.clustername ? (
-            <div className="mb-2 text-center text-sm xs:text-base sm:text-lg text-blue-700 font-bold truncate">
-              {candidate.clustername}
+            <div className="mb-2 flex flex-wrap justify-center gap-2">
+              {/* <Badge className={genderBadgeColor}>{gender}</Badge> */}
+              {candidate.ageDetails && <Badge>{candidate.ageDetails}</Badge>}
             </div>
-          ) : null}
-          {candidate.candidancytype === 'samanupatik' ? null : (
-            <>
-              {area && (
-                <div className="mb-2 text-center text-sm xs:text-base sm:text-lg text-blue-700 font-bold truncate">
-                  {area}
-                </div>
-              )}
-              <div className="mb-2 flex flex-wrap justify-center gap-2">
-                {/* <Badge className={genderBadgeColor}>{gender}</Badge> */}
-                {candidate.ageDetails && <Badge>{candidate.ageDetails}</Badge>}
-              </div>
-            </>
-          )}
-          </div>
-        </Card>
-      </Link>
-      {/* Photo Dialog */}
-      <Dialog open={isPhotoDialogOpen} onOpenChange={setIsPhotoDialogOpen}>
-        <DialogContent className="max-w-lg">
-          <img src={displayImage || ''} alt={fullName} className="w-full h-auto rounded-lg" />
-        </DialogContent>
-      </Dialog>
-    </>
+          </>
+        )}
+        </div>
+      </Card>
+    </Link>
   );
 };
 

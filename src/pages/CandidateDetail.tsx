@@ -459,13 +459,36 @@ const CandidateDetailPage: React.FC = () => {
           <CardContent className="p-0">
             <div className="relative bg-gradient-to-br from-primary/10 to-primary/5 p-6 xs:p-8 sm:p-10 min-h-[400px] xs:min-h-[480px] sm:min-h-[550px] flex items-center justify-center">
               {!imageLoadError && profilePhotoUrl ? (
-                <img
-                  src={profilePhotoUrl}
-                  alt={allFields.CandidateName || allFields.fullName || 'Candidate'}
-                  className="w-full h-full max-w-2xl max-h-[380px] xs:max-h-[460px] sm:max-h-[530px] rounded-2xl object-cover shadow-2xl border-4 border-white/80"
-                  onLoad={() => setImageLoadError(false)}
-                  onError={() => setImageLoadError(true)}
-                />
+                <div
+                  style={{
+                    width: '100%',
+                    maxWidth: '32rem', // max-w-2xl
+                    height: '100%',
+                    maxHeight: '530px', // sm:max-h-[530px]
+                    overflow: 'hidden',
+                    borderRadius: '1rem',
+                    boxShadow: '0 20px 40px rgba(0,0,0,0.15)',
+                    border: '4px solid rgba(255,255,255,0.8)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <img
+                    src={profilePhotoUrl}
+                    alt={allFields.CandidateName || allFields.fullName || 'Candidate'}
+                    style={{
+                      width: '125%', // show only 80% of the left
+                      height: '100%',
+                      objectFit: 'cover',
+                      objectPosition: 'left',
+                      borderRadius: '1rem',
+                      boxShadow: 'none',
+                    }}
+                    onLoad={() => setImageLoadError(false)}
+                    onError={() => setImageLoadError(true)}
+                  />
+                </div>
               ) : (
                 <div className="w-48 xs:w-56 sm:w-64 h-48 xs:h-56 sm:h-64 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-white text-8xl xs:text-9xl font-bold shadow-2xl">
                   {(allFields.CandidateName || allFields.fullName || 'C').charAt(0)}

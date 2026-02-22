@@ -928,7 +928,7 @@ const CandidateDetailPage: React.FC = () => {
                   <img
                     src={candidate.profilepicture}
                     alt={candidate.name}
-                    className="absolute inset-0 w-full h-full object-contain object-center opacity-80"
+                    className="absolute inset-0 w-full h-full object-cover object-center opacity-80"
                     style={{ background: '#fff' }}
                   />
                   {/* Fullscreen button overlay */}
@@ -1893,13 +1893,13 @@ const CandidateDetailPage: React.FC = () => {
               <img
                 src={getCandidateImageUrl(candidate) || ''}
                 alt={candidate?.personalInfo?.fullName}
-                className="min-w-[50vw] max-w-[90vw] max-h-[85vh] object-contain"
+                className="min-w-[50vw] max-w-[90vw] max-h-[85vh] object-cover"
               />
             ) : candidate?.personalInfo?.profilePhoto ? (
               <img
                 src={candidate?.personalInfo?.profilePhoto}
                 alt={candidate?.personalInfo?.fullName}
-                className="min-w-[50vw] max-w-[90vw] max-h-[85vh] object-contain"
+                className="min-w-[50vw] max-w-[90vw] max-h-[85vh] object-cover"
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center bg-gray-100">
