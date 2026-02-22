@@ -683,7 +683,6 @@ const CandidateDetailPage: React.FC = () => {
                       <Heart className={`w-3 xs:w-4 sm:w-5 h-3 xs:h-4 sm:h-5 mr-1 xs:mr-1.5 sm:mr-2 ${isLiked ? 'fill-current' : ''}`} />
                       {likesCount} {likesCount === 1 ? 'Like' : 'Likes'}
                     </Button>
-                    
                     <Button
                       variant="ghost"
                       onClick={() => setShowCommentForm(!showCommentForm)}
@@ -692,7 +691,6 @@ const CandidateDetailPage: React.FC = () => {
                       <MessageCircle className="w-3 xs:w-4 sm:w-5 h-3 xs:h-4 sm:h-5 mr-1 xs:mr-1.5 sm:mr-2" />
                       {comments.length} {comments.length === 1 ? 'Comment' : 'Comments'}
                     </Button>
-                    
                     <Button
                       variant="ghost"
                       onClick={handleShare}
@@ -700,6 +698,52 @@ const CandidateDetailPage: React.FC = () => {
                     >
                       <Share2 className="w-3 xs:w-4 sm:w-5 h-3 xs:h-4 sm:h-5 mr-1 xs:mr-1.5 sm:mr-2" />
                       {sharesCount} {sharesCount === 1 ? 'Share' : 'Shares'}
+                    </Button>
+                    {/* Social Media Share Icons */}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label="Share to Facebook"
+                      className="rounded-full text-blue-600"
+                      onClick={() => window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`, '_blank')}
+                    >
+                      <Facebook className="w-5 h-5 xs:w-6 xs:h-6" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label="Share to Twitter"
+                      className="rounded-full text-sky-500"
+                      onClick={() => window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(candidate.CandidateName || '')}`, '_blank')}
+                    >
+                      <Twitter className="w-5 h-5 xs:w-6 xs:h-6" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label="Share to Instagram"
+                      className="rounded-full text-pink-500"
+                      onClick={() => window.open(`https://www.instagram.com/?url=${encodeURIComponent(window.location.href)}`, '_blank')}
+                    >
+                      <Instagram className="w-5 h-5 xs:w-6 xs:h-6" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label="Share to WhatsApp"
+                      className="rounded-full text-green-500"
+                      onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(window.location.href)}`, '_blank')}
+                    >
+                      <MessageCircle className="w-5 h-5 xs:w-6 xs:h-6" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label="Share to LinkedIn"
+                      className="rounded-full text-blue-700"
+                      onClick={() => window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.href)}`, '_blank')}
+                    >
+                      <Linkedin className="w-5 h-5 xs:w-6 xs:h-6" />
                     </Button>
                   </div>
                 </div>

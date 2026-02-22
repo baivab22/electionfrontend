@@ -1,4 +1,3 @@
-             
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,6 +18,7 @@ import {
 import API from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import CandidateFeedbackSection from '@/components/CandidateFeedbackSection';
+import { Helmet } from 'react-helmet';
 
 // Normalize party names - replace all variations with standard NCP name
 const normalizePartyName = (partyName?: string): string => {
@@ -295,13 +295,21 @@ const CandidateDetailPage: React.FC = () => {
     setShowShareMenu(false);
   };
 
-  const handleShareTo = async (platform: 'facebook' | 'twitter' | 'whatsapp' | 'linkedin' | 'email' | 'copy') => {
+  const handleShareTo = async (
+    platform: 'facebook' | 'twitter' | 'whatsapp' | 'linkedin' | 'email' | 'copy',
+    candidateObj?: any
+  ) => {
     const pageUrl = encodeURIComponent(window.location.href);
-    const title = encodeURIComponent(candidate?.personalInfo?.fullName || '');
-    const text = encodeURIComponent(`Check out ${candidate?.personalInfo?.fullName}`);
+    const name = candidateObj?.name || candidateObj?.personalInfo?.fullName || '';
+    const area = candidateObj?.area || candidateObj?.politicalInfo?.constituency || '';
+    const party = candidateObj?.politicalInfo?.partyName || '';
+    const content = `Candidate: ${name}\nArea: ${area}\nParty: ${party}\nProfile: ${window.location.href}`;
+    const text = encodeURIComponent(content);
+    const title = encodeURIComponent(name);
 
     if (platform === 'facebook') {
-      const shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${pageUrl}`;
+      // Facebook does not allow prefilled post text, but we can use quote param for some browsers
+      const shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${pageUrl}&quote=${text}`;
       await openShareWindow(shareUrl);
       return;
     }
@@ -313,7 +321,7 @@ const CandidateDetailPage: React.FC = () => {
     }
 
     if (platform === 'whatsapp') {
-      const shareUrl = `https://api.whatsapp.com/send?text=${text}%20${pageUrl}`;
+      const shareUrl = `https://api.whatsapp.com/send?text=${text}`;
       await openShareWindow(shareUrl);
       return;
     }
@@ -325,7 +333,7 @@ const CandidateDetailPage: React.FC = () => {
     }
 
     if (platform === 'email') {
-      const mailto = `mailto:?subject=${title}&body=${text}%0A%0A${pageUrl}`;
+      const mailto = `mailto:?subject=${title}&body=${text}`;
       window.location.href = mailto;
       await recordShare();
       setShowShareMenu(false);
@@ -734,7 +742,7 @@ const CandidateDetailPage: React.FC = () => {
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
             placeholder="🔍 Search candidate by name..."
-            className="w-full px-4 py-3 sm:py-4 text-base sm:text-lg rounded-full border-4 border-primary/80 focus:border-accent focus:ring-4 focus:ring-accent/30 shadow-lg font-semibold text-gray-900 bg-white placeholder-gray-400 outline-none transition-all duration-200"
+            className="w-full px-4 py-3 sm:py-4 text-base sm:text-lg rounded-full border-4 border-primary/80 focus:border-accent focus:ring-4 focus:ring-accent/30 shadow-lg font-semibold text-gray-900 placeholder-gray-400 outline-none transition-all duration-200"
             style={{ boxShadow: '0 0 0 3px #f87171, 0 2px 8px rgba(0,0,0,0.08)' }}
           />
           {searchTerm && filteredCandidates.length > 0 && (
@@ -936,6 +944,54 @@ const CandidateDetailPage: React.FC = () => {
                     <div className="flex items-center gap-2 mb-2">
                       <MapPin className="w-6 h-6 text-white/80" />
                       <span className="text-xl sm:text-2xl md:text-3xl font-semibold text-white/90 drop-shadow">{candidate.area}</span>
+                    </div>
+                    {/* Social Media Share Icons on Banner */}
+                    <div className="flex items-center gap-3 mt-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label="Share to Facebook"
+                        className="rounded-full bg-white/90 shadow-md transition-all hover:bg-blue-600 hover:text-white hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                        onClick={() => handleShareTo('facebook', candidate)}
+                      >
+                        <Facebook className="w-5 h-5" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label="Share to Twitter"
+                        className="rounded-full bg-white/90 shadow-md transition-all hover:bg-sky-500 hover:text-white hover:scale-110 focus:outline-none focus:ring-2 focus:ring-sky-400"
+                        onClick={() => handleShareTo('twitter', candidate)}
+                      >
+                        <Twitter className="w-5 h-5" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label="Share to WhatsApp"
+                        className="rounded-full bg-white/90 shadow-md transition-all hover:bg-green-500 hover:text-white hover:scale-110 focus:outline-none focus:ring-2 focus:ring-green-400"
+                        onClick={() => handleShareTo('whatsapp', candidate)}
+                      >
+                        <MessageCircle className="w-5 h-5" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label="Share to LinkedIn"
+                        className="rounded-full bg-white/90 shadow-md transition-all hover:bg-blue-700 hover:text-white hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-700"
+                        onClick={() => handleShareTo('linkedin', candidate)}
+                      >
+                        <Linkedin className="w-5 h-5" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label="Copy Link"
+                        className="rounded-full bg-white/90 shadow-md transition-all hover:bg-gray-700 hover:text-white hover:scale-110 focus:outline-none focus:ring-2 focus:ring-gray-400"
+                        onClick={() => handleShareTo('copy', candidate)}
+                      >
+                        <Link className="w-5 h-5" />
+                      </Button>
                     </div>
                   </div>
                 </div>

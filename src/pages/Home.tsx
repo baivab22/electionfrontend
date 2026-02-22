@@ -160,10 +160,14 @@ interface HomeProps {
 }
 
 const Home: React.FC<HomeProps> = ({ searchTerm, setSearchTerm }) => {
-  const navigate = useNavigate();
-  const [ageRange, setAgeRange] = useState<[number, number]>([18, 100]);
   const { t, i18n } = useTranslation();
   const currentLanguage = i18n.language as 'en' | 'np';
+  // Search placeholder for hero search field
+  const searchPlaceholder = currentLanguage === 'np'
+    ? '🔍 नाम, क्षेत्र, पार्टी खोज्नुहोस्...'
+    : '🔍 Search by candidate name, constituency, party...';
+  const navigate = useNavigate();
+  const [ageRange, setAgeRange] = useState<[number, number]>([18, 100]);
 
   // Search state
   const [searchResults, setSearchResults] = useState<Candidate[]>([]);
@@ -479,7 +483,7 @@ const Home: React.FC<HomeProps> = ({ searchTerm, setSearchTerm }) => {
             type="text"
             value={searchTerm}
             onChange={handleSearchChange}
-            placeholder="🔍 Search by candidate name"
+            placeholder={searchPlaceholder}
             className="w-full px-5 py-3 rounded-xl border border-primary/60 focus:border-primary focus:ring-0 shadow-lg font-semibold text-gray-900 bg-white placeholder-gray-400 outline-none transition-all duration-200 text-lg"
             style={{ minHeight: '3rem', maxWidth: '100%', fontSize: '1.1rem', fontWeight: 600 }}
             autoComplete="off"
@@ -570,10 +574,10 @@ const Home: React.FC<HomeProps> = ({ searchTerm, setSearchTerm }) => {
             </p>
           </div>
           {loading.posts ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 xs:gap-6 sm:gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 xs:gap-6 sm:gap-8">
               {[...Array(4)].map((_, index) => (
                 <div key={index} className="animate-pulse">
-                  <div className="bg-muted h-40 xs:h-48 w-full rounded-lg mb-2 xs:mb-4"></div>
+                  <div className="bg-muted h-60 xs:h-80 w-full rounded-lg mb-2 xs:mb-4"></div>
                   <div className="bg-muted h-5 w-full rounded mb-2"></div>
                   <div className="bg-muted h-3 w-3/4 rounded"></div>
                 </div>
@@ -619,7 +623,7 @@ const Home: React.FC<HomeProps> = ({ searchTerm, setSearchTerm }) => {
                 {/* Fill with skeletons if less than 4 posts */}
                 {latestPosts.length < 4 && [...Array(4 - latestPosts.length)].map((_, idx) => (
                   <div key={"skeleton-"+idx} className="animate-pulse">
-                    <div className="bg-muted h-40 xs:h-48 w-full rounded-lg mb-2 xs:mb-4"></div>
+                    <div className="bg-muted h-60 xs:h-80 w-full rounded-lg mb-2 xs:mb-4"></div>
                     <div className="bg-muted h-5 w-full rounded mb-2"></div>
                     <div className="bg-muted h-3 w-3/4 rounded"></div>
                   </div>

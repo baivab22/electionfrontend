@@ -14,6 +14,8 @@ interface CandidateCardProps {
   candidate: {
     _id: string;
     candidateId?: string;
+
+    ageDetails?: string;
     personalInfo?: {
       fullName?: string;
       fullName_np?: string;
@@ -161,7 +163,7 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate }) => {
   const district = (candidate as any).DistrictName || (candidate as any).CTZDIST || (candidate as any).StateName || candidate.electionInfo?.district || '';
   const constituency = (candidate as any).ConstName || candidate.politicalInfo?.constituency || candidate.personalInfo?.constituency || 'Unknown';
   const partyName = (candidate as any).PoliticalPartyName || candidate.politicalInfo?.partyName || 'स्वतन्त्र';
-  const age = (candidate as any).AGE_YR || candidate.personalInfo?.age || 0;
+  const age = (candidate as any).AGE_YR || candidate.personalInfo?.age ||candidate.ageDetails ||  0;
   const gender = (candidate as any).Gender || candidate.personalInfo?.gender || '';
   const education = (candidate as any).QUALIFICATION || candidate.education?.highestQualification || '';
   // Prefer profilepicture if available, else fallback to old image logic
@@ -199,43 +201,75 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate }) => {
           </div>
           <div className="flex flex-col h-full p-5">
             <div className="flex justify-center mb-4">
-              {displayImage ? (
-                <div className="relative group/image">
-                  <img
-                    src={displayImage}
-                    alt={fullName}
-                    className="w-40 h-40 rounded-lg object-cover border-2 border-gray-200 group-hover:border-primary/50 transition-all cursor-pointer"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = '';
-                      (e.target as HTMLImageElement).style.display = 'none';
-                    }}
-                    onClick={handleImageClick}
-                  />
-                  <div 
-                    className="absolute inset-0 bg-black/40 rounded-lg opacity-0 group-hover/image:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
-                    onClick={handleImageClick}
-                  >
-                    <Maximize2 className="w-8 h-8 text-white" />
-                  </div>
-                </div>
-              ) : (
-                <div className="w-40 h-40 rounded-lg bg-primary/10 flex items-center justify-center border-2 border-gray-200 group-hover:border-primary/50 transition-all">
-                  <span className="text-6xl font-bold text-primary">{fullName.charAt(0)}</span>
-                </div>
+              {/* Area/Cluster display */}
+              {candidate.candidancytype === 'samanupatik' && candidate.clustername ? (
+            <></>
+              ) : area && (
+              <></>
               )}
+              {/* Profile image logic */}
+              <div className="flex justify-center mb-4">
+                {candidate.candidancytype === 'samanupatik' ? (
+                  candidate.ageDetails && candidate.ageDetails.includes('महिला') ? (
+                    <div className="w-40 h-40 rounded-lg bg-pink-100 flex items-center justify-center border-2 border-gray-200 group-hover:border-primary/50 transition-all">
+                      <span className="text-6xl font-bold text-pink-600">
+                        <svg width="48" height="48" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="24" cy="24" r="24" fill="#ec4899"/><path d="M24 14c3.3 0 6 2.7 6 6s-2.7 6-6 6-6-2.7-6-6 2.7-6 6-6zm0 2c-2.2 0-4 1.8-4 4s1.8 4 4 4 4-1.8 4-4-1.8-4-4-4zm0 14c-4.4 0-8 3.6-8 8h2c0-3.3 2.7-6 6-6s6 2.7 6 6h2c0-4.4-3.6-8-8-8z" fill="#fff"/></svg>
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="w-40 h-40 rounded-lg bg-blue-100 flex items-center justify-center border-2 border-gray-200 group-hover:border-primary/50 transition-all">
+                      <span className="text-6xl font-bold text-blue-600">
+                        <svg width="48" height="48" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="24" cy="24" r="24" fill="#3B82F6"/><path d="M24 14c3.3 0 6 2.7 6 6s-2.7 6-6 6-6-2.7-6-6 2.7-6 6-6zm0 2c-2.2 0-4 1.8-4 4s1.8 4 4 4 4-1.8 4-4-1.8-4-4-4zm0 14c-4.4 0-8 3.6-8 8h2c0-3.3 2.7-6 6-6s6 2.7 6 6h2c0-4.4-3.6-8-8-8z" fill="#fff"/></svg>
+                      </span>
+                    </div>
+                  )
+                ) : displayImage ? (
+                  <div className="relative group/image">
+                    <img
+                      src={displayImage}
+                      alt={fullName}
+                      className="w-40 h-40 rounded-lg object-cover border-2 border-gray-200 group-hover:border-primary/50 transition-all cursor-pointer"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = '';
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
+                      onClick={handleImageClick}
+                    />
+                    <div 
+                      className="absolute inset-0 bg-black/40 rounded-lg opacity-0 group-hover/image:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
+                      onClick={handleImageClick}
+                    >
+                      <Maximize2 className="w-8 h-8 text-white" />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="w-40 h-40 rounded-lg bg-primary/10 flex items-center justify-center border-2 border-gray-200 group-hover:border-primary/50 transition-all">
+                    <span className="text-6xl font-bold text-primary">{fullName.charAt(0)}</span>
+                  </div>
+                )}
+              </div>
             </div>
             <h3 className="text-lg font-extrabold text-gray-900 mb-2 text-center line-clamp-2 group-hover:text-primary transition-colors">
               {fullName}
             </h3>
-            {area && (
-              <div className="mb-2 text-center text-base xs:text-lg sm:text-xl text-blue-700 font-bold truncate">
-                {area}
+            {candidate.candidancytype === 'samanupatik' && candidate.clustername ? (
+              <div className="mb-2 text-center text-sm xs:text-base sm:text-lg text-blue-700 font-bold truncate">
+                {candidate.clustername}
               </div>
+            ) : null}
+            {candidate.candidancytype === 'samanupatik' ? null : (
+              <>
+                {area && (
+                  <div className="mb-2 text-center text-sm xs:text-base sm:text-lg text-blue-700 font-bold truncate">
+                    {area}
+                  </div>
+                )}
+                <div className="mb-2 flex flex-wrap justify-center gap-2">
+                  {/* <Badge className={genderBadgeColor}>{gender}</Badge> */}
+                  {candidate.ageDetails && <Badge>{candidate.ageDetails}</Badge>}
+                </div>
+              </>
             )}
-            <div className="mb-2 flex flex-wrap justify-center gap-2">
-              <Badge className={genderBadgeColor}>{gender}</Badge>
-              {age > 0 && <Badge>{age} वर्ष</Badge>}
-            </div>
             {/* Removed district and constituency display as per user request */}
             {/* Only 6 major key data shown above: Name, Party, Age, Gender, District, Constituency */}
             {/* All other details are intentionally omitted from the card for brevity as per user request */}

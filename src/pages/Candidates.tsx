@@ -63,6 +63,14 @@ import {
 
 interface Candidate {
   _id: string;
+  candidancytype?: string; // 'pratakshya' or 'samanupatik'
+  candidancyType?: string; // 'pratakshya' or 'samanupatik'  candidancytype?: string;
+
+  name?: string; // for samanupatik
+  ageDetails?: string; // for samanupatik
+  clustername?: string; // for samanupatik
+  StateName?: string; // for direct
+  DistrictName?: string; // for direct
   personalInfo: {
     fullName: string;
     fullName_np?: string;
@@ -73,6 +81,8 @@ interface Candidate {
     dateOfBirth_raw?: string;
     gender?: string;
     contactNumber?: string;
+    district?: string; // for direct
+    age?: number;
   };
   biography?: {
     bio_en?: string;
@@ -83,13 +93,14 @@ interface Candidate {
     partyName?: string;
     constituency?: string;
     candidacyLevel?: string;
+    district?: string; // for direct
   };
   achievements?: Array<any>;
   issues?: Array<any>;
 }
 
 const CandidatesPage: React.FC = () => {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
   // Get actual age from candidate with proper priority
   const getCandidateAge = (candidate: any): number | null => {
     // Priority 1: Use rawSource.AGE_YR if available
@@ -152,17 +163,26 @@ const CandidatesPage: React.FC = () => {
   };
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'direct' | 'proportional'>('direct');
   const [searchTerm, setSearchTerm] = useState('');
+  // Dynamic search placeholder (Nepali/English)
+  const currentLanguage = i18n.language || 'en';
+  const searchPlaceholder = currentLanguage === 'np' || currentLanguage === 'ne'
+    ? 'नाम, क्षेत्र, पार्टी, उमेर आदि खोज्नुहोस्...'
+    : 'Search by name, area, party, age, etc...';
   const [selectedPosition, setSelectedPosition] = useState('');
   const [selectedConstituency, setSelectedConstituency] = useState('');
   const [selectedDistrict, setSelectedDistrict] = useState('');
   const [selectedProvince, setSelectedProvince] = useState('');
-    const [selectedStateName, setSelectedStateName] = useState('');
+  const [selectedCluster, setSelectedCluster] = useState('');
+  const [selectedStateName, setSelectedStateName] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 12;
 
   const [minAgeFilter, setMinAgeFilter] = useState<number | null>(null);
   const [maxAgeFilter, setMaxAgeFilter] = useState<number | null>(null);
+
+  console.log(selectedCluster,"selectedCluster value")
 
 
 
@@ -179,12 +199,21 @@ const CandidatesPage: React.FC = () => {
         setCandidates(data.data);
       } catch (error) {
         console.error('Error fetching candidates:', error);
-      } finally {
-        setLoading(false);
       }
     };
-    fetchCandidates();
+    setLoading(true);
+    fetchCandidates().finally(() => setLoading(false));
   }, []);
+
+  // Tab UI
+  const tabLabels = [
+    { key: 'direct', label: 'प्रत्यक्ष' },
+    { key: 'proportional', label: 'समानुपातिक' }
+  ];
+  // Choose candidates based on active tab
+  const directCandidates = useMemo(() => candidates.filter(c => c.candidancyType === 'pratakshya'), [candidates]);
+  const proportionalCandidates = useMemo(() => candidates.filter(c => c.candidancytype === 'samanupatik'), [candidates]);
+  const candidatesToShow = activeTab === 'direct' ? directCandidates : proportionalCandidates;
 
   console.log('Fetched candidates:', candidates);
 
@@ -192,114 +221,144 @@ const CandidatesPage: React.FC = () => {
 
   // Derived age stats
   const ages = useMemo(() => {
-    return candidates
+    return candidatesToShow
       .map(c => getCandidateAge(c))
       .filter(a => a !== null) as number[];
-  }, [candidates]);
+  }, [candidatesToShow]);
   const ageMin = ages.length ? Math.min(...ages) : 18;
   const ageMax = ages.length ? Math.max(...ages) : 80;
 
   // Filter candidates by search term (Nepali or romanized name)
-  const filteredCandidates = useMemo(() => {
-    let filtered = candidates;
-    // Search filter (Nepali or romanized)
-    if (searchTerm.trim()) {
-      const term = searchTerm.trim().toLowerCase();
-      // Simple transliteration function for Nepali to Latin
-      const transliterate = (str: string) => {
-        return str
-          .replace(/[अआ]/g, 'a')
-          .replace(/[इई]/g, 'i')
-          .replace(/[उऊ]/g, 'u')
-          .replace(/[ए]/g, 'e')
-          .replace(/[ओ]/g, 'o')
-          .replace(/[क]/g, 'k')
-          .replace(/[ख]/g, 'kh')
-          .replace(/[ग]/g, 'g')
-          .replace(/[घ]/g, 'gh')
-          .replace(/[च]/g, 'ch')
-          .replace(/[छ]/g, 'chh')
-          .replace(/[ज]/g, 'j')
-          .replace(/[झ]/g, 'jh')
-          .replace(/[ट]/g, 't')
-          .replace(/[ठ]/g, 'th')
-          .replace(/[ड]/g, 'd')
-          .replace(/[ढ]/g, 'dh')
-          .replace(/[ण]/g, 'n')
-          .replace(/[त]/g, 't')
-          .replace(/[थ]/g, 'th')
-          .replace(/[द]/g, 'd')
-          .replace(/[ध]/g, 'dh')
-          .replace(/[न]/g, 'n')
-          .replace(/[प]/g, 'p')
-          .replace(/[फ]/g, 'ph')
-          .replace(/[ब]/g, 'b')
-          .replace(/[भ]/g, 'bh')
-          .replace(/[म]/g, 'm')
-          .replace(/[य]/g, 'y')
-          .replace(/[र]/g, 'r')
-          .replace(/[ल]/g, 'l')
-          .replace(/[व]/g, 'w')
-          .replace(/[श]/g, 'sh')
-          .replace(/[ष]/g, 'sh')
-          .replace(/[स]/g, 's')
-          .replace(/[ह]/g, 'h')
-          .replace(/[ृ]/g, 'ri')
-          .replace(/[ं]/g, 'n')
-          .replace(/[ः]/g, 'h')
-          .replace(/[ँ]/g, 'n')
-          .replace(/[्]/g, '')
-          .replace(/[ा]/g, 'a')
-          .replace(/[ि]/g, 'i')
-          .replace(/[ी]/g, 'i')
-          .replace(/[ु]/g, 'u')
-          .replace(/[ू]/g, 'u')
-          .replace(/[े]/g, 'e')
-          .replace(/[ै]/g, 'ai')
-          .replace(/[ो]/g, 'o')
-          .replace(/[ौ]/g, 'au');
-      };
-      filtered = filtered.filter(c => {
-        const fields = [
-          c.personalInfo?.fullName,
-          c.name,
-          c.personalInfo?.fullName_np,
-          c.politicalInfo?.partyName,
-          c.politicalInfo?.partyName_np,
-          c.personalInfo?.constituency,
-          c.politicalInfo?.constituency,
-          c.nepaliName,
-          c.englishName,
-          c.CandidateName,
-          c.PartyName,
-          c.ConstituencyName
-        ];
-        return fields.some(f => {
-          const val = (f || '').toString().toLowerCase();
-          return val.includes(term) || transliterate(val).includes(term);
-        });
+  const [filteredCandidates, setFilteredCandidates] = useState<Candidate[]>([]);
+
+  useEffect(() => {
+
+
+
+  // Always start from candidatesToShow for each filter
+  let filtered = candidatesToShow;
+
+  // Search filter (Nepali or romanized, same as Home.tsx)
+  if (searchTerm.trim()) {
+    const term = searchTerm.trim().toLowerCase();
+    // Simple transliteration for Nepali to Latin
+    const transliterate = (str: string) => {
+      return str
+        .replace(/[अआ]/g, 'a')
+        .replace(/[इई]/g, 'i')
+        .replace(/[उऊ]/g, 'u')
+        .replace(/[ए]/g, 'e')
+        .replace(/[ओ]/g, 'o')
+        .replace(/[क]/g, 'k')
+        .replace(/[ख]/g, 'kh')
+        .replace(/[ग]/g, 'g')
+        .replace(/[घ]/g, 'gh')
+        .replace(/[च]/g, 'ch')
+        .replace(/[छ]/g, 'chh')
+        .replace(/[ज]/g, 'j')
+        .replace(/[झ]/g, 'jh')
+        .replace(/[ट]/g, 't')
+        .replace(/[ठ]/g, 'th')
+        .replace(/[ड]/g, 'd')
+        .replace(/[ढ]/g, 'dh')
+        .replace(/[ण]/g, 'n')
+        .replace(/[त]/g, 't')
+        .replace(/[थ]/g, 'th')
+        .replace(/[द]/g, 'd')
+        .replace(/[ध]/g, 'dh')
+        .replace(/[न]/g, 'n')
+        .replace(/[प]/g, 'p')
+        .replace(/[फ]/g, 'ph')
+        .replace(/[ब]/g, 'b')
+        .replace(/[भ]/g, 'bh')
+        .replace(/[म]/g, 'm')
+        .replace(/[य]/g, 'y')
+        .replace(/[र]/g, 'r')
+        .replace(/[ल]/g, 'l')
+        .replace(/[व]/g, 'w')
+        .replace(/[श]/g, 'sh')
+        .replace(/[ष]/g, 'sh')
+        .replace(/[स]/g, 's')
+        .replace(/[ह]/g, 'h')
+        .replace(/[ृ]/g, 'ri')
+        .replace(/[ं]/g, 'n')
+        .replace(/[ः]/g, 'h')
+        .replace(/[ँ]/g, 'n')
+        .replace(/[्]/g, '')
+        .replace(/[ा]/g, 'a')
+        .replace(/[ि]/g, 'i')
+        .replace(/[ी]/g, 'i')
+        .replace(/[ु]/g, 'u')
+        .replace(/[ू]/g, 'u')
+        .replace(/[े]/g, 'e')
+        .replace(/[ै]/g, 'ai')
+        .replace(/[ो]/g, 'o')
+        .replace(/[ौ]/g, 'au');
+    };
+    filtered = filtered.filter(c => {
+      // Search all relevant fields for both direct and proportional
+      const fields = [
+        c.personalInfo?.fullName,
+        c.personalInfo?.fullName_np,
+        c.personalInfo?.constituency,
+        c.politicalInfo?.partyName,
+        c.politicalInfo?.constituency,
+        c.name,
+        c.ageDetails,
+        c.clustername,
+        c.StateName,
+        c.DistrictName
+      ];
+      return fields.some(f => {
+        const val = (f || '').toString().toLowerCase();
+        return val.includes(term) || transliterate(val).includes(term);
       });
+    });
+  }
+
+  // Province and district filter only for 'direct' tab
+  if (activeTab === 'direct') {
+    if (selectedProvince && selectedProvince !== 'all') {
+      filtered = candidatesToShow.filter(c => c.StateName === selectedProvince);
     }
-    // Province filter
-        if (selectedProvince && selectedProvince !== 'all') {
-          filtered = filtered.filter(c => c.StateName === selectedProvince);
-    }
-    // District filter (after province)
     if (selectedDistrict && selectedDistrict !== 'all') {
-      filtered = filtered.filter(c => c.personalInfo?.district === selectedDistrict || c.politicalInfo?.district === selectedDistrict || c.DistrictName === selectedDistrict);
-    }
-    // Age filter
-    if (minAgeFilter !== null || maxAgeFilter !== null) {
-      filtered = filtered.filter(c => {
-        const age = getCandidateAge(c);
-        if (age === null) return false;
-        if (minAgeFilter !== null && age < minAgeFilter) return false;
-        if (maxAgeFilter !== null && age > maxAgeFilter) return false;
-        return true;
+      filtered = candidatesToShow.filter((c) => {
+        const area = c.area || '';
+        const areaFirstWord = area.split(' ')[0];
+        const candidateDistrict = c.personalInfo?.district || c.politicalInfo?.district || c.DistrictName || '';
+        let candidateDistrictNepali = candidateDistrict;
+        const districtObj = provincesAndDistricts.flatMap(p => p.districtList).find(d => d.name === candidateDistrict || d.nepali_name === candidateDistrict);
+        if (districtObj) candidateDistrictNepali = districtObj.nepali_name;
+        return areaFirstWord === selectedDistrict || candidateDistrictNepali === selectedDistrict;
       });
     }
-    return filtered;
-  }, [candidates, searchTerm, selectedPosition, selectedConstituency, selectedDistrict, selectedProvince, minAgeFilter, maxAgeFilter]);
+  }
+
+
+    console.log('Applying cluster filter with value:',activeTab === 'proportional' && selectedCluster && selectedCluster !== 'all', selectedCluster);
+  // Cluster filter only for 'proportional' tab
+  if (activeTab === 'proportional' && selectedCluster && selectedCluster !== 'all') {
+
+  
+    filtered = filtered.filter(c => typeof c.clustername === 'string' && c.clustername === selectedCluster);
+  }
+
+  // Age filter
+  if (minAgeFilter !== null || maxAgeFilter !== null) {
+    filtered = candidatesToShow.filter(c => {
+      const age = getCandidateAge(c);
+      if (age === null) return false;
+      if (minAgeFilter !== null && age < minAgeFilter) return false;
+      if (maxAgeFilter !== null && age > maxAgeFilter) return false;
+      return true;
+    });
+  }
+
+  setFilteredCandidates(filtered);
+}, [candidatesToShow, searchTerm, selectedPosition, selectedConstituency, selectedDistrict, selectedProvince, minAgeFilter, maxAgeFilter,selectedCluster]);
+
+
+  console.log('Filtered candidates:', filteredCandidates);
   const totalPages = Math.ceil(filteredCandidates.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedCandidates = filteredCandidates.slice(startIndex, startIndex + itemsPerPage);
@@ -370,8 +429,8 @@ const CandidatesPage: React.FC = () => {
 
   const stats = [
     {
-      label: t('candidates.total', 'Total Candidates'),
-      value: candidates.length,
+      label: t('candidates.total', 'कुल उम्मेदवारहरू'),
+      value: activeTab === 'direct' ? directCandidates.length : proportionalCandidates.length,
       icon: Users,
       color: 'bg-blue-100 text-blue-600'
     },
@@ -406,7 +465,7 @@ const CandidatesPage: React.FC = () => {
       </div>
 
       {/* Stats Section */}
-      <div className="max-w-7xl mx-auto px-2 xs:px-4 sm:px-6 lg:px-8 -mt-6 xs:-mt-8 sm:-mt-10 mb-6 xs:mb-8 sm:mb-12 relative z-10">
+      <div className="max-w-7xl mx-auto px-2 xs:px-4 sm:px-6 lg:px-8 -mt-6 xs:-mt-8 sm:-mt-10 mb-6 xs:mb-8 relative z-10">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 xs:gap-4 sm:gap-6">
           {stats.map((stat, index) => {
             const Icon = stat.icon;
@@ -437,47 +496,122 @@ const CandidatesPage: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2 xs:gap-3 sm:gap-4">
-                            {/* Search */}
-                            <div className="relative col-span-1 sm:col-span-2 lg:col-span-1">
-                              <Search className="absolute left-2 xs:left-3 top-1/2 -translate-y-1/2 w-4 xs:w-5 h-4 xs:h-5 text-muted-foreground" />
-                              <Input
-                                placeholder={t('candidates.searchPlaceholder', 'Search by name...')}
-                                className="pl-8 xs:pl-10 border-gray-200 focus:border-primary text-xs xs:text-sm h-9 xs:h-10"
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                              />
+                            {/* Filters Section */}
+                            <div className="max-w-7xl mx-auto px-2 xs:px-4 sm:px-6 lg:px-8 mb-6 xs:mb-8">
+                              <Card className="border-0 shadow-lg" style={{ minWidth: '60vw' }}>
+                                <CardHeader className="pb-1 xs:pb-2">
+                                  <CardTitle className="text-sm xs:text-base sm:text-lg text-foreground">{t('candidates.filter', 'Filter Candidates')}</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2 xs:gap-3 sm:gap-4">
+                                    {/* Search + Province/District/Cluster Filters */}
+                                    <div className="relative col-span-1 sm:col-span-2 lg:col-span-6 w-full flex items-center gap-2 xs:gap-3" style={{ minHeight: '2.5rem' }}>
+                                      <Search className="absolute left-2 xs:left-3 top-1/2 -translate-y-1/2 w-4 xs:w-5 h-4 xs:h-5 text-muted-foreground" />
+                                      <Input
+                                        placeholder={searchPlaceholder}
+                                        className="pl-8 xs:pl-10 border-gray-200 focus:border-primary text-xs xs:text-sm h-8 xs:h-10 w-[40vw] rounded-lg shadow-sm bg-white"
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                        style={{ fontSize: '1rem', fontWeight: 500, minHeight: '2.5rem', width: '40vw' }}
+                                      />
+                                      {/* Province/District for direct, Cluster for proportional */}
+                                      {activeTab === 'direct' && (
+                                        <>
+                                          <Select value={selectedProvince} onValueChange={value => { setSelectedProvince(value); setSelectedDistrict(''); }}>
+                                            <SelectTrigger className="w-32 xs:w-40 h-8 xs:h-10 text-xs xs:text-sm border-gray-200">
+                                              <SelectValue placeholder={t('candidates.province', 'Province')} />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                              <SelectItem value="all">{t('candidates.allProvinces', 'All Provinces')}</SelectItem>
+                                              {provincesAndDistricts.map(p => (
+                                                <SelectItem key={p.id} value={p.name}>{p.nepali_name} ({p.name})</SelectItem>
+                                              ))}
+                                            </SelectContent>
+                                          </Select>
+                                          <Select
+                                            value={selectedDistrict}
+                                            onValueChange={value => {
+                                              if (value === 'all') {
+                                                setSelectedDistrict('all');
+                                              } else {
+                                                const districtObj = provincesAndDistricts.flatMap(p => p.districtList).find(d => d.name === value || d.nepali_name === value);
+                                                setSelectedDistrict(districtObj ? districtObj.nepali_name : value);
+                                              }
+                                            }}
+                                            disabled={!selectedProvince || selectedProvince === 'all'}
+                                          >
+                                            <SelectTrigger className="w-32 xs:w-40 h-8 xs:h-10 text-xs xs:text-sm border-gray-200">
+                                              <SelectValue placeholder={t('candidates.district', 'District')} />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                              <SelectItem value="all">{t('candidates.allDistricts', 'All Districts')}</SelectItem>
+                                              {(selectedProvince && selectedProvince !== 'all'
+                                                ? (provincesAndDistricts.find(p => p.name === selectedProvince)?.districtList || [])
+                                                : [])
+                                                .map(d => (
+                                                  <SelectItem key={d.id} value={d.nepali_name}>{d.nepali_name} ({d.name})</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                          </Select>
+                                        </>
+                                      )}
+                                      {activeTab === 'proportional' && (
+                                        <Select
+                                          value={selectedCluster}
+                                          onValueChange={value => setSelectedCluster(value)}
+                                        >
+                                          <SelectTrigger className="w-32 xs:w-40 h-8 xs:h-10 text-xs xs:text-sm border-gray-200">
+                                            <SelectValue placeholder={t('candidates.cluster', 'Cluster Name')} />
+                                          </SelectTrigger>
+                                          <SelectContent>
+                                            <SelectItem value="all">{t('candidates.allClusters', 'All Clusters')}</SelectItem>
+                                            {[...new Set(proportionalCandidates.map(c => typeof c.clustername === 'string' ? c.clustername : '').filter(cluster => !!cluster))].map(cluster => (
+                                              <SelectItem key={cluster} value={cluster}>{cluster}</SelectItem>
+                                            ))}
+                                          </SelectContent>
+                                        </Select>
+                                      )}
+                                    </div>
+                                    {/* Clear Filters */}
+                                    {hasActiveFilters && (
+                                      <Button
+                                        variant="outline"
+                                        onClick={() => {
+                                          setSearchTerm('');
+                                          setSelectedDistrict('');
+                                          setSelectedProvince('');
+                                          setMinAgeFilter(null);
+                                          setMaxAgeFilter(null);
+                                        }}
+                                        className="border-gray-200 text-primary hover:bg-primary/10 text-xs xs:text-sm h-9 xs:h-10"
+                                      >
+                                        Clear All
+                                      </Button>
+                                    )}
+                                  </div>
+                                </CardContent>
+                              </Card>
+                              {/* Tab Section (moved below filter) */}
+                              <div className="mt-4 mb-6 xs:mb-8">
+                                <div className="flex gap-2 xs:gap-4">
+                                  {tabLabels.map(tab => (
+                                    <Button
+                                      key={tab.key}
+                                      variant={activeTab === tab.key ? 'default' : 'outline'}
+                                      className={`text-base xs:text-lg font-bold ${activeTab === tab.key ? 'bg-primary text-white' : 'bg-white text-primary border-primary'}`}
+                                      onClick={() => {
+                                        setActiveTab(tab.key as 'direct' | 'proportional');
+                                        setCurrentPage(1);
+                                      }}
+                                    >
+                                      {tab.label}
+                                    </Button>
+                                  ))}
+                                </div>
+                              </div>
                             </div>
-
-              {/* Province Filter */}
-              <Select value={selectedProvince || "all"} onValueChange={value => {
-                setSelectedProvince(value === "all" ? '' : value);
-                setSelectedDistrict(''); // Reset district when province changes
-              }}>
-                <SelectTrigger className="border-gray-200 focus:border-primary text-xs xs:text-sm h-9 xs:h-10">
-                  <SelectValue placeholder="Select Province" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{t('candidates.allProvinces', 'All Provinces')}</SelectItem>
-                  {provinceOptions.map(province => (
-                    <SelectItem key={province} value={province}>{province}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              {/* District Filter (depends on province) */}
-              <Select value={selectedDistrict || "all"} onValueChange={value => setSelectedDistrict(value === "all" ? '' : value)}>
-                <SelectTrigger className="border-gray-200 focus:border-primary text-xs xs:text-sm h-9 xs:h-10">
-                  <SelectValue placeholder={selectedProvince ? "Select District" : "Select Province first"} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{t('candidates.allDistricts', 'All Districts')}</SelectItem>
-                  {districtOptions.map(district => (
-                    <SelectItem key={district} value={district}>{district}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
               {/* Clear Filters */}
-              {hasActiveFilters && (
+              {/* {hasActiveFilters && (
                 <Button
                   variant="outline"
                   onClick={() => {
@@ -491,7 +625,7 @@ const CandidatesPage: React.FC = () => {
                 >
                   Clear All
                 </Button>
-              )}
+              )} */}
             </div>
           </CardContent>
         </Card>
