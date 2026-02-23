@@ -70,7 +70,7 @@ export const provincesAndDistricts = [
       { id: 43, name: "Nawalpur", nepali_name: "नवलपुर" },
       { id: 44, name: "Syangja", nepali_name: "स्याङ्जा" },
       { id: 45, name: "Parbat", nepali_name: "पर्वत" },
-      { id: 46, name: "Baglung", nepali_name: "बागलुङ" }
+      { id: 46, name: "Baglung", nepali_name: "बाग्लुङ" }
     ]
   },
   {
@@ -84,8 +84,9 @@ export const provincesAndDistricts = [
       { id: 50, name: "Gulmi", nepali_name: "गुल्मी" },
       { id: 51, name: "Arghakhanchi", nepali_name: "अर्घाखाँची" },
       { id: 52, name: "Palpa", nepali_name: "पाल्पा" },
-      { id: 53, name: "Nawalparasi West", nepali_name: "नवलपरासी पश्चिम" },
-      { id: 54, name: "Rupandehi", nepali_name: "रुपन्देही" },
+      { id: 53, name: "Nawalparasi", nepali_name: "नवलपरासी" },
+      
+      { id: 54, name: "Rupandehi", nepali_name: "रूपन्देही" },
       { id: 55, name: "Kapilvastu", nepali_name: "कपिलवस्तु" },
       { id: 56, name: "Dang", nepali_name: "दाङ" },
       { id: 57, name: "Banke", nepali_name: "बाँके" },

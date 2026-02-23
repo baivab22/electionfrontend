@@ -69,8 +69,9 @@ interface Candidate {
   name?: string; // for samanupatik
   ageDetails?: string; // for samanupatik
   clustername?: string; // for samanupatik
-  StateName?: string; // for direct
-  DistrictName?: string; // for direct
+  StateName?: string; // for direct (legacy)
+  DistrictName?: string; // for direct (legacy)
+  provinceName?: string; // new API field
   personalInfo: {
     fullName: string;
     fullName_np?: string;
@@ -196,6 +197,9 @@ const CandidatesPage: React.FC = () => {
         );
         if (!response.ok) throw new Error('Failed to fetch candidates');
         const data = await response.json();
+        if (data.data && data.data.length > 0) {
+          console.log('DEBUG: First candidate object:', data.data[0]);
+        }
         setCandidates(data.data);
       } catch (error) {
         console.error('Error fetching candidates:', error);
@@ -318,18 +322,39 @@ const CandidatesPage: React.FC = () => {
 
   // Province and district filter only for 'direct' tab
   if (activeTab === 'direct') {
+    // Province filter: strict match on provinceName
     if (selectedProvince && selectedProvince !== 'all') {
-      filtered = candidatesToShow.filter(c => c.StateName === selectedProvince);
+      const provinceObj = provincesAndDistricts.find(p => p.nepali_name === selectedProvince);
+      console.log('Applying province filter with value:', filtered, selectedProvince, provinceObj);
+      if (provinceObj) {
+        filtered = filtered.filter(c => c.provinceName === provinceObj.nepali_name);
+      } else {
+        filtered = [];
+      }
     }
+    // District filter (area-based, first word matches selected district Nepali name)
     if (selectedDistrict && selectedDistrict !== 'all') {
-      filtered = candidatesToShow.filter((c) => {
-        const area = c.area || '';
-        const areaFirstWord = area.split(' ')[0];
-        const candidateDistrict = c.personalInfo?.district || c.politicalInfo?.district || c.DistrictName || '';
-        let candidateDistrictNepali = candidateDistrict;
-        const districtObj = provincesAndDistricts.flatMap(p => p.districtList).find(d => d.name === candidateDistrict || d.nepali_name === candidateDistrict);
-        if (districtObj) candidateDistrictNepali = districtObj.nepali_name;
-        return areaFirstWord === selectedDistrict || candidateDistrictNepali === selectedDistrict;
+      console.log('Applyyyyy1111', filtered);
+      filtered = filtered.filter((c) => {
+
+                  console.log('Applyyyyy2222', { candidate: c,  reason: 'No constituency', selectedDistrict });
+        // Province check (if province is selected)
+        // if (selectedProvince && selectedProvince !== 'all') {
+        //   const provinceObj = provincesAndDistricts.find(p => p.nepali_name === selectedProvince);
+        //   if (!provinceObj || c.provinceName !== provinceObj.name) return false;
+        // }
+        // // Use constituency from personalInfo or politicalInfo
+        // const constituency = c.personalInfo?.constituency || c.politicalInfo?.constituency || '';
+        // if (!constituency) {
+
+        //   return false;
+        // }
+        // Get first word (may be separated by space or dash)
+        const firstWord = c.area.split(/[\s\-]/)[0];
+        // Debug log for each candidate
+        console.log('Applyyyyy2222finals', { candidate: c,  firstWord, selectedDistrict });
+        // Compare with selectedDistrict (Nepali name)
+        return firstWord === selectedDistrict;
       });
     }
   }
@@ -369,22 +394,20 @@ const CandidatesPage: React.FC = () => {
   )];
   // Province options from constants
       const provinceOptions = useMemo(() => {
-        return [...new Set(candidates.map(c => c.StateName).filter(Boolean))];
+        // Use provinceName if present, fallback to StateName
+        return [...new Set(candidates.map(c => c.provinceName || c.StateName).filter(Boolean))];
       }, [candidates]);
 
   // District options depend on selectedProvince
       const districtOptions = useMemo(() => {
         if (!selectedProvince || selectedProvince === 'all') {
           // Show all districts if no province selected
-          return [...new Set(candidates.map(c => c.personalInfo?.district || c.politicalInfo?.district || c.DistrictName).filter(Boolean))];
+          return provincesAndDistricts.flatMap(p => p.districtList).map(d => d.nepali_name);
         }
-        // Find all districts for candidates in the selected province
-        return [...new Set(
-          candidates
-            .filter(c => c.StateName === selectedProvince)
-            .map(c => c.personalInfo?.district || c.politicalInfo?.district || c.DistrictName)
-        )].filter(Boolean);
-      }, [selectedProvince, candidates]);
+        const provinceObj = provincesAndDistricts.find(p => p.nepali_name === selectedProvince);
+        if (!provinceObj) return [];
+        return provinceObj.districtList.map(d => d.nepali_name);
+      }, [selectedProvince]);
   const stateNames = [...new Set(
     candidates.map(c => c.StateName || '').filter(Boolean)
   )];
@@ -526,7 +549,7 @@ const CandidatesPage: React.FC = () => {
                                             <SelectContent>
                                               <SelectItem value="all">{t('candidates.allProvinces', 'All Provinces')}</SelectItem>
                                               {provincesAndDistricts.map(p => (
-                                                <SelectItem key={p.id} value={p.name}>{p.nepali_name} ({p.name})</SelectItem>
+                                                <SelectItem key={p.id} value={p.nepali_name}>{p.nepali_name} ({p.name})</SelectItem>
                                               ))}
                                             </SelectContent>
                                           </Select>
@@ -548,7 +571,7 @@ const CandidatesPage: React.FC = () => {
                                             <SelectContent>
                                               <SelectItem value="all">{t('candidates.allDistricts', 'All Districts')}</SelectItem>
                                               {(selectedProvince && selectedProvince !== 'all'
-                                                ? (provincesAndDistricts.find(p => p.name === selectedProvince)?.districtList || [])
+                                                ? (provincesAndDistricts.find(p => p.nepali_name === selectedProvince)?.districtList || [])
                                                 : [])
                                                 .map(d => (
                                                   <SelectItem key={d.id} value={d.nepali_name}>{d.nepali_name} ({d.name})</SelectItem>
