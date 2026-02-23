@@ -29,6 +29,7 @@ interface Choice {
 }
 
 const PollDetail: React.FC = () => {
+    const [voteCooldown, setVoteCooldown] = useState(false);
   const { id } = useParams();
   const navigate = useNavigate();
   const [poll, setPoll] = useState<any>(null);
@@ -37,7 +38,7 @@ const PollDetail: React.FC = () => {
   const [votingLoading, setVotingLoading] = useState(false);
   const [selectedChoice, setSelectedChoice] = useState<string | null>(null);
   const { toast } = useToast();
-  const [hasVoted, setHasVoted] = useState<boolean>(false);
+  // Removed hasVoted state to allow multiple votes
   const resultsIntervalRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -57,14 +58,7 @@ const PollDetail: React.FC = () => {
       if (res?.data) {
         setPoll(res.data);
 
-        const pollVoterKey = `voterId_${id}`;
-        const storedVoterId = localStorage.getItem(pollVoterKey) || undefined;
-        try {
-          const status = await API.polls.checkStatus(id as string, { voterId: storedVoterId });
-          if (status?.data?.hasVoted) setHasVoted(true);
-        } catch (err) {
-          // ignore
-        }
+        // Removed hasVoted check to allow multiple votes
 
         await fetchResults();
         try {
@@ -99,27 +93,15 @@ const PollDetail: React.FC = () => {
     setVotingLoading(true);
     setSelectedChoice(choiceId);
     try {
-      const pollVoterKey = `voterId_${id}`;
-      let voterId = localStorage.getItem(pollVoterKey) || undefined;
-      if (!voterId) {
-        try {
-          voterId =
-            (typeof crypto !== 'undefined' && (crypto as any).randomUUID) ?
-              (crypto as any).randomUUID() :
-              `${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
-        } catch (e) {
-          voterId = `${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
-        }
-        localStorage.setItem(pollVoterKey, voterId);
-      }
-
-      const res = await API.polls.vote(id as string, { choiceId, voterId });
+      // No voterId or hasVoted logic, allow multiple votes
+      const res = await API.polls.vote(id as string, { choiceId });
       if (res?.message || res?.success) {
         toast({
           title: '✓ Vote Recorded',
           description: 'Thank you for voting! Your vote is anonymous and secure.',
         });
-        setHasVoted(true);
+        setVoteCooldown(true);
+        setTimeout(() => setVoteCooldown(false), 10000);
         await fetchResults();
       }
     } catch (err: any) {
@@ -256,8 +238,8 @@ const PollDetail: React.FC = () => {
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Your Vote</p>
-                  <p className={`font-bold text-lg ${hasVoted ? 'text-green-600' : 'text-gray-600'}`}>
-                    {hasVoted ? '✓ Voted' : 'Not Voted'}
+                  <p className="font-bold text-lg text-blue-600">
+                    Voting Open
                   </p>
                 </div>
               </div>
@@ -289,12 +271,12 @@ const PollDetail: React.FC = () => {
                     className={`relative p-4 border-2 rounded-lg transition-all cursor-pointer ${
                       isSelected
                         ? 'border-primary bg-primary/5'
-                        : hasVoted || !poll.isActive
+                        : !poll.isActive
                           ? 'border-gray-200 bg-gray-50 cursor-not-allowed'
                           : 'border-gray-200 hover:border-primary hover:bg-blue-50'
                     }`}
                     onClick={() => {
-                      if (!hasVoted && poll.isActive) {
+                      if (poll.isActive && !voteCooldown) {
                         handleVote(cid);
                       }
                     }}
@@ -320,7 +302,7 @@ const PollDetail: React.FC = () => {
                         </div>
                       </div>
                       <div className="text-right">
-                        {hasVoted && votes > 0 && (
+                        {votes > 0 && (
                           <Badge className="bg-green-100 text-green-700">
                             {((votes / totalVotes) * 100).toFixed(0)}%
                           </Badge>
@@ -349,24 +331,19 @@ const PollDetail: React.FC = () => {
             </div>
 
             {/* Action Buttons */}
-            {!hasVoted && poll.isActive && (
+            {poll.isActive && (
               <div className="mt-6">
                 <p className="text-sm text-gray-600 mb-2">
-                  {votingLoading ? 'Recording your vote...' : 'Select an option above and click to vote'}
+                  {votingLoading
+                    ? 'Recording your vote...'
+                    : voteCooldown
+                      ? 'You can vote again in 10 seconds.'
+                      : 'Select an option above and click to vote'}
                 </p>
               </div>
             )}
 
-            {hasVoted && (
-              <div className="mt-6 p-4 bg-green-50 rounded-lg border border-green-200 flex items-center gap-2">
-                <CheckCircle2 className="w-5 h-5 text-green-600" />
-                <p className="text-sm text-green-700 font-semibold">
-                  Thank you for voting! Your vote has been recorded.
-                </p>
-              </div>
-            )}
-
-            {!poll.isActive && !hasVoted && (
+            {!poll.isActive && (
               <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
                 <p className="text-sm text-gray-600">
                   This poll is no longer active and votes cannot be recorded.
