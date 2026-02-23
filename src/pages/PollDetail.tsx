@@ -57,7 +57,8 @@ const PollDetail: React.FC = () => {
       if (res?.data) {
         setPoll(res.data);
 
-        const storedVoterId = localStorage.getItem('voterId') || undefined;
+        const pollVoterKey = `voterId_${id}`;
+        const storedVoterId = localStorage.getItem(pollVoterKey) || undefined;
         try {
           const status = await API.polls.checkStatus(id as string, { voterId: storedVoterId });
           if (status?.data?.hasVoted) setHasVoted(true);
@@ -98,7 +99,8 @@ const PollDetail: React.FC = () => {
     setVotingLoading(true);
     setSelectedChoice(choiceId);
     try {
-      let voterId = localStorage.getItem('voterId') || undefined;
+      const pollVoterKey = `voterId_${id}`;
+      let voterId = localStorage.getItem(pollVoterKey) || undefined;
       if (!voterId) {
         try {
           voterId =
@@ -108,7 +110,7 @@ const PollDetail: React.FC = () => {
         } catch (e) {
           voterId = `${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
         }
-        localStorage.setItem('voterId', voterId);
+        localStorage.setItem(pollVoterKey, voterId);
       }
 
       const res = await API.polls.vote(id as string, { choiceId, voterId });
