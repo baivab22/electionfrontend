@@ -45,7 +45,7 @@ export const provincesAndDistricts = [
       { id: 25, name: "Rasuwa", nepali_name: "रसुवा" },
       { id: 26, name: "Dhading", nepali_name: "धादिङ" },
       { id: 27, name: "Nuwakot", nepali_name: "नुवाकोट" },
-      { id: 28, name: "Kathmandu", nepali_name: "काठमाण्डौ" },
+      { id: 28, name: "Kathmandu", nepali_name: "काठमाडौं" },
       { id: 29, name: "Bhaktapur", nepali_name: "भक्तपुर" },
       { id: 30, name: "Lalitpur", nepali_name: "ललितपुर" },
       { id: 31, name: "Kavrepalanchok", nepali_name: "काभ्रे" },

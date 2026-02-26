@@ -184,7 +184,9 @@ const CandidateDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [candidate, setCandidate] = useState< any>(null);
+  const [candidate, setCandidate] = useState<any>(null);
+  const [voteOptions, setVoteOptions] = useState<Array<{ id: string; label: string; count: number }>>([]);
+  const [voteLoading, setVoteLoading] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('general');
@@ -201,8 +203,6 @@ const CandidateDetailPage: React.FC = () => {
 
   useEffect(() => {
     const fetchCandidate = async () => {
-
-      console.log("Fetching candidate with ID:", id);
       try {
         const response = await fetch(`${import.meta.env.VITE_API_URL || 'https://api.abhushangallery.com'}/api/candidates/${id}`);
         if (!response.ok) throw new Error('Failed to fetch candidate');
@@ -213,14 +213,20 @@ const CandidateDetailPage: React.FC = () => {
         setSharesCount(data.data.shares || 0);
         const likedCandidates = JSON.parse(localStorage.getItem('likedCandidates') || '[]');
         setIsLiked(likedCandidates.includes(id));
+        // Setup vote options
+        if (data.data.voteOptions && Array.isArray(data.data.voteOptions)) {
+          setVoteOptions(data.data.voteOptions.map((opt: any) => ({
+            id: opt.id || opt._id || opt.label,
+            label: opt.label,
+            count: opt.count || 0
+          })));
+        }
       } catch (err: any) {
         setError(err.message);
       } finally {
         setLoading(false);
       }
     };
-
-    // Fetch candidate detail for the page ONLY when id changes
     if (id) fetchCandidate();
     // Fetch all candidates only once on mount (not on every id change)
     // This assumes you have a local source or initial fetch for allCandidates elsewhere
@@ -763,6 +769,50 @@ const CandidateDetailPage: React.FC = () => {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8">
+        {/* Voting Options Section */}
+        {voteOptions.length > 0 && (
+          <div className="mb-8">
+            <Card className="border-2 border-blue-200 shadow-lg rounded-2xl">
+              <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-100 border-b border-blue-200 py-4">
+                <CardTitle className="flex items-center gap-3 text-blue-700">
+                  <Users className="w-6 h-6 text-blue-600" />
+                  <span className="font-bold text-lg">Vote for Candidate</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                  {voteOptions.map(opt => (
+                    <div key={opt.id} className="flex flex-col items-center bg-blue-50 rounded-xl p-4 shadow-md">
+                      <div className="text-lg font-semibold text-blue-900 mb-2">{opt.label}</div>
+                      <div className="text-2xl font-bold text-blue-700 mb-2">{opt.count}</div>
+                      <Button
+                        className="w-full bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-all"
+                        onClick={async () => {
+                          try {
+                            const res = await fetch(`${import.meta.env.VITE_API_URL || 'https://api.abhushangallery.com'}/api/candidates/${id}/vote`, {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ optionId: opt.id })
+                            });
+                            const data = await res.json();
+                            if (data.success) {
+                              setVoteOptions(prev => prev.map(o => o.id === opt.id ? { ...o, count: o.count + 1 } : o));
+                              toast({ title: 'Vote Recorded', description: `Your vote for ${opt.label} was counted.` });
+                            } else {
+                              toast({ title: 'Vote Failed', description: data.message || 'Could not record vote', variant: 'destructive' });
+                            }
+                          } catch (err) {
+                            toast({ title: 'Vote Failed', description: 'Network error', variant: 'destructive' });
+                          }
+                        }}
+                      >Vote</Button>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
         <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 lg:gap-8">
           {/* Vertical Tabs Sidebar */}
           <div className="lg:w-56 flex-shrink-0">
@@ -1063,23 +1113,35 @@ const CandidateDetailPage: React.FC = () => {
                       <CardTitle className="text-xl font-extrabold text-red-600 tracking-wide border-b-2 border-red-100 pb-1 mb-2">About Candidate</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      {/* Content before Battleground Analysis */}
-                      {candidate.detaildescription && (() => {
-                        const desc = candidate.detaildescription;
-                        const highlight = 'Battleground Analysis';
-                        const highlightIdx = desc.indexOf(highlight);
-                        let beforeBattleground = '';
-                        if (highlightIdx !== -1) {
-                          beforeBattleground = desc.slice(0, highlightIdx).trim();
-                        } else {
-                          beforeBattleground = desc.trim();
-                        }
-                        return (
-                          <div className="prose max-w-none text-gray-900 text-base font-semibold leading-relaxed whitespace-pre-line mb-6">
-                            {beforeBattleground}
-                          </div>
-                        );
-                      })()}
+                                  {/* Extra content for पुष्पकमल दाहाल प्रचण्ड (appended at the end) */}
+                                  {candidate.name === 'पुष्पकमल दाहाल प्रचण्ड' && (
+                                    <div className="prose max-w-none text-gray-900 text-base font-semibold leading-relaxed whitespace-pre-line mb-6">
+                                      नेपाल कम्युनिष्ट पार्टी (माओवादी केन्द्र) का अध्यक्ष प्रचण्डको जन्म वि.सं. २०११ मंसिर २६ गते कास्की जिल्लाको ढिकुरपोखरी गाविस वडा नं. २ लेवाडेमा भएको हो। पिता मुक्तिराम र माता भवानीका जेठो छोरा प्रचण्डले आफ्नो प्रारम्भिक शिक्षा कास्कीको ढिकुरपोखरीमा नै लिनुभयो। २०२६ चितवनको नारायणी विद्यामन्दिर माध्यमिक विद्यालय शिवनगरबाट एस.एल.सी. उत्तीर्ण भई २०२७-२०२९ पाटन बहुमुखी क्याम्पसबाट आई.एस.सी. पूरा गरी २०३१-२०३३ सालमा रामपुर कृषि क्याम्पसबाट कृषिमा बि.एस्सी. गर्नु भई एम.पी.ए.सम्मको अध्ययन गर्नुभएको छ। कक्षा १० मा अध्ययनरत हुँदा छविलाल दाहाल नाम परिवर्तन गरी पुष्पकमल दाहाल नामाकरण गरिनुभएका प्रचण्डको वि.सं. २०३८ देखि २०६३ सम्म भूमिगत अवस्थामा रहँदा कल्याण, विश्वास, निर्माण र प्रचण्ड नाम रहेको थियो। हाल उहाँ आफू पुष्पकमलभन्दा प्रचण्ड भनिनुमा नै गौरव गर्नुहुन्छ।वि.सं. २०१९ मा ढिकुरपोखरी - २ बाट चितवन भरतपुरको शिवनगर गा.वि.स.मा बसाइ सराई गर्नुभएका प्रचण्डको वि.सं. २०२६ बैशाखमा सीता पौडेलससँग विवाह भएको हो। उहाँ नारायणी विद्या मन्दिर मा.वि. शिवनगर - २०२९ साल, डण्डा मा.वि. नवलपरासी र भीमोदय मा.वि., आरूघाट, गोरखा - २०३३ - ०३५ सालमा अध्यापन गरी २०३२ सालमा यु.एस.एड.मा सेवारत रहनुभएको थियो।
+वि.सं. २०२८ मा नेकपाको पुष्पलाल समूहमा पार्टीको सदस्यताबाट आफ्नो राजनीतिक जीवन प्रारम्भ गर्नुभएका प्रचण्डले बादल, मित्र दवाडी, खेम भण्डारी र पुष्प भुर्तेलससँग मिलेर २०३१ सालमा मार्क्सवादी अध्ययन समूह गठन गर्नुभएको थियो। उहाँ २०३४ सालमा चौंथो महाधिवेशनमा प्रवेश गरी २०३५ सालमा पूर्णकालिन कार्यकर्ता र २०३६ सालमा चितवन जिल्ला समिति सदस्यमा निर्वाचित हुनुभएको थियो। उहाँ वि.सं. २०३८ मा क्षेत्रीय ब्यूरो सदस्य एवं अखिल नेपाल युवक संघको केन्द्रीय समितिको महासचिव भई २०४० मा संघको केन्द्रीय अध्यक्षमा निर्वाचित हुनुभएको थियो।संविधान सभाको दोस्रो निर्वाचन, २०७० मा सिरहा क्षेत्र नं. - ५ बाट निर्वाचित पुष्पकमल दाहाल ‘प्रचण्ड’ २०७३ साल साउन १९ गते व्यवस्थापिका - संसदमा ३६३ सदस्यको बहुमत प्राप्त गरी नेपाल सरकारको ३९ औं प्रधानमन्त्रीमा निर्वाचित हुनुभयो। २०७४ मंसीर २१ गते सम्पन्न प्रतिनिधिसभा सदस्य निर्वाचनमा चितवन क्षेत्र नं. ३ बाट अध्यक्ष प्रचण्डले ४८,२७६ मत प्राप्त गरी प्रतिनिधि सभा सदस्यमा निर्वाचित हुनुभएको थियो।
+२०७५ जेठ ३ गते नेकपा (एमाले) र नेकपा (माओवादी केन्द्र) बीच पार्टी एकता भई नेपाल कम्युनिस्ट पार्टी (नेकपा) गठन भएपश्चात् उहाँ पार्टीको कार्यकारी अध्यक्ष हुनुभयो। २०७७ फागुन २३ गतेको सर्वोच्च अदालतको फैसलापछि नेकपा (एमाले) र नेकपा (माओवादी केन्द्र) पूर्ववत् अवस्थामा फर्किएपछि हाल उहाँ नेकपा (माओवादी केन्द्र) को अध्यक्ष हुनुहुन्छ।
+२०७९ साल मंसिर ४ गते सम्पन्न प्रतिनिधिसभा निर्वाचनमा उहाँ गोरखा क्षेत्र नं. - २ बाट २६१०९ मत प्राप्त गरी निर्वाचित हुनुभयो। २०७९ पुस १० गते प्रधानमन्त्रीमा निर्वाचित उहाँले पुस २६ गते प्रतिनिधिसभाबाट विश्वासको मत लिनुभएको थियो। २७० सांसद उपस्थित प्रतिनिधिसभामा उहाँले २६८ मत प्राप्त गरी नेपालकै इतिहासमा अभूतपूर्व कीर्तिमानी कायम गर्नुभएको छ। हाल पुष्पकमल दाहाल 'प्रचण्ड' नेपालको ४४ औँ प्रधानमन्त्रीका रूपमा मुलूकको नेतृत्व गरिरहनुभएको छ।वि.सं. २०४१ मा नेकपा (मशाल) को पाँचौ महाधिवेशनबाट केन्द्रीय सदस्यमा निर्वाचित, २०४२ मा पोलिटब्यूरो सदस्य, २०४६ मा महामन्त्री र २०४८ सालमा नेकपा (एकताकेन्द्र) को महामन्त्री हुनुभयो। यसैगरी २०५१ सालमा तत्कालीन नेकपा - एकता केन्द्रको प्रथम राष्ट्रिय सम्मेलनपछि बसेको तेस्रो बिस्तारित बैठकपछि पार्टीको नाम परिवर्तन गरी नेकपा (माओवादी) राखेपछि महामन्त्री हुनुभएका प्रचण्डले २०५२ सालदेखि सुरू भएको जनयुद्धको नेतृत्व गर्नुभयो । २०५७ सालमा दोस्रो राष्ट्रिय सम्मेलनबाट उहाँ नेकपा (माओवादी)को अध्यक्ष हुनुभयो।
+वि.सं. २०५८ मा जनमुक्ति सेना नेपालको सर्वोच्च कमान्डर रहनुभएका प्रचण्ड २०६३ साल असार २ गते बालुवाटारमा पत्रकार सम्मेलन गरी काठमाडौंमा भूमिगत जीवनबाट सार्वजनिक हुनुभएको थियो। उहाँ २०६५ साल साउनमा गणतन्त्र नेपालको प्रथम प्रधानमन्त्रीमा निर्वाचित हुनुभयो। २०६९ सालमा वृहत्तर लुम्बिनी विकास निर्देशक समितिको अध्यक्ष बन्नुभयो। २०६९ सालमा हेटौंडामा सम्पन्न राष्ट्रिय सम्मेलनबाट अध्यक्ष पदमा निर्वाचित हुनुभयो। २०७० सालमा विराटनगरमा सम्पन्न एकताको महाधिवेशनबाट पुनः अध्यक्ष पदमा निर्वाचित हुनुभयो। साथै उहाँ उच्चस्तरीय राजनीतिक समितिको संयोजकको भूमिकासमेत निर्वाह गरिसक्नुभएको छ। नेपालको संविधान निर्माणमा समेत उहाँको अभिभावकीय भूमिका रह्यो।
+अध्यक्ष प्रचण्डका नेपाली क्रान्तिका समस्या (भाग १, २, ३ र ४), संस्कृति, कला र सौन्दर्य चिन्तन, प्रचण्डका छानिएका रचनाहरू (खण्ड १ र २), प्रचण्डका छानिएका सैन्य रचनाहरू, गणतन्त्रको पहिलो दशक, नयाँ राजनीतिक विश्लेषण, नयाँ युगको पदचाप लगायतका पुस्तक प्रकाशित छन्। यसका साथै राष्ट्रिय र अन्तर्राष्ट्रिय मिडियामा उहाँका गहन विश्लेषणात्मक एवं दार्शनिक लेखहरू प्रकाशित छन्।
+उहाँ २०६४ सालमा सम्पन्न संविधानसभा निर्वाचनमा काठमाडौं - १० र रोल्पा–२ बाट निर्वाचित हुनुभएको थियो। २०७० मंसिरमा सम्पन्न दोस्रो संविधानसभाको निर्वाचनमा सिराहा ५ बाट निर्वाचित हुनुभएको थियो।
+                                    </div>
+                                  )}
+                                  {candidate.detaildescription && (() => {
+                                    const desc = candidate.detaildescription;
+                                    const highlight = 'Battleground Analysis';
+                                    const highlightIdx = desc.indexOf(highlight);
+                                    let beforeBattleground = '';
+                                    if (highlightIdx !== -1) {
+                                      beforeBattleground = desc.slice(0, highlightIdx).trim();
+                                    } else {
+                                      beforeBattleground = desc.trim();
+                                    }
+                                    return (
+                                      <div className="prose max-w-none text-gray-900 text-base font-semibold leading-relaxed whitespace-pre-line mb-6">
+                                        {beforeBattleground}
+                                      </div>
+                                    );
+                                  })()}
+                            
                       {/* Battleground Analysis parsing and cards */}
                       {candidate.detaildescription && candidate.detaildescription.includes('Battleground Analysis') && (() => {
                         const desc = candidate.detaildescription;

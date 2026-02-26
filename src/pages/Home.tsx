@@ -8,8 +8,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import NewsCard from '@/components/NewsCard';
+import PdfViewer from '@/components/PdfViewer';
 import bannerImage from '@/assets/images/banner.png';
 import mobileBannerImage from '@/assets/images/mobilebanner.png';
+import partyPdf from '@/assets/नेपाली कम्युनिष्ट पार्टीको प्रतिबद्धता पत्र २०८२.pdf';
 // import ModernYouTubeSection from '@/components/youtubeSection';
 import API, { Post, StatsResponse } from '@/lib/api';
 import { ModernYoutubeSection } from '@/components/youtubeSection';
@@ -731,6 +733,15 @@ const Home: React.FC<HomeProps> = ({ searchTerm, setSearchTerm }) => {
             </Button>
           </Link>
         </div>
+
+        {/* प्रतिबद्धता पत्र Section - Modern UI PDF Viewer */}
+        <div className="w-full mt-12" data-aos="fade-up" data-aos-delay="200">
+          <PdfViewer
+            pdfPath={partyPdf}
+            title="नेपाली कम्युनिष्ट पार्टीको प्रतिबद्धता पत्र २०८२"
+            downloadName="नेपाली कम्युनिष्ट पार्टीको प्रतिबद्धता पत्र २०८२.pdf"
+          />
+        </div>
       </div>
 
       {/* Search Results Dropdown Example (if implemented) */}
@@ -850,6 +861,10 @@ const Home: React.FC<HomeProps> = ({ searchTerm, setSearchTerm }) => {
       <div data-aos="fade-up" data-aos-delay="600">
         <ModernYoutubeSection/>
       </div>
+
+        {/* ...existing code... */}
+
+  
     </div>
   );
 };

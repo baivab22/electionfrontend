@@ -29,7 +29,9 @@ interface Choice {
 }
 
 const PollDetail: React.FC = () => {
-    const [voteCooldown, setVoteCooldown] = useState(false);
+      // Local vote counters for each option
+      const [localVoteCounts, setLocalVoteCounts] = useState<{ [key: string]: number }>({});
+    // Removed voteCooldown state, allow instant voting
   const { id } = useParams();
   const navigate = useNavigate();
   const [poll, setPoll] = useState<any>(null);
@@ -57,6 +59,15 @@ const PollDetail: React.FC = () => {
       const res = await API.polls.getPoll(id as string);
       if (res?.data) {
         setPoll(res.data);
+        // Initialize local vote counts
+        if (res.data.choices) {
+          const counts: { [key: string]: number } = {};
+          res.data.choices.forEach((c: any) => {
+            const cid = c._id || c.id;
+            counts[cid] = 0;
+          });
+          setLocalVoteCounts(counts);
+        }
 
         // Removed hasVoted check to allow multiple votes
 
@@ -92,16 +103,15 @@ const PollDetail: React.FC = () => {
   const handleVote = async (choiceId: string) => {
     setVotingLoading(true);
     setSelectedChoice(choiceId);
+    // Increment local vote count immediately
+    setLocalVoteCounts(prev => ({ ...prev, [choiceId]: (prev[choiceId] || 0) + 1 }));
     try {
-      // No voterId or hasVoted logic, allow multiple votes
       const res = await API.polls.vote(id as string, { choiceId });
       if (res?.message || res?.success) {
         toast({
           title: '✓ Vote Recorded',
           description: 'Thank you for voting! Your vote is anonymous and secure.',
         });
-        setVoteCooldown(true);
-        setTimeout(() => setVoteCooldown(false), 10000);
         await fetchResults();
       }
     } catch (err: any) {
@@ -262,7 +272,7 @@ const PollDetail: React.FC = () => {
                 const cid = c._id || c.id;
                 const r = results?.choices.find((rc) => String(rc.id) === String(cid));
                 const percent = r ? parseFloat(String(r.percentage || '0')) : 0;
-                const votes = r?.votes || 0;
+                const votes = (r?.votes || 0) + (localVoteCounts[cid] || 0);
                 const isSelected = selectedChoice === cid;
 
                 return (
@@ -276,7 +286,7 @@ const PollDetail: React.FC = () => {
                           : 'border-gray-200 hover:border-primary hover:bg-blue-50'
                     }`}
                     onClick={() => {
-                      if (poll.isActive && !voteCooldown) {
+                      if (poll.isActive) {
                         handleVote(cid);
                       }
                     }}
@@ -336,9 +346,7 @@ const PollDetail: React.FC = () => {
                 <p className="text-sm text-gray-600 mb-2">
                   {votingLoading
                     ? 'Recording your vote...'
-                    : voteCooldown
-                      ? 'You can vote again in 10 seconds.'
-                      : 'Select an option above and click to vote'}
+                    : 'Select an option above and click to vote'}
                 </p>
               </div>
             )}

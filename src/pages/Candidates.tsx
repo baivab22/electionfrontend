@@ -334,23 +334,11 @@ const CandidatesPage: React.FC = () => {
     }
     // District filter (area-based, first word matches selected district Nepali name)
     if (selectedDistrict && selectedDistrict !== 'all') {
-      console.log('Applyyyyy1111', filtered);
+      console.log('Applyyyyy1111', filtered,selectedDistrict);
       filtered = filtered.filter((c) => {
-
-                  console.log('Applyyyyy2222', { candidate: c,  reason: 'No constituency', selectedDistrict });
-        // Province check (if province is selected)
-        // if (selectedProvince && selectedProvince !== 'all') {
-        //   const provinceObj = provincesAndDistricts.find(p => p.nepali_name === selectedProvince);
-        //   if (!provinceObj || c.provinceName !== provinceObj.name) return false;
-        // }
-        // // Use constituency from personalInfo or politicalInfo
-        // const constituency = c.personalInfo?.constituency || c.politicalInfo?.constituency || '';
-        // if (!constituency) {
-
-        //   return false;
-        // }
         // Get first word (may be separated by space or dash)
-        const firstWord = c.area.split(/[\s\-]/)[0];
+        let area = c.area || c.personalInfo?.district || c.politicalInfo?.district || c.DistrictName || '';
+        const firstWord = area.split(/[\s\-]/)[0];
         // Debug log for each candidate
         console.log('Applyyyyy2222finals', { candidate: c,  firstWord, selectedDistrict });
         // Compare with selectedDistrict (Nepali name)
